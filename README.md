@@ -20,7 +20,7 @@ Build, deploy, automate, monitor and troubleshoot containerized applications usi
 ## Labs
 
 1. [K3s Basics](labs/01-k3s-basics.md)
-2. Kubernetes Services
+2. [Kubernetes Services](labs/02-services.md)
 3. ConfigMaps & Secrets
 4. Ingress
 5. GitHub Actions
