@@ -441,3 +441,39 @@ sudo kubectl logs <pod-name>
 - Replicas allow multiple copies of an application to run.
 - Kubernetes continuously maintains the desired state.
 - If a Pod disappears, Kubernetes can automatically replace it.
+
+## What I tested?
+
+```bash
+sapops@k8s-lab:~/devops-lab$ sudo kubectl get nodes
+NAME      STATUS   ROLES           AGE   VERSION
+k8s-lab   Ready    control-plane   10s   v1.36.4+k3s1
+sapops@k8s-lab:~/devops-lab$ 
+sapops@k8s-lab:~/devops-lab$ 
+sapops@k8s-lab:~/devops-lab$ sudo kubectl create deployment nginx --image=nginx
+deployment.apps/nginx created
+sapops@k8s-lab:~/devops-lab$ sudo kubectl get deployments
+sudo kubectl get pods
+NAME    READY   UP-TO-DATE   AVAILABLE   AGE
+nginx   0/1     1            0           9s
+NAME                    READY   STATUS              RESTARTS   AGE
+nginx-7f8fbb96d-sgjqf   0/1     ContainerCreating   0          9s
+sapops@k8s-lab:~/devops-lab$ sudo kubectl get pods
+NAME                    READY   STATUS    RESTARTS   AGE
+nginx-7f8fbb96d-sgjqf   1/1     Running   0          27s
+sapops@k8s-lab:~/devops-lab$ sudo kubectl scale deployment nginx --replicas=3
+deployment.apps/nginx scaled
+sapops@k8s-lab:~/devops-lab$ sudo kubectl get pods
+NAME                    READY   STATUS    RESTARTS   AGE
+nginx-7f8fbb96d-2c74g   1/1     Running   0          8s
+nginx-7f8fbb96d-8mr9l   1/1     Running   0          8s
+nginx-7f8fbb96d-sgjqf   1/1     Running   0          54s
+sapops@k8s-lab:~/devops-lab$ sudo kubectl delete pod nginx-7f8fbb96d-sgjqf
+pod "nginx-7f8fbb96d-sgjqf" deleted from default namespace
+sapops@k8s-lab:~/devops-lab$ sudo kubectl get pods
+NAME                    READY   STATUS    RESTARTS   AGE
+nginx-7f8fbb96d-2c74g   1/1     Running   0          42s
+nginx-7f8fbb96d-8mr9l   1/1     Running   0          42s
+nginx-7f8fbb96d-xfrzv   1/1     Running   0          11s
+sapops@k8s-lab:~/devops-lab$
+
