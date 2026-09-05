@@ -2,16 +2,29 @@
 
 ## Goal
 
-Learn the basic Kubernetes concepts:
+Learn the basic Kubernetes concepts and deploy the first containerized application.
+
+Topics covered:
 
 - Cluster
 - Node
-- Deployment
-- Pod
-- Container
 - Image
+- Container
+- Pod
+- Deployment
 - Replica
+- Scaling
 - Self-healing
+
+---
+
+## Environment
+
+- Host OS: Windows
+- Hypervisor: VirtualBox
+- Guest OS: Ubuntu Server
+- Kubernetes distribution: k3s
+- Development environment: VS Code Remote SSH
 
 ---
 
@@ -21,143 +34,410 @@ Install k3s:
 
 ```bash
 curl -sfL https://get.k3s.io | sh -
+```
 
 Check the Kubernetes node:
 
+```bash
 sudo kubectl get nodes
+```
 
-Expected result:
+Example output:
 
-NAME      STATUS   ROLES           VERSION
-k8s-lab   Ready    control-plane   v1.36.4+k3s1
+```text
+NAME      STATUS   ROLES           AGE   VERSION
+k8s-lab   Ready    control-plane   10s   v1.36.4+k3s1
+```
 
-2. Create a Deployment
-Create an nginx Deployment:
+---
 
-sudo kubectl create deployment nginx --image=nginx
+## 2. Basic Kubernetes Concepts
 
-This tells Kubernetes to create a Deployment called nginx using the nginx container image.
+### Cluster
 
-Check the Deployment:
+A Kubernetes cluster is the complete Kubernetes environment.
 
-sudo kubectl get deployments
+It contains the control plane and one or more worker nodes.
 
-Check the Pods:
+In this lab, the entire cluster runs on a single virtual machine.
 
-sudo kubectl get pods
+---
 
-3. Kubernetes object relationship
-The basic relationship is:
+### Node
 
-Deployment
-    ↓
-Pod
-    ↓
-Container
-    ↓
-Image
+A node is a server or virtual machine where Kubernetes workloads run.
 
 In this lab:
 
-nginx Deployment
-    ↓
-nginx Pod
-    ↓
-nginx container
-    ↓
+```text
+k8s-lab
+```
+
+is both the control-plane and worker node.
+
+---
+
+### Image
+
+An image is a packaged application and all dependencies required to run it.
+
+Example:
+
+```text
+nginx
+```
+
+The nginx image contains the nginx web server and everything required to execute it inside a container.
+
+---
+
+### Container
+
+A container is a running instance created from an image.
+
+The relationship is:
+
+```text
+Image
+  ↓
+Container
+```
+
+For example:
+
+```text
 nginx image
+    ↓
+running nginx container
+```
 
-4. Scale the Deployment
-Scale nginx from one Pod to three Pods:
+---
 
-sudo kubectl scale deployment nginx --replicas=3
+### Pod
+
+A Pod is the smallest deployable unit in Kubernetes.
+
+A Pod normally contains one application container.
+
+Example:
+
+```text
+Pod
+└── nginx container
+```
+
+A Pod can technically contain multiple containers, but the common pattern is one main application container per Pod.
+
+---
+
+### Deployment
+
+A Deployment defines how an application should run and how many Pod replicas should exist.
+
+Example:
+
+```text
+Deployment
+   ↓
+Pod
+   ↓
+Container
+   ↓
+Image
+```
+
+In this lab:
+
+```text
+nginx Deployment
+       ↓
+nginx Pod
+       ↓
+nginx container
+       ↓
+nginx image
+```
+
+---
+
+### Replica
+
+A replica is one copy of a Pod.
+
+For example:
+
+```text
+Deployment
+├── Pod 1
+├── Pod 2
+└── Pod 3
+```
+
+Multiple replicas can improve availability and allow an application to process more requests in parallel.
+
+---
+
+### Self-healing
+
+Kubernetes continuously compares the desired state with the actual state.
+
+For example:
+
+```text
+Desired replicas = 3
+Actual replicas  = 2
+```
+
+Kubernetes detects the difference and automatically creates another Pod.
+
+Eventually:
+
+```text
+Desired replicas = 3
+Actual replicas  = 3
+```
+
+---
+
+## 3. Create the First Deployment
+
+Create an nginx Deployment:
+
+```bash
+sudo kubectl create deployment nginx --image=nginx
+```
+
+Output:
+
+```text
+deployment.apps/nginx created
+```
+
+This command tells Kubernetes:
+
+- create a Deployment called `nginx`
+- use the `nginx` container image
+- maintain the required number of Pods
+
+Check the Deployment:
+
+```bash
+sudo kubectl get deployments
+```
+
+Example output:
+
+```text
+NAME    READY   UP-TO-DATE   AVAILABLE   AGE
+nginx   0/1     1            0           9s
+```
 
 Check the Pods:
 
+```bash
 sudo kubectl get pods
+```
 
-There should now be three running Pods.
+During startup the Pod may initially appear as:
 
-5. Test Kubernetes self-healing
-Delete one Pod:
-
-sudo kubectl delete pod <pod-name>
-
-Example:
-
-sudo kubectl delete pod nginx-7f8fbb96d-sgjqf
-
-Check the Pods again:
-
-sudo kubectl get pods
-
-Kubernetes automatically creates a replacement Pod.
-
-desired replicas = 3
-actual replicas = 2
-
-Kubernetes detects the difference and creates another Pod until:
-
-desired replicas = 3
-actual replicas = 3
-
-
-Key concepts
-
-Cluster
-The complete Kubernetes environment.
-
-Node
-A server or virtual machine where Kubernetes workloads run.
-In this lab, k8s-lab is both the control-plane and worker node.
-
-Image
-A packaged application.
-
-Example:
-nginx
-
-Container
-A running instance created from an image.
-
-Pod
-The smallest deployable unit in Kubernetes.
-A Pod normally contains one application container.
-
-Deployment
-Defines how an application should run and how many replicas should exist.
-
-Replica
-One copy of a Pod.
-
-Self-healing
-If a Pod disappears or crashes, Kubernetes creates a replacement to maintain the desired state.
-
-
-Example:
-sapops@k8s-lab:~/devops-lab$ sudo kubectl create deployment nginx --image=nginx
-deployment.apps/nginx created
-sapops@k8s-lab:~/devops-lab$ sudo kubectl get deployments
-sudo kubectl get pods
-NAME    READY   UP-TO-DATE   AVAILABLE   AGE
-nginx   0/1     1            0           9s
+```text
 NAME                    READY   STATUS              RESTARTS   AGE
 nginx-7f8fbb96d-sgjqf   0/1     ContainerCreating   0          9s
-sapops@k8s-lab:~/devops-lab$ sudo kubectl get pods
+```
+
+A few seconds later:
+
+```text
 NAME                    READY   STATUS    RESTARTS   AGE
 nginx-7f8fbb96d-sgjqf   1/1     Running   0          27s
-sapops@k8s-lab:~/devops-lab$ sudo kubectl scale deployment nginx --replicas=3
+```
+
+The nginx application is now running inside a container inside a Kubernetes Pod.
+
+---
+
+## 4. Scale the Deployment
+
+Scale the nginx Deployment from one replica to three replicas:
+
+```bash
+sudo kubectl scale deployment nginx --replicas=3
+```
+
+Output:
+
+```text
 deployment.apps/nginx scaled
-sapops@k8s-lab:~/devops-lab$ sudo kubectl get pods
+```
+
+Check the Pods:
+
+```bash
+sudo kubectl get pods
+```
+
+Example:
+
+```text
 NAME                    READY   STATUS    RESTARTS   AGE
 nginx-7f8fbb96d-2c74g   1/1     Running   0          8s
 nginx-7f8fbb96d-8mr9l   1/1     Running   0          8s
 nginx-7f8fbb96d-sgjqf   1/1     Running   0          54s
-sapops@k8s-lab:~/devops-lab$ sudo kubectl delete pod nginx-7f8fbb96d-sgjqf
+```
+
+There are now three nginx Pods running.
+
+Conceptually:
+
+```text
+nginx Deployment
+├── nginx Pod 1
+├── nginx Pod 2
+└── nginx Pod 3
+```
+
+---
+
+## 5. Test Kubernetes Self-healing
+
+Delete one Pod manually:
+
+```bash
+sudo kubectl delete pod nginx-7f8fbb96d-sgjqf
+```
+
+Output:
+
+```text
 pod "nginx-7f8fbb96d-sgjqf" deleted from default namespace
-sapops@k8s-lab:~/devops-lab$ sudo kubectl get pods
+```
+
+Check the Pods again:
+
+```bash
+sudo kubectl get pods
+```
+
+Example:
+
+```text
 NAME                    READY   STATUS    RESTARTS   AGE
 nginx-7f8fbb96d-2c74g   1/1     Running   0          42s
 nginx-7f8fbb96d-8mr9l   1/1     Running   0          42s
 nginx-7f8fbb96d-xfrzv   1/1     Running   0          11s
-sapops@k8s-lab:~/devops-lab$ 
+```
+
+The deleted Pod:
+
+```text
+nginx-7f8fbb96d-sgjqf
+```
+
+was automatically replaced by:
+
+```text
+nginx-7f8fbb96d-xfrzv
+```
+
+This happened because the Deployment still required three replicas.
+
+Kubernetes detected:
+
+```text
+Desired state = 3 Pods
+Actual state  = 2 Pods
+```
+
+and automatically created another Pod.
+
+This behavior is called **self-healing**.
+
+---
+
+## 6. What Happened Internally
+
+The simplified flow is:
+
+```text
+Deployment
+   ↓
+ReplicaSet
+   ↓
+Pods
+   ↓
+Containers
+   ↓
+nginx image
+```
+
+The Deployment defines the desired application state.
+
+The ReplicaSet ensures the requested number of Pods exists.
+
+Each Pod runs a container created from the nginx image.
+
+---
+
+## 7. Useful Commands
+
+Check cluster nodes:
+
+```bash
+sudo kubectl get nodes
+```
+
+Check Deployments:
+
+```bash
+sudo kubectl get deployments
+```
+
+Check Pods:
+
+```bash
+sudo kubectl get pods
+```
+
+Show more information about Pods:
+
+```bash
+sudo kubectl get pods -o wide
+```
+
+Scale a Deployment:
+
+```bash
+sudo kubectl scale deployment nginx --replicas=3
+```
+
+Delete a Pod:
+
+```bash
+sudo kubectl delete pod <pod-name>
+```
+
+Show detailed information about a Pod:
+
+```bash
+sudo kubectl describe pod <pod-name>
+```
+
+Show container logs:
+
+```bash
+sudo kubectl logs <pod-name>
+```
+
+---
+
+## Key Takeaways
+
+- Kubernetes manages containerized applications.
+- A Node is a machine where workloads run.
+- An Image is a packaged application.
+- A Container is a running instance of an image.
+- A Pod is the smallest deployable Kubernetes unit.
+- A Deployment manages Pods.
+- Replicas allow multiple copies of an application to run.
+- Kubernetes continuously maintains the desired state.
+- If a Pod disappears, Kubernetes can automatically replace it.
