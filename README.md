@@ -21,13 +21,14 @@ Build, deploy, automate, monitor and troubleshoot containerized applications usi
 
 1. [K3s Basics](labs/01-k3s-basics.md)
 2. [Kubernetes Services](labs/02-services.md)
-3. ConfigMaps & Secrets
-4. Ingress
-5. GitHub Actions
-6. ArgoCD / GitOps
-7. Prometheus & Grafana
-8. Terraform
-9. GCP / GKE
+3. [Docker Basics & Custom Image](labs/03-docker-custom-image.md)
+4. ConfigMaps & Secrets
+5. Ingress
+6. GitHub Actions
+7. ArgoCD / GitOps
+8. Prometheus & Grafana
+9. Terraform
+10. GCP / GKE
 
 ## Environment
 
