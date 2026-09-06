@@ -7,5 +7,6 @@ def status():
     return {
         "sid": "D50",
         "application": "UP",
-        "database": "UP"
+        "database": "DOWN"
+        "version": "2.0."
     }
