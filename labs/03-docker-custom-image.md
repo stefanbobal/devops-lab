@@ -615,3 +615,59 @@ fake-sap-api:v2    8d58c3b4acb5        223MB         54.6MB
 python:3.13-slim   9d2e5553305c        189MB         48.2MB        
 sapops@k8s-lab:~/devops-lab/projects/fake-sap-api$ 
 ```
+
+## I encountered isue and did some troubleshooting:
+issue was with syntax error in app.py, where I forgot to put "," at the end of last line in code.
+
+container Exited → docker ps -a → docker logs → syntax error → fix source → rebuild image → rerun container
+
+```bash
+sapops@k8s-lab:~/devops-lab/projects/fake-sap-api$ docker logs fake-sap-api 
+Traceback (most recent call last):
+  File "/usr/local/bin/uvicorn", line 6, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "/usr/local/lib/python3.13/site-packages/click/core.py", line 1631, in __call__
+    return self.main(*args, **kwargs)
+           ~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/click/core.py", line 1552, in main
+    rv = self.invoke(ctx)
+  File "/usr/local/lib/python3.13/site-packages/click/core.py", line 1415, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+           ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/click/core.py", line 910, in invoke
+    return callback(*args, **kwargs)
+  File "/usr/local/lib/python3.13/site-packages/uvicorn/main.py", line 440, in main
+    run(
+    ~~~^
+        app,
+        ^^^^
+    ...<48 lines>...
+        reset_contextvars=reset_contextvars,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/usr/local/lib/python3.13/site-packages/uvicorn/main.py", line 609, in run
+    config.load_app()
+    ~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/site-packages/uvicorn/config.py", line 428, in load_app
+    return import_from_string(self.app)
+  File "/usr/local/lib/python3.13/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+  File "/usr/local/lib/python3.13/importlib/__init__.py", line 88, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1395, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 1019, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 1157, in get_code
+  File "<frozen importlib._bootstrap_external>", line 1087, in source_to_code
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/app/app.py", line 11
+    "version": "2.0."
+             ^
+SyntaxError: invalid syntax
+sapops@k8s-lab:~/devops-lab/projects/fake-sap-api$
+```
