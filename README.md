@@ -24,12 +24,13 @@ Build, deploy, automate, monitor and troubleshoot containerized applications usi
 3. [Docker Basics & Custom Image](labs/03-docker-custom-image.md)
 4. [Deploy Custom Docker Image to Kubernetes](labs/04-docker-image-to-kubernetes.md)
 5. ConfigMaps & Secrets
-6. Ingress
-7. GitHub Actions
-8. ArgoCD / GitOps
-9. Prometheus & Grafana
-10. Terraform
-11. GCP / GKE
+6. Sealed Secrets / kubeseal
+7. Ingress
+8. GitHub Actions
+9. ArgoCD / GitOps
+10. Prometheus & Grafana
+11. Terraform
+12. GCP / GKE
 
 ## Environment
 

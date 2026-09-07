@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fake-sap-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: fake-sap-api
+  template:
+    metadata:
+      labels:
+        app: fake-sap-api
+    spec:
+      containers:
+        - name: fake-sap-api
+          image: fake-sap-api:v2
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8000

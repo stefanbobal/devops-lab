@@ -541,3 +541,162 @@ Secret
 ```
 
 This allows configuration to change without rebuilding the Docker image.
+
+
+## Actions and steps done on todays lab
+
+saved docker image into local tar:
+
+```bash
+docker save fake-sap-api:v2 -o fake-sap-api-v2.tar
+```
+
+
+imported local docker image into kubernetes
+
+```bash
+sudo k3s ctr images import fake-sap-api-v2.tar
+```
+
+List of kubernetes images:
+
+```bash
+sudo k3s ctr images list | grep fake-sap-api
+docker.io/library/fake-sap-api:v2                                                                                  application/vnd.oci.image.manifest.v1+json                sha256:fd212d07b1ede9de7a6b44463afdb4a6abf265af80eeefa0bfe3bff5963282f4 52.0 MiB  linux/amd64                                                                                            io.cri-containerd.image=managed 
+```
+
+Created kubernetes deployment manifest for kubernetes:
+
+```bash
+sapops@k8s-lab:~/devops-lab/projects/fake-sap-api/k8s$ cat deployment.yaml 
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fake-sap-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: fake-sap-api
+  template:
+    metadata:
+      labels:
+        app: fake-sap-api
+    spec:
+      containers:
+        - name: fake-sap-api
+          image: fake-sap-api:v2
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8000
+sapops@k8s-lab:~/devops-lab/projects/fake-sap-api/k8s$ 
+```
+
+Applied the Deployment manifest to the Kubernetes cluster:
+
+```bash
+sapops@k8s-lab:~/devops-lab/projects/fake-sap-api/k8s$ sudo kubectl apply -f deployment.yaml
+deployment.apps/fake-sap-api created
+sapops@k8s-lab:~/devops-lab/projects/fake-sap-api/k8s$
+
+
+
+apops@k8s-lab:~/devops-lab/projects/fake-sap-api/k8s$ sudo kubectl get deployments
+NAME           READY   UP-TO-DATE   AVAILABLE   AGE
+fake-sap-api   2/2     2            2           18s
+nginx          3/3     3            3           42h
+sapops@k8s-lab:~/devops-lab/projects/fake-sap-api/k8s$
+```
+
+deleted old deployment from previous lab:
+
+```bash
+sapops@k8s-lab:~/devops-lab/projects/fake-sap-api/k8s$ sudo kubectl delete deployment nginx
+deployment.apps "nginx" deleted from default namespace
+sapops@k8s-lab:~/devops-lab/projects/fake-sap-api/k8s$ sudo kubectl delete service nginx
+service "nginx" deleted from default namespace
+sapops@k8s-lab:~/devops-lab/projects/fake-sap-api/k8s$ 
+```
+
+
+check all details of kubernetes cluster:
+
+```bash
+sapops@k8s-lab:~/devops-lab/projects/fake-sap-api/k8s$ sudo kubectl get all
+NAME                                READY   STATUS    RESTARTS   AGE
+pod/fake-sap-api-59cffcfbdf-4rlv4   1/1     Running   0          90s
+pod/fake-sap-api-59cffcfbdf-ngrd7   1/1     Running   0          90s
+
+NAME                 TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+service/kubernetes   ClusterIP   10.43.0.1    <none>        443/TCP   42h
+
+NAME                           READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/fake-sap-api   2/2     2            2           92s
+
+NAME                                      DESIRED   CURRENT   READY   AGE
+replicaset.apps/fake-sap-api-59cffcfbdf   2         2         2       92s
+sapops@k8s-lab:~/devops-lab/projects/fake-sap-api/k8s$
+```
+
+Create (expose) kubernetes service for deployment fake-sap-api:
+
+```bash
+sapops@k8s-lab:~/devops-lab/projects/fake-sap-api/k8s$ sudo kubectl expose deployment fake-sap-api \
+  --port=8000 \
+  --target-port=8000 \
+  --type=ClusterIP
+service/fake-sap-api exposed
+```
+
+We can see that service is exposed and endpoint available:
+
+```bash
+sapops@k8s-lab:~/devops-lab/projects/fake-sap-api/k8s$ sudo kubectl get services
+NAME           TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)    AGE
+fake-sap-api   ClusterIP   10.43.9.211   <none>        8000/TCP   6s
+kubernetes     ClusterIP   10.43.0.1     <none>        443/TCP    42h
+sapops@k8s-lab:~/devops-lab/projects/fake-sap-api/k8s$ curl http://10.43.9.211:8000/status
+{"sid":"D50","application":"UP","database":"DOWN","version":"2.0"}sapops@k8s-lab:~/devops-lab/projects/fake-sap-api/k8s$ 
+sapops@k8s-lab:~/devops-lab/projects/fake-sap-api/k8s$ 
+
+
+sapops@k8s-lab:~/devops-lab/projects/fake-sap-api/k8s$ sudo kubectl get endpoints fake-sap-api
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME           ENDPOINTS                         AGE
+fake-sap-api   10.42.0.38:8000,10.42.0.39:8000   62s
+sapops@k8s-lab:~/devops-lab/projects/fake-sap-api/k8s$ sudo kubectl get endpointslices
+NAME                 ADDRESSTYPE   PORTS   ENDPOINTS               AGE
+fake-sap-api-jrbnp   IPv4          8000    10.42.0.39,10.42.0.38   100s
+kubernetes           IPv4          6443    192.168.178.110         42h
+sapops@k8s-lab:~/devops-lab/projects/fake-sap-api/k8s$ 
+```
+
+We configured deployment to have exactly 2 pods (configured in deployment.yaml as replicas: 2), so now we will test if we delete one pod it should recreate it automatically:
+
+```bash
+sapops@k8s-lab:~/devops-lab/projects/fake-sap-api/k8s$ sudo kubectl get pods
+NAME                            READY   STATUS    RESTARTS   AGE
+fake-sap-api-59cffcfbdf-4rlv4   1/1     Running   0          5m35s
+fake-sap-api-59cffcfbdf-ngrd7   1/1     Running   0          5m35s
+sapops@k8s-lab:~/devops-lab/projects/fake-sap-api/k8s$
+```
+
+Deleted one of the pods:
+
+```bash
+sapops@k8s-lab:~/devops-lab/projects/fake-sap-api/k8s$ sudo kubectl delete pod fake-sap-api-59cffcfbdf-ngrd7
+pod "fake-sap-api-59cffcfbdf-ngrd7" deleted from default namespace
+sapops@k8s-lab:~/devops-lab/projects/fake-sap-api/k8s$ 
+```
+
+
+And now we can see that new pod is started with new name:
+
+```bash
+sapops@k8s-lab:~/devops-lab/projects/fake-sap-api/k8s$ sudo kubectl get pods
+NAME                            READY   STATUS    RESTARTS   AGE
+fake-sap-api-59cffcfbdf-4rlv4   1/1     Running   0          6m7s
+fake-sap-api-59cffcfbdf-qgq4x   1/1     Running   0          11s
+sapops@k8s-lab:~/devops-lab/projects/fake-sap-api/k8s$
+```
+
