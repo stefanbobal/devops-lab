@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: fake-sap-api
-          image: fake-sap-api:v2
-          imagePullPolicy: Never
+          image: stefanbobal/fake-sap-api:v2
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000

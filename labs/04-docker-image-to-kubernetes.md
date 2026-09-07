@@ -700,3 +700,68 @@ fake-sap-api-59cffcfbdf-qgq4x   1/1     Running   0          11s
 sapops@k8s-lab:~/devops-lab/projects/fake-sap-api/k8s$
 ```
 
+
+We continued with pushing docker image to docker hub:
+
+## Push the Image to Docker Hub
+
+Tag the local image:
+
+```bash
+sapops@k8s-lab:~/devops-lab/projects/fake-sap-api$ docker tag fake-sap-api:v2 stefanbobal/fake-sap-api:v2
+sapops@k8s-lab:~/devops-lab/projects/fake-sap-api$ 
+```
+
+Push it to Docker Hub:
+
+```bash
+sapops@k8s-lab:~/devops-lab/projects/fake-sap-api$ docker push stefanbobal/fake-sap-api:v2
+The push refers to repository [docker.io/stefanbobal/fake-sap-api]
+ce64d450c156: Pushed 
+237e12970bdc: Mounted from library/python 
+1c01a696343e: Pushed 
+760e6610c29d: Pushed 
+9b83eae799b8: Mounted from library/python 
+6310eb16bf42: Mounted from library/python 
+7ce6cb042700: Pushed 
+5bbcb35ea63e: Mounted from library/python 
+v2: digest: sha256:fd212d07b1ede9de7a6b44463afdb4a6abf265af80eeefa0bfe3bff5963282f4 size: 2054
+sapops@k8s-lab:~/devops-lab/projects/fake-sap-api$
+```
+
+Update the Kubernetes Deployment manifest:
+
+```yaml
+image: stefanbobal/fake-sap-api:v2
+imagePullPolicy: IfNotPresent
+```
+
+Apply the updated manifest:
+
+```bash
+sapops@k8s-lab:~/devops-lab/projects/fake-sap-api/k8s$ sudo kubectl apply -f deployment.yaml
+[sudo: authenticate] Password:            
+deployment.apps/fake-sap-api configured
+sapops@k8s-lab:~/devops-lab/projects/fake-sap-api/k8s$ 
+```
+
+```bash
+sapops@k8s-lab:~/devops-lab/projects/fake-sap-api/k8s$ sudo kubectl rollout status deployment/fake-sap-api
+deployment "fake-sap-api" successfully rolled out
+sapops@k8s-lab:~/devops-lab/projects/fake-sap-api/k8s$ 
+```
+
+Check the pods are running now with new image from docker hub:
+
+```bash
+sapops@k8s-lab:~/devops-lab/projects/fake-sap-api/k8s$ sudo kubectl get pod
+NAME                          READY   STATUS    RESTARTS   AGE
+fake-sap-api-7949477d-5sttb   1/1     Running   0          81s
+fake-sap-api-7949477d-p2286   1/1     Running   0          83s
+sapops@k8s-lab:~/devops-lab/projects/fake-sap-api/k8s$ sudo kubectl describe pod fake-sap-api-7949477d-5sttb | grep -i image
+    Image:          stefanbobal/fake-sap-api:v2
+    Image ID:       docker.io/stefanbobal/fake-sap-api@sha256:fd212d07b1ede9de7a6b44463afdb4a6abf265af80eeefa0bfe3bff5963282f4
+  Normal  Pulled     2m6s  kubelet            spec.containers{fake-sap-api}: Container image "stefanbobal/fake-sap-api:v2" already present on machine and can be accessed by the pod
+sapops@k8s-lab:~/devops-lab/projects/fake-sap-api/k8s$ 
+```
+
