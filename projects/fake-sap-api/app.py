@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 
 app = FastAPI()
@@ -5,8 +6,9 @@ app = FastAPI()
 @app.get("/status")
 def status():
     return {
-        "sid": "D50",
-        "application": "UP",
-        "database": "DOWN",
-        "version": "2.0"
+        "sid": os.getenv("SAP_SID", "UNKNOWN"),
+        "application": os.getenv("APP_STATUS", "UNKNOWN"),
+        "database": os.getenv("DB_STATUS", "UNKNOWN"),
+        "version": "3.0",
+        "user": os.getenv("SAP_USER", "UNKNOWN")
     }

@@ -23,7 +23,7 @@ Build, deploy, automate, monitor and troubleshoot containerized applications usi
 2. [Kubernetes Services](labs/02-services.md)
 3. [Docker Basics & Custom Image](labs/03-docker-custom-image.md)
 4. [Deploy Custom Docker Image to Kubernetes](labs/04-docker-image-to-kubernetes.md)
-5. ConfigMaps & Secrets
+5. [ConfigMaps & Secrets](labs/05-configmaps-secrets.md)
 6. Sealed Secrets / kubeseal
 7. Ingress
 8. GitHub Actions

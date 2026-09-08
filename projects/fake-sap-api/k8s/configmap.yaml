@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fake-sap-api-config
+
+data:
+  SAP_SID: "D50"
+  APP_STATUS: "UP"
+  DB_STATUS: "UP"
