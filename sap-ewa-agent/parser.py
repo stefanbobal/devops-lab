@@ -133,3 +133,82 @@ def normalize_section_tree(payload):
         })
 
     return result
+
+
+def category_for_section(name):
+    name = (name or "").lower()
+
+    categories = (
+        ("security", "security"),
+        ("performance", "performance"),
+        ("sql", "sql"),
+        ("statement", "sql"),
+        ("hana", "hana"),
+        ("database", "database"),
+        ("capacity", "capacity"),
+        ("availability", "availability"),
+        ("maintenance", "maintenance"),
+    )
+
+    for keyword, category in categories:
+        if keyword in name:
+            return category
+
+    return "other"
+
+
+def normalize_findings(
+    system,
+    session_date,
+    source_document,
+    section_name,
+    toc_rating_key,
+    sections,
+):
+    findings = []
+
+    for section in sections:
+        rating = section.get("rating") or {}
+        components = section.get("components") or []
+        summary = "\n".join(
+            component.get("text", "")
+            for component in components
+            if component.get("type") == "TEXT"
+            and component.get("text")
+        )
+        table_data = [
+            {
+                "header": component.get("header", ""),
+                "columns": component.get("columns", []),
+                "rows": component.get("rows", []),
+            }
+            for component in components
+            if component.get("type") == "TABLE"
+        ]
+
+        findings.append({
+            "system": system,
+            "session_date": (
+                session_date.isoformat()
+                if session_date
+                else None
+            ),
+            "section_name": (
+                section.get("name")
+                or section_name
+            ),
+            "rating": rating.get("Text"),
+            "rating_key": (
+                rating.get("RatingKey")
+                or toc_rating_key
+            ),
+            "category": category_for_section(
+                section.get("name")
+                or section_name
+            ),
+            "summary": summary,
+            "table_data": table_data,
+            "source_document": source_document,
+        })
+
+    return findings
