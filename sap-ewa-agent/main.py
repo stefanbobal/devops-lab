@@ -83,13 +83,6 @@ def section_limit(environment_name, default):
         return default
 
 
-def max_warning_sections():
-    return section_limit(
-        "EWA_MAX_WARNING_SECTIONS",
-        10,
-    )
-
-
 def max_other_sections():
     return section_limit(
         "EWA_MAX_OTHER_SECTIONS",
@@ -121,7 +114,6 @@ def latest_sessions_by_sid(sessions):
 
 def select_section_details(
     toc,
-    warning_limit,
     other_limit,
 ):
     candidates = [
@@ -165,7 +157,7 @@ def select_section_details(
 
     return (
         critical
-        + warnings[:warning_limit]
+        + warnings
         + other[:other_limit]
     )
 
@@ -215,7 +207,6 @@ async def main():
         )
 
         latest = latest_sessions_by_sid(sessions)
-        warning_limit = max_warning_sections()
         other_limit = max_other_sections()
 
         for sid, ewa in sorted(
@@ -234,15 +225,13 @@ async def main():
 
             selected = select_section_details(
                 toc,
-                warning_limit,
                 other_limit,
             )
 
             print(
                 f"TOC: {len(toc)} | "
                 f"Detail sections: {len(selected)} "
-                f"(all critical, max {warning_limit} warnings, "
-                f"max {other_limit} other)"
+                f"(all critical/warnings, max {other_limit} other)"
             )
 
             findings = []
