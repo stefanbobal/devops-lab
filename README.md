@@ -31,7 +31,7 @@ vector search) in an operations context.
 7. Ingress
 8. GitHub Actions
 9. ArgoCD / GitOps
-10. Prometheus & Grafana
+10. [Prometheus & Grafana](labs/10-prometheus-grafana.md)
 11. Terraform
 12. GCP / GKE
 
