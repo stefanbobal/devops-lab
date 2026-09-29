@@ -34,4 +34,25 @@ Add your own sentences (no company data) and see what the model considers simila
 
 ## Notes
 
+
+sapops@k8s-lab:~/devops-lab/ai-labs/code$ python embeddings_test.py
+Vector dimension: 768
+0.64  SAP system is very slow for users  <->  High dialog response times on application server
+0.42  SAP system is very slow for users  <->  HANA data backup failed
+0.43  SAP system is very slow for users  <->  Backint returned SSL handshake error during backup
+0.36  SAP system is very slow for users  <->  Coffee machine on the third floor is broken
+0.65  SAP system is very slow for users  <->  SAP systém je veľmi pomalý
+0.36  High dialog response times on application server  <->  HANA data backup failed
+0.42  High dialog response times on application server  <->  Backint returned SSL handshake error during backup
+0.36  High dialog response times on application server  <->  Coffee machine on the third floor is broken
+0.46  High dialog response times on application server  <->  SAP systém je veľmi pomalý
+0.58  HANA data backup failed  <->  Backint returned SSL handshake error during backup
+0.36  HANA data backup failed  <->  Coffee machine on the third floor is broken
+0.43  HANA data backup failed  <->  SAP systém je veľmi pomalý
+0.34  Backint returned SSL handshake error during backup  <->  Coffee machine on the third floor is broken
+0.45  Backint returned SSL handshake error during backup  <->  SAP systém je veľmi pomalý
+0.37  Coffee machine on the third floor is broken  <->  SAP systém je veľmi pomalý
+sapops@k8s-lab:~/devops-lab/ai-labs/code$ 
+
+
 -
