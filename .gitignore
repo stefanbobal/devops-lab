@@ -1,5 +1,6 @@
 *.tar
 .env
 .env.*
-!.env.examplevenv/
+!.env.example
+venv/
 __pycache__/
