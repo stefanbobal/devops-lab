@@ -1,10 +1,10 @@
 """Lab 05: RAG - historical incidents as CONTEXT for a local LLM, never as proof."""
-import ollama
-
-from config import LLM_MODEL, SIMILARITY_THRESHOLD
+from config import EMBED_MODEL, LLM_MODEL, LLM_PROVIDER, SIMILARITY_THRESHOLD
+from providers import chat
 from search import find_similar
 
-current_incident = """SID: D60
+current_incident = """Incident: INC-NEW
+SID: HXP
 Domain: backup
 Database: HANA
 Title: HANA Backup Failure
@@ -16,7 +16,7 @@ history = [c for c in candidates if c["similarity"] >= SIMILARITY_THRESHOLD]
 
 if history:
     context = "\n\n".join(
-        f"Similar incident #{i + 1}: {h['sid']} ({h['incident_date']}), "
+        f"Similar incident #{i + 1}: {h['incident_id']} on {h['sid']} ({h['incident_date']}), "
         f"similarity {h['similarity']:.2f}\n"
         f"Title: {h['title']}\nEvidence: {h['evidence']}\n"
         f"Root cause status: {h['root_cause_status']}\nResolution: {h['resolution']}"
@@ -35,16 +35,16 @@ user_prompt = f"""CURRENT EVIDENCE
 HISTORICAL CONTEXT
 {context}
 
-Task: propose the 3 most useful next investigation steps for the CURRENT incident.
-For each step, say which historical case inspired it.
+Task: propose up to 3 next investigation steps for the CURRENT incident.
+Only include steps that fit the current evidence. Fewer steps are better than weak ones.
+Do not propose checks that the current evidence already rules out.
+For each step, say which historical case inspired it, or "none" if it comes from the current evidence only.
 State clearly what must still be verified on the current system."""
 
-response = ollama.chat(model=LLM_MODEL, messages=[
-    {"role": "system", "content": system_prompt},
-    {"role": "user", "content": user_prompt},
-])
+answer = chat(system_prompt, user_prompt)
 
+print(f"LLM: {LLM_MODEL} ({LLM_PROVIDER}) | embeddings: {EMBED_MODEL} | threshold: {SIMILARITY_THRESHOLD}")
 print("--- HISTORICAL CONTEXT ---")
 print(context)
 print("\n--- MODEL ANSWER ---")
-print(response["message"]["content"])
+print(answer)

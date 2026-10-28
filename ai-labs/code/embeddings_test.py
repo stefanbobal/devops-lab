@@ -1,23 +1,23 @@
-"""Lab 02: compare the meaning of sentences using embeddings."""
+"""Lab 02: compare the meaning of sentences using embeddings (local or cloud model)."""
 import numpy as np
-import ollama
 
-from config import EMBED_MODEL
+from config import EMBED_MODEL, EMBED_PROVIDER
+from providers import embed
 
 sentences = [
-    "SAP system is very slow for users",
+    "Server with SAP system is now running high on CPU",
     "High dialog response times on application server",
-    "HANA data backup failed",
+    "Filesystem /oracle/SID/oraarch is full",
     "Backint returned SSL handshake error during backup",
     "Coffee machine on the third floor is broken",
-    "SAP systém je veľmi pomalý",
+    "HANA backint SSL verification failed",
+    "ORA-01555 message in AlertSID.log"
 ]
 
-response = ollama.embed(model=EMBED_MODEL, input=sentences)
-vectors = np.array(response["embeddings"])
-print("Vector dimension:", vectors.shape[1])
+vectors = np.array([embed(s, "similarity") for s in sentences])
+print(f"Model: {EMBED_MODEL} ({EMBED_PROVIDER}) | vector dimension: {vectors.shape[1]}")
 
-# cosine similarity: 1 = same meaning, close to 0 = unrelated
+# cosine similarity: 1 = same meaning, unrelated sentences land around 0.3-0.4
 vectors = vectors / np.linalg.norm(vectors, axis=1, keepdims=True)
 similarity = vectors @ vectors.T
 
