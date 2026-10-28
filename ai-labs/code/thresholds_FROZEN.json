@@ -1,0 +1,66 @@
+[
+  {
+    "model": "azure",
+    "threshold": 0.4,
+    "range_from": 0.4,
+    "range_to": 0.4,
+    "score": 32,
+    "date": "2026-10-28"
+  },
+  {
+    "model": "bge",
+    "threshold": 0.6,
+    "range_from": 0.6,
+    "range_to": 0.6,
+    "score": 32,
+    "date": "2026-10-28"
+  },
+  {
+    "model": "gemini",
+    "threshold": 0.65,
+    "range_from": 0.65,
+    "range_to": 0.65,
+    "score": 33,
+    "date": "2026-10-28"
+  },
+  {
+    "model": "nomic",
+    "threshold": 0.6,
+    "range_from": 0.6,
+    "range_to": 0.65,
+    "score": 31,
+    "date": "2026-10-28"
+  },
+  {
+    "model": "nomic_prefix",
+    "threshold": 0.65,
+    "range_from": 0.65,
+    "range_to": 0.65,
+    "score": 31,
+    "date": "2026-10-28"
+  },
+  {
+    "model": "qwen",
+    "threshold": 0.6,
+    "range_from": 0.6,
+    "range_to": 0.6,
+    "score": 29,
+    "date": "2026-10-28"
+  },
+  {
+    "model": "qwen8",
+    "threshold": 0.55,
+    "range_from": 0.55,
+    "range_to": 0.55,
+    "score": 29,
+    "date": "2026-10-28"
+  },
+  {
+    "model": "qwen_instr",
+    "threshold": 0.4,
+    "range_from": 0.35,
+    "range_to": 0.45,
+    "score": 29,
+    "date": "2026-10-28"
+  }
+]
