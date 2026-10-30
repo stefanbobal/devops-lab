@@ -14,7 +14,7 @@ TESTS = [
      "from providers import embed; v = embed('HANA backup failed', 'query'); "
      "print(f'OK, {len(v)} dims')"),
 ]
-for profile in ("claude", "haiku", "opus", "gemini", "azure"):
+for profile in ("claude", "haiku", "opus", "gemini", "gemini_argon", "azure"):
     TESTS.append((
         f"LLM {profile}", {"LLM_PROFILE": profile},
         "from config import LLM_MODEL, LLM_PROVIDER; "
