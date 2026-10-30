@@ -75,22 +75,38 @@ verification and a separate investigation-history table are a later agent phase.
 
 ### LLM candidates for the comparison
 
-The planned matrix includes the following nine profiles from [config.py](code/config.py).
+The planned matrix includes the following ten profiles from [config.py](code/config.py).
 These are configured candidates; a successful smoke test is required before a profile
 is marked available in the run manifest. Missing models must be reported as unavailable,
 not silently replaced or counted as quality failures.
 
 | LLM_PROFILE | Model / configured identifier | Execution | Status / verification |
 | --- | --- | --- | --- |
-| `gemma` | `gemma3:27b` | Local Ollama | Verify installed tag and quantization |
-| `qwen36` | `qwen3.6:27b` | Local Ollama | Verify installed tag and quantization |
-| `qwen38` | `qwen3.8:27b` | Local Ollama | Verify installed tag and quantization |
-| `llama` | `llama3.1:8b` | Local Ollama | Smaller local baseline; verify installed tag |
-| `claude` | `claude-sonnet-5-5` by default | Anthropic API | May be overridden by CLAUDE_MODEL; verify access |
-| `haiku` | `claude-haiku-5-5` | Anthropic API | Verify identifier and account access |
-| `opus` | `claude-opus-5-5` | Anthropic API | Verify identifier and account access |
-| `gemini` | `gemini-3-flash-preview` by default | Google Vertex AI | May be overridden by VERTEX_LLM_MODEL; verify access |
-| `azure` | GPT-5 Mini, deployment `gpt-5-mini` | Azure OpenAI / Foundry | Deployment succeeded; VM integration smoke test pending |
+| `gemma` | `gemma3:27b` | Local Ollama | Installed tag confirmed; generation and quantization pending |
+| `qwen36` | `qwen3.6:27b` | Local Ollama | Installed tag confirmed; generation and quantization pending |
+| `qwen38` | `qwen3.8:27b` | Local Ollama | Installed tag confirmed; generation and quantization pending |
+| `llama` | `llama3.1:8b` | Local Ollama | Installed tag confirmed; generation and quantization pending |
+| `claude` | `claude-sonnet-5-5` by default | Anthropic API | VM smoke test passed; override via CLAUDE_MODEL |
+| `haiku` | `claude-haiku-5-5` | Anthropic API | VM smoke test passed |
+| `opus` | `claude-opus-5-5` | Anthropic API | VM smoke test passed |
+| `gemini` | `gemini-3-flash-preview` by default | Google Vertex AI | VM smoke test passed; override via VERTEX_LLM_MODEL |
+| `gemini_argon` | `gemini-4-argon` by default | Google Vertex AI | Direct VM smoke test passed; override via VERTEX_ARGON_MODEL |
+| `azure` | GPT-5 Mini, deployment `gpt-5-mini` | Azure OpenAI / Foundry | VM integration smoke test passed |
+
+On 30 October 2026, the VM cloud check passed for two embedding profiles and five LLMs
+(Sonnet, Haiku, Opus, Gemini Flash and Azure GPT-5 Mini). A separate direct call with
+`gemini-4-argon` and location `global` also returned a nonempty answer.
+These are connectivity smoke tests, not RAG quality results. The updated
+`check_cloud.py` includes Argon as a sixth cloud LLM (eight checks in total);
+the new profile wiring still needs to be exercised after pulling the update.
+
+Flash and Argon use the same Vertex credentials and GCP_PROJECT. Keep
+VERTEX_LLM_MODEL set to Flash (or unset for its default); VERTEX_ARGON_MODEL independently
+controls Argon. Both use VERTEX_LLM_LOCATION, defaulting to `global`.
+
+```bash
+EMBED_PROFILE=gemini LLM_PROFILE=gemini_argon python rag.py
+```
 
 Azure GPT-5 Mini deployment was confirmed in Foundry on 30 October 2026:
 model version `2025-08-07`, Global Standard, 250,000 TPM and 250 RPM.
@@ -100,7 +116,7 @@ subscription currently has zero quota for it.
 
 Each available LLM will be paired with all eight embedding profiles: `nomic`,
 `nomic_prefix`, `bge`, `qwen`, `qwen_instr`, `qwen8`, `gemini`, and `azure`.
-Nine available LLMs would give **72 RAG configurations per scenario and repetition**,
+Ten available LLMs would give **80 RAG configurations per scenario and repetition**,
 plus any no-history and curated-context controls. EMBED_PROFILE and LLM_PROFILE are
 independent: `EMBED_PROFILE=gemini LLM_PROFILE=azure` means Gemini retrieval with GPT-5 Mini
 answer generation. Embedding rankings do not establish the ranking of LLMs.
