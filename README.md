@@ -56,6 +56,18 @@ vector search) in an operations context.
 7. Anomaly Detection (z-score)
 8. Multilingual Embeddings
 
+### Experiment status — 30 October 2026
+
+The basic RAG demonstration in Lab 05 was followed by the expanded retrieval evaluation in Lab 06:
+200 fictional SAP HANA and Oracle incidents, eight embedding profiles, 33 tuning questions and
+40 separate held-out questions. Gemini and Qwen 4B with a query instruction both scored 40/40,
+with different amounts of irrelevant context. See [the recorded results](ai-labs/06-evaluation.md#results).
+
+The next step is the [planned LLM comparison](ai-labs/05-rag-local-llm.md#planned-llm-comparison):
+each candidate LLM over all eight embedding profiles using their own frozen thresholds.
+The basic RAG demonstration is implemented; comparative LLM results are still pending.
+Full agent investigations with tools and a linked investigation history are a later phase.
+
 ## Environment
 
 - Host: Windows
