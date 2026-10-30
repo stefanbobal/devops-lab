@@ -69,10 +69,9 @@ or lower middle. The 40 held-out questions did not participate in this selection
 | qwen_instr | 0.40 |
 
 The values are stored in [thresholds.json](code/thresholds.json). `sweep_eval.py` selects
-them and `eval_test.py` reads them. As inspected on 30 October, `search.py` and `rag.py`
-instead use `SIMILARITY_THRESHOLD` from config/environment (default 0.60); they do not
-automatically load the JSON. Until this is wired into the RAG runner, pass the selected
-profile and its threshold explicitly, for example:
+them and `eval_test.py` reads them. The search CLI still uses `SIMILARITY_THRESHOLD` from config/environment (default 0.60),
+so pass its selected profile and threshold explicitly as below. RAG now automatically loads
+`thresholds_FROZEN.json`; see [Lab 05](05-rag-local-llm.md) for file selection and explicit overrides.
 
 ```bash
 EMBED_PROFILE=gemini SIMILARITY_THRESHOLD=0.65 python search.py "Backup failed, backint SSL handshake error" backup HANA
