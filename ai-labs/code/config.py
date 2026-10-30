@@ -30,6 +30,7 @@ TABLE = f"incident_memory_{PROFILE}"   # each embedding model has its own table
 # ---------- LLMs for rag.py ----------
 # provider: ollama (local GPU), anthropic (Claude API), vertex (Gemini on Google Cloud)
 LLMS = {
+    "azure":  {"provider": "azure", "name": os.getenv("AZURE_OPENAI_LLM_DEPLOYMENT", "").strip()},
     "gemma":  {"provider": "ollama",    "name": "gemma3:27b"},
     "qwen36": {"provider": "ollama",    "name": "qwen3.6:27b"},
     "qwen38": {"provider": "ollama",    "name": "qwen3.8:27b"},
