@@ -1,0 +1,52 @@
+{
+  "currency": "USD",
+  "notes": "User-supplied rates, not independently verified vendor or Azure contract prices. Input includes cached/creation tokens; unknown cache prices are not guessed. Output includes billable reasoning. No tax, retrieval, storage or electricity.",
+  "models": {
+    "vertex:gemini-3.1-flash-lite": {
+      "effective_from": "2026-10-30",
+      "input_per_million": 0.25,
+      "output_per_million": 1.50,
+      "source": "User-provided rates, 2026-10-30"
+    },
+    "anthropic:claude-haiku-5-5": {
+      "effective_from": "2026-10-30",
+      "source": "User-provided table, 2026-10-30; prompt-length tiers",
+      "tiers": [
+        {
+          "max_input_tokens": 100000,
+          "input_per_million": 0.1,
+          "output_per_million": 0.5
+        },
+        {
+          "max_input_tokens": null,
+          "input_per_million": 0.5,
+          "output_per_million": 2.5
+        }
+      ]
+    },
+    "anthropic:claude-sonnet-5-5": {
+      "effective_from": "2026-10-30",
+      "input_per_million": 2,
+      "output_per_million": 10,
+      "source": "User-provided table, 2026-10-30"
+    },
+    "anthropic:claude-opus-5-5": {
+      "effective_from": "2026-10-30",
+      "input_per_million": 4,
+      "output_per_million": 20,
+      "source": "User-provided table, 2026-10-30"
+    },
+    "azure:gpt-5-mini": {
+      "effective_from": "2026-10-30",
+      "input_per_million": 0.25,
+      "output_per_million": 2,
+      "source": "User-provided standard model rate; verify Azure agreement/region"
+    },
+    "vertex:gemini-4-argon": {
+      "effective_from": "2026-12-01",
+      "input_per_million": 4,
+      "output_per_million": 20,
+      "source": "User-provided Standard Rates starting December 1, 2026"
+    }
+  }
+}

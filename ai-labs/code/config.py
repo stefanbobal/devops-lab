@@ -38,7 +38,7 @@ LLMS = {
     "claude": {"provider": "anthropic", "name": os.getenv("CLAUDE_MODEL", "claude-sonnet-5-5")},
     "haiku":  {"provider": "anthropic", "name": "claude-haiku-5-5"},
     "opus":   {"provider": "anthropic", "name": "claude-opus-5-5"},
-    "gemini": {"provider": "vertex",    "name": os.getenv("VERTEX_LLM_MODEL", "gemini-3-flash-preview")},
+    "gemini": {"provider": "vertex",    "name": os.getenv("VERTEX_LLM_MODEL", "gemini-3.1-flash-lite")},
     "gemini_argon": {"provider": "vertex", "name": os.getenv("VERTEX_ARGON_MODEL", "gemini-4-argon")},
 }
 
@@ -57,3 +57,4 @@ VERTEX_LLM_LOCATION = os.getenv("VERTEX_LLM_LOCATION", "global")
 # ---------- database and search ----------
 PG_DSN = os.getenv("PG_DSN", "host=localhost user=postgres password=heslo dbname=postgres")
 SIMILARITY_THRESHOLD = float(os.getenv("SIMILARITY_THRESHOLD", "0.60"))
+

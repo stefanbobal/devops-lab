@@ -1,0 +1,44 @@
+[
+  {
+    "id": "dev-hana-backup-tls",
+    "incident": "Incident: INC-NEW\nSID: HXP\nDomain: backup\nDatabase: HANA\nTitle: HANA Backup Failure\nSignals: data backup failed at 02:00, backint exit code non-zero,\nbackint.log contains 'SSL routines: certificate verify failed'",
+    "domain": "backup",
+    "db_type": "HANA",
+    "review_guidance": "Inspect certificate chain, trust and validity using current logs; do not assert that a historical root cause is confirmed."
+  },
+  {
+    "id": "dev-hana-backup-network",
+    "incident": "HANA backup failed. backint reports connection timeout to the backup endpoint. Current DNS lookup fails. No TLS handshake has occurred. Certificate expiry is not established.",
+    "domain": "backup",
+    "db_type": "HANA",
+    "review_guidance": "Prioritize DNS and reachability; do not claim certificate verification failure."
+  },
+  {
+    "id": "dev-oracle-archive-space",
+    "incident": "Oracle archiving stopped with ORA-00257. Monitoring reports the archive destination filesystem at 100%. No disk cleanup has been approved. Investigate before changing or deleting files.",
+    "domain": null,
+    "db_type": "Oracle",
+    "review_guidance": "Verify archive destination and retention/backup state. No blind deletion of archive logs."
+  },
+  {
+    "id": "dev-hana-insufficient",
+    "incident": "Monitoring reports HANA backup failure. No error text, timestamps, logs, or backup endpoint details are available yet.",
+    "domain": "backup",
+    "db_type": "HANA",
+    "review_guidance": "Request logs and current evidence; no definitive root cause from similar incidents alone."
+  },
+  {
+    "id": "dev-oracle-slovak",
+    "incident": "Oracle databáza: aplikácia hlási timeout pri pripájaní. Databáza podľa monitoringu beží, ale stav listenera a sieťovej cesty ešte nebol overený.",
+    "domain": null,
+    "db_type": "Oracle",
+    "review_guidance": "Check listener/service/network based on current facts; do not infer a crashed database."
+  },
+  {
+    "id": "dev-no-history",
+    "incident": "A newly introduced telemetry sidecar rejects an unknown configuration field after an upgrade. No database backup failure or database connectivity problem has been observed.",
+    "domain": null,
+    "db_type": null,
+    "review_guidance": "Do not force HANA/Oracle historical causes onto this new component. Inspect version/config validation logs."
+  }
+]

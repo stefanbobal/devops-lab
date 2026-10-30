@@ -28,7 +28,7 @@ The first call can take longer while the model loads into GPU memory.
 
 1. **High-threshold diagnostic:** `python rag.py --threshold 0.99` – inspect the printed context.
    This does not guarantee empty history; a true no-history baseline must explicitly omit it.
-2. **No guardrail:** remove the "CONTEXT ONLY" sentences from `system_prompt`.
+2. **No guardrail:** remove the "CONTEXT ONLY" sentences from `SYSTEM_PROMPT` in `rag_prompt.py`.
    Does the model start claiming the root cause is certainly the certificate?
 3. **Different cause:** change the signals to "storage endpoint unreachable, connection timeout".
    Is D15 retrieved instead of Q50?
@@ -44,7 +44,7 @@ a requirement to finish every extension before moving to the next lab.
 
 ### Planned LLM comparison
 
-**Status: planned; no comparative LLM results recorded yet.**
+**Status: matrix runner implemented; real comparative LLM results are still pending.**
 
 Compare each candidate LLM with all eight embedding profiles using their own frozen
 thresholds from [thresholds_FROZEN.json](code/thresholds_FROZEN.json), established in [Lab 06](06-evaluation.md).
@@ -67,8 +67,10 @@ Repeat each combination 2–3 times where feasible.
 
 **Implementation status on 30 October:** RAG now reads the selected embedding profile's threshold
 from `thresholds_FROZEN.json` by default. Azure chat completions are supported via
-`LLM_PROFILE=azure`. The single incident demo still returns answer text only; timing,
-usage capture, pricing and the evaluation matrix remain to be implemented.
+`LLM_PROFILE=azure`. The single-incident demo remains available. The new
+[rag_test.py](code/rag_test.py) adds the automatic matrix, shared frozen contexts,
+per-call usage/latency/cost, JSON/CSV output and resume. See the
+[benchmark guide](code/rag_test_README.md) for commands, measurement definitions and limitations.
 
 This test asks models to propose investigation steps. Tool execution, current-system
 verification and a separate investigation-history table are a later agent phase.
@@ -89,7 +91,7 @@ not silently replaced or counted as quality failures.
 | `claude` | `claude-sonnet-5-5` by default | Anthropic API | VM smoke test passed; override via CLAUDE_MODEL |
 | `haiku` | `claude-haiku-5-5` | Anthropic API | VM smoke test passed |
 | `opus` | `claude-opus-5-5` | Anthropic API | VM smoke test passed |
-| `gemini` | `gemini-3-flash-preview` by default | Google Vertex AI | VM smoke test passed; override via VERTEX_LLM_MODEL |
+| `gemini` | `gemini-3.1-flash-lite` by default | Google Vertex AI | Replaces Flash at user request; new identifier needs VM smoke test |
 | `gemini_argon` | `gemini-4-argon` by default | Google Vertex AI | Direct VM smoke test passed; override via VERTEX_ARGON_MODEL |
 | `azure` | GPT-5 Mini, deployment `gpt-5-mini` | Azure OpenAI / Foundry | VM integration smoke test passed |
 
@@ -100,8 +102,9 @@ These are connectivity smoke tests, not RAG quality results. The updated
 `check_cloud.py` includes Argon as a sixth cloud LLM (eight checks in total);
 the new profile wiring still needs to be exercised after pulling the update.
 
-Flash and Argon use the same Vertex credentials and GCP_PROJECT. Keep
-VERTEX_LLM_MODEL set to Flash (or unset for its default); VERTEX_ARGON_MODEL independently
+Flash-Lite and Argon use the same Vertex credentials and GCP_PROJECT. Set
+VERTEX_LLM_MODEL to `gemini-3.1-flash-lite` (also update any old .env override);
+VERTEX_ARGON_MODEL independently
 controls Argon. Both use VERTEX_LLM_LOCATION, defaulting to `global`.
 
 ```bash
@@ -124,7 +127,21 @@ answer generation. Embedding rankings do not establish the ranking of LLMs.
 Before the benchmark, record resolved API model identifiers, Azure deployment/version,
 Ollama tags/digests and quantization, generation/reasoning settings, and availability.
 Keep that manifest fixed for the comparison and document any provider-side version changes.
-The automatic `rag_test.py` matrix runner is planned and has not been implemented yet.
+The automatic runner is now implemented. The six bundled development scenarios give
+480 RAG calls per repetition for the full matrix. They are not the final held-out set.
+Start with a small smoke run; the default invocation only prints the plan.
+
+```bash
+export VERTEX_LLM_MODEL=gemini-3.1-flash-lite
+python rag_test.py
+python rag_test.py --embeddings gemini --llms gemini,azure --max-calls 2 --out results/rag-smoke --execute
+```
+
+The rate table uses user-supplied prices: Haiku input-length tiers, Sonnet, Opus,
+Azure GPT-5 Mini and Gemini Flash-Lite. Argon rates are dated from 1 December 2026;
+earlier runs show unknown cost instead of applying future rates. Cached token prices
+are not guessed. These are LLM-only estimates; query-embedding costs and infrastructure
+are excluded. Quality is reviewed separately in the generated scoring sheet.
 
 ### Frozen thresholds and Azure LLM setup
 
