@@ -39,6 +39,7 @@ LLMS = {
     "haiku":  {"provider": "anthropic", "name": "claude-haiku-5-5"},
     "opus":   {"provider": "anthropic", "name": "claude-opus-5-5"},
     "gemini": {"provider": "vertex",    "name": os.getenv("VERTEX_LLM_MODEL", "gemini-3-flash-preview")},
+    "gemini_argon": {"provider": "vertex", "name": os.getenv("VERTEX_ARGON_MODEL", "gemini-4-argon")},
 }
 
 LLM_PROFILE = os.getenv("LLM_PROFILE", "gemma")
