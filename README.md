@@ -42,7 +42,7 @@ vector search) in an operations context.
 2. [Embeddings](ai-labs/02-embeddings.md)
 3. [PostgreSQL + pgvector: Incident Memory](ai-labs/03-pgvector-incident-memory.md)
 4. [Similarity Search with Filters and Threshold](ai-labs/04-similarity-search.md)
-5. [RAG with a Local LLM](ai-labs/05-rag-local-llm.md)
+5. [RAG Evaluation: Local LLMs vs. Cloud Models](ai-labs/05-rag-local-llm.md)
 6. [Evaluating Retrieval](ai-labs/06-evaluation.md)
 7. [GPU Fundamentals](ai-labs/07-gpu-fundamentals.md)
 8. [Serving with vLLM](ai-labs/08-vllm-serving.md)
