@@ -8,14 +8,14 @@ Understand how text becomes a vector and how "similar meaning" is measured.
 
 - **Embedding:** a list of numbers (here 768) that represents the meaning of a text.
 - **Cosine similarity:** how close two vectors point in the same direction.
-  1 = same meaning, close to 0 = unrelated.
+  1 means aligned vectors; semantic relevance still requires task-specific evaluation.
 - Sentences with similar meaning get similar vectors even if they share almost no words.
 
 ## Steps
 
 ```bash
 cd ~/devops-lab/ai-labs/code
-source venv/bin/activate
+source .venv/bin/activate
 python embeddings_test.py
 ```
 
@@ -31,6 +31,24 @@ python embeddings_test.py
 ## Experiment
 
 Add your own sentences (no company data) and see what the model considers similar.
+
+### Expanded experiment — 25–28 October 2026
+
+The six-sentence exercise was extended to 200 fictional SAP HANA and Oracle incidents.
+Eight configurations were compared: `nomic`, `nomic_prefix`, `bge`, `qwen`,
+`qwen_instr`, `qwen8`, `gemini`, and `azure`.
+
+Nomic's prefixed profile adds `search_document: ` to documents and `search_query: ` to queries.
+Qwen's instructed profile adds a retrieval instruction only to queries; Gemini uses
+RETRIEVAL_DOCUMENT and RETRIEVAL_QUERY task types. These are distinct profiles, not eight
+different base models. Input formatting and dimensions are defined in
+[providers.py](code/providers.py) and [config.py](code/config.py).
+
+The experiment confirmed that similarity scales differ between profiles. Each threshold was
+selected on 33 tuning questions and assessed on 40 separate questions. Nomic with prefixes
+scored 32/40 versus 34/40 without; Qwen with its instruction scored 40/40 versus 37/40 without,
+but admitted more irrelevant context. These observations do not establish a universal effect
+of prefixes or instructions. [Lab 06](06-evaluation.md) contains the results and limitations.
 
 ## Notes
 
