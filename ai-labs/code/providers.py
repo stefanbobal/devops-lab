@@ -20,7 +20,9 @@ def _get_azure_client():
         from openai import OpenAI
 
         _azure_client = OpenAI(
-            base_url=os.environ["AZURE_OPENAI_ENDPOINT"].rstrip("/") + "/openai/v1/",
+            base_url=(os.environ["AZURE_OPENAI_ENDPOINT"].rstrip("/")
+                      if os.environ["AZURE_OPENAI_ENDPOINT"].rstrip("/").endswith("/openai/v1")
+                      else os.environ["AZURE_OPENAI_ENDPOINT"].rstrip("/") + "/openai/v1") + "/",
             api_key=os.environ["AZURE_OPENAI_API_KEY"],
         )
     return _azure_client
@@ -68,6 +70,28 @@ def embed(text, kind="document"):
 
 
 def chat(system_prompt, user_prompt):
+    if LLM_PROVIDER == "azure":
+        if not LLM_MODEL:
+            raise SystemExit("Set AZURE_OPENAI_LLM_DEPLOYMENT to your Azure chat deployment name.")
+        for name in ("AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY"):
+            if not os.getenv(name, "").strip():
+                raise SystemExit(f"Set {name} before using Azure OpenAI.")
+        response = _get_azure_client().chat.completions.create(
+            model=LLM_MODEL,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+        )
+        if not response.choices:
+            raise RuntimeError("Azure returned no completion choices.")
+        choice = response.choices[0]
+        if choice.finish_reason != "stop" or not choice.message.content:
+            raise RuntimeError(
+                f"Azure did not return a complete text answer (finish_reason={choice.finish_reason})."
+            )
+        return choice.message.content
+
     if LLM_PROVIDER == "ollama":
         import ollama
         response = ollama.chat(model=LLM_MODEL, messages=[
