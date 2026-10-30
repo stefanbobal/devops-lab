@@ -1,9 +1,11 @@
-# AI Lab 05 – RAG with a local LLM
+# AI Lab 05 – RAG evaluation: Local LLMs vs. Cloud Models
 
 ## Goal
 
-Give the LLM similar historical incidents as clearly separated context, without letting it
-treat history as proof.
+Compare local and cloud LLMs on SAP HANA and Oracle incident triage using historical
+cases as context. Evaluate useful next checks, evidence handling, reliability, latency
+and cost across the calibrated embedding profiles. History must never become proof
+of the current root cause.
 
 ## Concepts
 
@@ -45,7 +47,7 @@ a requirement to finish every extension before moving to the next lab.
 **Status: planned; no comparative LLM results recorded yet.**
 
 Compare each candidate LLM with all eight embedding profiles using their own frozen
-thresholds from [thresholds.json](code/thresholds.json), established in [Lab 06](06-evaluation.md).
+thresholds from [thresholds_FROZEN.json](code/thresholds_FROZEN.json), established in [Lab 06](06-evaluation.md).
 For each question and embedding profile, save the retrieved context and give exactly that
 context to every LLM. Keep prompts and scenario inputs fixed. A separate comparison with
 one fixed context can isolate LLM behavior from retrieval quality.
@@ -71,6 +73,43 @@ usage capture, pricing and the evaluation matrix remain to be implemented.
 This test asks models to propose investigation steps. Tool execution, current-system
 verification and a separate investigation-history table are a later agent phase.
 
+### LLM candidates for the comparison
+
+The planned matrix includes the following nine profiles from [config.py](code/config.py).
+These are configured candidates; a successful smoke test is required before a profile
+is marked available in the run manifest. Missing models must be reported as unavailable,
+not silently replaced or counted as quality failures.
+
+| LLM_PROFILE | Model / configured identifier | Execution | Status / verification |
+| --- | --- | --- | --- |
+| `gemma` | `gemma3:27b` | Local Ollama | Verify installed tag and quantization |
+| `qwen36` | `qwen3.6:27b` | Local Ollama | Verify installed tag and quantization |
+| `qwen38` | `qwen3.8:27b` | Local Ollama | Verify installed tag and quantization |
+| `llama` | `llama3.1:8b` | Local Ollama | Smaller local baseline; verify installed tag |
+| `claude` | `claude-sonnet-5-5` by default | Anthropic API | May be overridden by CLAUDE_MODEL; verify access |
+| `haiku` | `claude-haiku-5-5` | Anthropic API | Verify identifier and account access |
+| `opus` | `claude-opus-5-5` | Anthropic API | Verify identifier and account access |
+| `gemini` | `gemini-3-flash-preview` by default | Google Vertex AI | May be overridden by VERTEX_LLM_MODEL; verify access |
+| `azure` | GPT-5 Mini, deployment `gpt-5-mini` | Azure OpenAI / Foundry | Deployment succeeded; VM integration smoke test pending |
+
+Azure GPT-5 Mini deployment was confirmed in Foundry on 30 October 2026:
+model version `2025-08-07`, Global Standard, 250,000 TPM and 250 RPM.
+The deployment has an automatic version upgrade policy; record its actual version at
+experiment time. GPT-6.1 Sol was considered but is not part of this matrix because the
+subscription currently has zero quota for it.
+
+Each available LLM will be paired with all eight embedding profiles: `nomic`,
+`nomic_prefix`, `bge`, `qwen`, `qwen_instr`, `qwen8`, `gemini`, and `azure`.
+Nine available LLMs would give **72 RAG configurations per scenario and repetition**,
+plus any no-history and curated-context controls. EMBED_PROFILE and LLM_PROFILE are
+independent: `EMBED_PROFILE=gemini LLM_PROFILE=azure` means Gemini retrieval with GPT-5 Mini
+answer generation. Embedding rankings do not establish the ranking of LLMs.
+
+Before the benchmark, record resolved API model identifiers, Azure deployment/version,
+Ollama tags/digests and quantization, generation/reasoning settings, and availability.
+Keep that manifest fixed for the comparison and document any provider-side version changes.
+The automatic `rag_test.py` matrix runner is planned and has not been implemented yet.
+
 ### Frozen thresholds and Azure LLM setup
 
 Both threshold JSON files currently contain the same values. RAG defaults to the frozen
@@ -89,7 +128,7 @@ Deploy a chat-completion model in Azure Foundry, then add its **deployment name*
 Ubuntu VM's environment or local .env:
 
 ```bash
-export AZURE_OPENAI_LLM_DEPLOYMENT="your-chat-deployment-name"
+export AZURE_OPENAI_LLM_DEPLOYMENT="gpt-5-mini"
 EMBED_PROFILE=gemini LLM_PROFILE=azure python rag.py
 EMBED_PROFILE=azure LLM_PROFILE=azure python rag.py
 ```
