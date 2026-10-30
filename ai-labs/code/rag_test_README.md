@@ -81,9 +81,11 @@ categories separately; a nonzero cache count without its rate produces **unknown
 not a guessed zero. Mixed cache-write TTL prices are not supported by this simple rate table.
 Local API fee is zero; local electricity and hardware are not priced.
 
-The Argon rates ($4 input / $20 output) start **2026-12-01**. Runs priced before that date
-show `price_outside_effective_dates`. A separate run with `--pricing-date 2026-12-01`
-is a hypothetical future-price calculation, not today's bill. Effective dates for the
+The Argon rates ($4 input / $20 output) start **2026-12-01**. At the user\'s request,
+`estimate_from: 2026-10-30` also permits using these rates for earlier cost estimates.
+Until December 1, such results have `cost_status: estimated_future_rate`; they are projections
+using the future rate card, not verified current charges. From December 1 the status is
+`estimated`. Dates before October 30 remain outside the permitted estimate window. Effective dates for the
 other user-provided rates begin on 2026-10-30, when the table was supplied.
 
 Query embedding cost, original corpus embedding, database/storage, tax and network fees

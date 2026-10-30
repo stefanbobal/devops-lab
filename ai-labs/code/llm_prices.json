@@ -5,7 +5,7 @@
     "vertex:gemini-3.1-flash-lite": {
       "effective_from": "2026-10-30",
       "input_per_million": 0.25,
-      "output_per_million": 1.50,
+      "output_per_million": 1.5,
       "source": "User-provided rates, 2026-10-30"
     },
     "anthropic:claude-haiku-5-5": {
@@ -46,7 +46,8 @@
       "effective_from": "2026-12-01",
       "input_per_million": 4,
       "output_per_million": 20,
-      "source": "User-provided Standard Rates starting December 1, 2026"
+      "source": "User-provided Standard Rates effective December 1, 2026; user authorized using these future rates for estimates from October 30, 2026.",
+      "estimate_from": "2026-10-30"
     }
   }
 }

@@ -139,7 +139,8 @@ python rag_test.py --embeddings gemini --llms gemini,azure --max-calls 2 --out r
 
 The rate table uses user-supplied prices: Haiku input-length tiers, Sonnet, Opus,
 Azure GPT-5 Mini and Gemini Flash-Lite. Argon rates are dated from 1 December 2026;
-earlier runs show unknown cost instead of applying future rates. Cached token prices
+at the user's request, runs from 30 October also use these rates as projections,
+marked `estimated_future_rate` until December 1. Cached token prices
 are not guessed. These are LLM-only estimates; query-embedding costs and infrastructure
 are excluded. Quality is reviewed separately in the generated scoring sheet.
 

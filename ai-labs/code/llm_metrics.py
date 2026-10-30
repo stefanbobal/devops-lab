@@ -11,6 +11,8 @@ def validate_prices(prices):
         if not isinstance(rate, dict) or ":" not in model:
             raise ValueError("Price keys must be provider:model, with a rate object")
         start = date.fromisoformat(rate["effective_from"])
+        if rate.get("estimate_from") and date.fromisoformat(rate["estimate_from"]) > start:
+            raise ValueError("estimate_from must not follow effective_from")
         if rate.get("effective_to") and date.fromisoformat(rate["effective_to"]) < start:
             raise ValueError("Price effective_to precedes effective_from")
         tiers = rate.get("tiers", [rate])
@@ -84,7 +86,9 @@ def estimate_cost(provider, model, usage, prices, pricing_date):
     if not rate:
         return unknown("missing_price")
     day = date.fromisoformat(pricing_date)
-    if day < date.fromisoformat(rate["effective_from"]) or (
+    future_rate = day < date.fromisoformat(rate["effective_from"])
+    earliest = date.fromisoformat(rate.get("estimate_from", rate["effective_from"]))
+    if day < earliest or (
         rate.get("effective_to") and day > date.fromisoformat(rate["effective_to"])
     ):
         return unknown("price_outside_effective_dates")
@@ -113,7 +117,8 @@ def estimate_cost(provider, model, usage, prices, pricing_date):
         if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value < 0:
             return unknown("missing_or_invalid_" + key)
         total += count * value / 1_000_000
-    return {"estimated_cost_usd": total, "cost_status": "estimated", "price_source": rate.get("source")}
+    return {"estimated_cost_usd": total, "cost_status": "estimated_future_rate" if future_rate else "estimated",
+            "price_source": rate.get("source")}
 
 
 def chat_measured(system, user, max_tokens=4096, timeout=180):

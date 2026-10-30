@@ -52,7 +52,10 @@ class UsageTests(unittest.TestCase):
         self.assertAlmostEqual(quote("anthropic", "claude-haiku-5-5")["estimated_cost_usd"], .0105)
         usage["input_tokens"] = 100001
         self.assertAlmostEqual(quote("anthropic", "claude-haiku-5-5")["estimated_cost_usd"], .0525005)
-        self.assertIsNone(quote("vertex", "gemini-4-argon")["estimated_cost_usd"])
+        self.assertAlmostEqual(quote("vertex", "gemini-4-argon")["estimated_cost_usd"], .420004)
+        self.assertEqual(quote("vertex", "gemini-4-argon")["cost_status"], "estimated_future_rate")
+        self.assertIsNone(quote("vertex", "gemini-4-argon", "2026-10-29")["estimated_cost_usd"])
+        self.assertEqual(quote("vertex", "gemini-4-argon", "2026-12-01")["cost_status"], "estimated")
         self.assertAlmostEqual(quote("vertex", "gemini-4-argon", "2026-12-01")["estimated_cost_usd"], .420004)
         self.assertEqual(quote("ollama", "local")["estimated_cost_usd"], 0)
         self.assertIsNone(quote("azure", "unknown-deployment")["estimated_cost_usd"])
