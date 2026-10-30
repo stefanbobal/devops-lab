@@ -24,7 +24,8 @@ The first call can take longer while the model loads into GPU memory.
 
 ## Experiments
 
-1. **No history:** `SIMILARITY_THRESHOLD=0.99 python rag.py` – how much worse is the answer?
+1. **High-threshold diagnostic:** `python rag.py --threshold 0.99` – inspect the printed context.
+   This does not guarantee empty history; a true no-history baseline must explicitly omit it.
 2. **No guardrail:** remove the "CONTEXT ONLY" sentences from `system_prompt`.
    Does the model start claiming the root cause is certainly the certificate?
 3. **Different cause:** change the signals to "storage endpoint unreachable, connection timeout".
@@ -62,14 +63,43 @@ Where available, retain provider usage fields including reasoning/cache categori
 Local inference has no API fee; electricity and hardware are outside that figure.
 Repeat each combination 2–3 times where feasible.
 
-**Implementation status on 30 October:** `rag.py` has one fixed incident.
-`providers.chat()` returns answer text only; timing, usage capture, pricing and a matrix
-runner still need implementation. RAG does not yet read the threshold JSON automatically.
-Azure embeddings exist, but Azure LLM support is not implemented in `chat()`.
-Candidate API availability and exact deployed model IDs must be checked before the run.
+**Implementation status on 30 October:** RAG now reads the selected embedding profile's threshold
+from `thresholds_FROZEN.json` by default. Azure chat completions are supported via
+`LLM_PROFILE=azure`. The single incident demo still returns answer text only; timing,
+usage capture, pricing and the evaluation matrix remain to be implemented.
 
 This test asks models to propose investigation steps. Tool execution, current-system
 verification and a separate investigation-history table are a later agent phase.
+
+### Frozen thresholds and Azure LLM setup
+
+Both threshold JSON files currently contain the same values. RAG defaults to the frozen
+file next to `rag.py`, regardless of the working directory. Missing, malformed, duplicate
+or invalid thresholds stop the run. To use the working file explicitly:
+
+```bash
+EMBED_PROFILE=gemini python rag.py --thresholds-file thresholds.json
+```
+
+RAG ignores `SIMILARITY_THRESHOLD` (and prints a note if present). Use the explicit
+`--threshold` flag only for deliberate experiments. The standalone search and legacy
+evaluation configuration keep their existing environment behavior.
+
+Deploy a chat-completion model in Azure Foundry, then add its **deployment name** to the
+Ubuntu VM's environment or local .env:
+
+```bash
+export AZURE_OPENAI_LLM_DEPLOYMENT="your-chat-deployment-name"
+EMBED_PROFILE=gemini LLM_PROFILE=azure python rag.py
+EMBED_PROFILE=azure LLM_PROFILE=azure python rag.py
+```
+
+The chat deployment uses the existing AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY.
+It must be hosted under that resource. AZURE_OPENAI_EMBED_DEPLOYMENT remains the embedding
+deployment. The endpoint may be a resource root or already end in /openai/v1/.
+A deployment name is not necessarily identical to the underlying model name.
+No API version is required by this v1 client. Incomplete or empty Azure answers raise an
+error rather than silently becoming successful evaluation outputs.
 
 ## Notes
 
