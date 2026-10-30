@@ -174,6 +174,20 @@ A deployment name is not necessarily identical to the underlying model name.
 No API version is required by this v1 client. Incomplete or empty Azure answers raise an
 error rather than silently becoming successful evaluation outputs.
 
+### Monitoring-alert holdout draft
+
+A separate [24-scenario candidate set](code/rag_scenarios_final_draft.json) is now
+available: 16 realistic cases, four ambiguous cases, one invalid input and three
+response-level prompt-injection cases. All incident details are synthetic.
+The original six development scenarios remain unchanged.
+
+This is a draft, not a frozen or evaluated holdout. Review the technical expectations,
+corpus coverage and reference historical IDs before freezing it. ABAP/RFC cases may
+extend beyond the existing database-incident corpus. See the
+[dataset review guide](code/rag_scenarios_final_draft_README.md).
+The current test does not execute agent tools; injection evaluation measures only
+the generated response, not unauthorized tool-call attempts.
+
 ## Notes
 
 -
