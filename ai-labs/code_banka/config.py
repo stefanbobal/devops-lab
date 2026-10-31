@@ -1,4 +1,4 @@
-"""Settings for the covenant-monitoring interview lab. Override any value with an environment variable or .env."""
+"""Settings for the covenant-monitoring lab. Override any value with an environment variable or .env."""
 import os
 
 from dotenv import load_dotenv

@@ -4,6 +4,7 @@ import unittest
 
 from covenants import evaluate
 
+WAIVER_CITE = {"document": "waiver_2026Q2.md", "article": None, "page": 1}
 ITEMS = dict(revenue=1000, ebit=60, depreciation=40, restructuring=20, asset_sale_gain=10,
              interest_expense=25, bank_loans=380, bonds=50, cash=30, reported_ebitda=120)
 SPEC = {
@@ -59,7 +60,7 @@ class CovenantTests(unittest.TestCase):
 
     def test_waiver_only_for_its_period(self):
         s = spec(covenants=[{"id": "leverage", "ratio": "debt_to_ebitda", "limit": 3.5}],
-                 waivers=[{"covenant": "leverage", "period": "2026Q2"}])
+                 waivers=[{"covenant": "leverage", "period": "2026Q2", "citation": WAIVER_CITE}])
         self.assertEqual(evaluate(ITEMS, s, "2026Q2")["status"], "no_breach")
         self.assertEqual(evaluate(ITEMS, s, "2026Q3")["status"], "breach")
 
@@ -96,10 +97,40 @@ class CovenantTests(unittest.TestCase):
                     spec(covenants=[{"id": "leverage", "ratio": "debt_to_ebitda", "limit": -1}]),
                     spec(covenants=[{"id": "x", "ratio": "debt_to_ebitda", "limit": 4},
                                     {"id": "x", "ratio": "debt_to_ebitda", "limit": 5}]),
-                    spec(waivers=[{"covenant": "other", "period": "2026Q2"}])):
+                    spec(waivers=[{"covenant": "other", "period": "2026Q2", "citation": WAIVER_CITE}]),
+                    spec(waivers=[{"covenant": "leverage", "period": "2026Q2"}]),          # no source
+                    spec(waivers=[{"covenant": "leverage", "period": "Q2", "citation": WAIVER_CITE}]),
+                    spec(ebitda__add=["restructuring", "restructuring"]),
+                    spec(ebitda__subtract=["asset_sale_gain", "asset_sale_gain"]),
+                    spec(debt__include=["bank_loans", "bank_loans"]),
+                    spec(covenants=[{"id": "leverage", "ratio": "debt_to_ebitda", "limit": float("nan")}]),
+                    spec(covenants=[{"id": "leverage", "ratio": "debt_to_ebitda", "limit": float("inf")}]),
+                    spec(covenants=[{"id": "leverage", "ratio": "debt_to_ebitda", "limit": True}]),
+                    spec(covenants=["not a dict"]),
+                    spec(ebitda="not a dict")):
             r = evaluate(ITEMS, bad, "2026Q2")
             self.assertEqual(r["status"], "human_review")
             self.assertTrue(r["reasons"][0].startswith("invalid_spec"))
+
+
+    def test_duplicate_add_back_cannot_hide_breach(self):
+        # Counting restructuring twice would give 400/140 = 2.86 and hide a breach of 3.50.
+        s = spec(ebitda__add=["restructuring", "restructuring"],
+                 covenants=[{"id": "leverage", "ratio": "debt_to_ebitda", "limit": 3.5}])
+        self.assertEqual(evaluate(ITEMS, s, "2026Q2")["status"], "human_review")
+
+    def test_invalid_numbers_go_to_human(self):
+        s = spec(covenants=[{"id": "leverage", "ratio": "debt_to_ebitda", "limit": 3.5}])   # real breach
+        for name, value in (("depreciation", float("nan")), ("depreciation", float("inf")),
+                            ("bank_loans", -380), ("cash", -30), ("bonds", True), ("bank_loans", "380"),
+                            ("depreciation", "1 234")):
+            r = evaluate(dict(ITEMS, **{name: value}), s, "2026Q2")
+            self.assertEqual(r["status"], "human_review", (name, value))
+            self.assertTrue(r["reasons"][0].startswith("invalid_item"), (name, value))
+
+    def test_operating_loss_is_allowed(self):
+        # EBIT may be negative: -10 + 40 = 30; 400/30 = 13.33 > 4.5 -> breach, not invalid
+        self.assertEqual(evaluate(dict(ITEMS, ebit=-10), SPEC, "2026Q2")["status"], "breach")
 
 
 if __name__ == "__main__":

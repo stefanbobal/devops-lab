@@ -1,6 +1,6 @@
 # code_banka: agent na sledovanie úverových podmienok (covenant monitoring)
 
-Domáci lab na pohovor. **Všetky firmy, zmluvy, výkazy a čísla sú vymyslené.**
+Domáci lab. **Všetky firmy, zmluvy, výkazy a čísla sú vymyslené.**
 Žiadne skutočné klientske dáta ani firemný kód.
 
 ## Use case
@@ -64,12 +64,16 @@ python generate_data.py          # deterministicky prepíše data/ (seed 2026110
 - `data/generic_rule.md`: všeobecné pravidlo pre režim bez zmluvy;
 - `data/SUMMARY.md`: prehľad 36 prípadov (12 firiem × 3 štvrťroky).
 
-Stav: 21 `no_breach`, 12 `breach`, 3 `human_review`; 12 prípadov sa podľa všeobecného pravidla pokazí.
+Stav: 21 `no_breach`, 12 `breach`, 3 `human_review`. V 12 prípadoch dáva všeobecné pravidlo
+(`data/generic_rule.md`) iný stav než zmluva. Je to **porovnanie dvoch deterministických pravidiel**,
+nie namerané zlyhanie LLM; skutočné správanie modelov bez zmluvy ukáže až test T3.
+Podiel sa umelo nezvyšuje kvôli lepšiemu výsledku RAG.
 Navyše C10-2026Q2 zlyhá, ak RAG nájde zmluvu, ale nie dodatok. C04 má v poznámkach analytika
 zavádzajúce tvrdenie klienta, C06 žiadosť o výnimku, ktorá ešte nebola udelená.
 Čísla a očakávané výsledky počíta kód; `test_generate_data.py` overuje determinizmus,
-zhodu s `covenants.py` a existenciu citovaných článkov a strán. Dokumenty nikdy neupravovať ručne,
-iba cez generátor.
+zhodu s `covenants.py` a to, že citovaný článok leží na citovanej strane. Dokumenty nikdy
+neupravovať ručne, iba cez generátor. Generátor maže iba priečinok, ktorý sám vytvoril
+(značka `.generated-by-generate_data`); cudzí neprázdny priečinok ani priečinok s kódom nezmaže.
 
 ## 2. Načítanie do vektorovej DB (`load_documents.py`)
 
@@ -93,11 +97,19 @@ Najprv sa zistí, **čo** a **podľa akej definície** sa má počítať, až po
    `{"ratio": "net_debt/ebitda", "ebitda_adds_back": ["one_off_restructuring"], "limit": 4.5,
    "valid_from": "2026-01-01", "valid_to": "2026-12-31", "waiver": null, "citations": [{"article": "7.2", "page": 4}]}`.
    Hodnoty sa vyberajú iba z pevného zoznamu povolených položiek.
-5. **Overenie špecifikácie (Python):** citované články sú v nájdenom texte, položky sú z povoleného
-   zoznamu, obdobie sedí na výkaz, limit je kladné číslo, žiadne dva články si neodporujú.
+5. **Overenie špecifikácie (Python):**
+   - `covenants.validate_spec`: položky iba z povoleného zoznamu a bez duplicít, limit je konečné
+     kladné číslo, žiadne dva ukazovatele s rovnakým id, každá výnimka má citáciu a platné obdobie;
+   - `sources.verify_sources`: citovaný dokument existuje, citovaný článok leží na citovanej strane,
+     limit je v citovanom texte uvedený, výnimka cituje dokument, ktorý ju výslovne udeľuje
+     („prominuje“) pre daný Deň testování; poznámky analytika nie sú dôkaz výnimky ani limitu.
+   Čokoľvek neoverené → `human_review`. Vymyslená výnimka tak nemôže zmeniť `breach` na `no_breach`.
+   Textové kontroly sú šité na formát vygenerovaných dokumentov; skutočné dokumenty by potrebovali
+   robustnejšie overenie (napr. štruktúrovaný register výnimiek).
 6. **Výpočet a stav (Python, `covenants.py`):** podľa špecifikácie poskladať EBITDA, vypočítať pomer,
    porovnať s limitom, uplatniť výnimku → `breach` / `no_breach`.
-7. **Pravidlá pre `human_review` (Python):** chýba položka, špecifikácia neprešla overením,
+7. **Pravidlá pre `human_review` (Python):** chýba položka alebo nie je konečné nezáporné číslo
+   (záporný môže byť iba EBIT), špecifikácia alebo zdroje neprešli overením,
    nečitateľný dokument, výsledok v pásme blízko limitu, rozpor medzi článkami.
 8. **Vysvetlenie (LLM):** zrozumiteľné zdôvodnenie s citáciami. Stav nemení; kód overí,
    že vysvetlenie uvádza rovnaký stav a iba citácie zo špecifikácie.
@@ -138,7 +150,7 @@ Modely: 1–2 z Foundry a 1–2 lokálne, aby matica ostala zvládnuteľná.
 - Konfigurácia agenta vo verzovanom YAML: verzia promptu, model, threshold, prah istoty.
 - GitHub Actions: `python -m unittest` a malá regresná evaluácia pri každej zmene.
 
-## 6. Výstup na pohovor
+## 6. Prezentácia výsledkov
 
 - jedna tabuľka výsledkov (3 režimy × modely);
 - 2–3 rozobrané zlyhania: čo sa stalo, prečo a čo sa zmenilo;
@@ -170,6 +182,7 @@ Zámerne **neprevzaté**: incidenty, scenáre, testovacie otázky, thresholdy a 
 - [ ] `search.py`: stĺpce a filtre pre dokumenty (firma, typ dokumentu, obdobie) namiesto domain/db_type
 - [x] schéma zmluvnej špecifikácie a zoznam povolených položiek; validátor špecifikácie (`covenants.py`)
 - [x] `covenants.py` + testy: výpočet podľa špecifikácie, porovnanie s limitom, výnimky, pravidlá pre `human_review`
+- [x] `sources.py` + testy: overenie citácií, limitov a výnimok voči dokumentom (`evaluate_with_sources`)
 - [ ] `rag_prompt.py`: prompty pre vyťahovanie položiek, zmluvnú špecifikáciu a vysvetlenie; štruktúrovaný JSON výstup
 - [ ] scenáre pre runner (`incident` → text výkazu, `curated_context` → celá zmluva)
 - [ ] automatické hodnotenie T1–T4 voči `expected.json` (runner zatiaľ hodnotí iba ručne)
@@ -182,5 +195,6 @@ Zámerne **neprevzaté**: incidenty, scenáre, testovacie otázky, thresholdy a 
 ```bash
 cd ~/devops-lab/ai-labs/code_banka
 docker compose up -d          # vlastná DB na porte 5433
-python -m unittest -v test_rag_benchmark
+python generate_data.py
+python -m unittest discover -v -p "test_*.py"
 ```

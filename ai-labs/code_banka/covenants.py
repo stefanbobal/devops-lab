@@ -9,6 +9,8 @@ Inputs:
 Output: computed values, per-covenant results and a final status:
   breach | no_breach | human_review
 """
+import math
+import re
 from decimal import Decimal, ROUND_HALF_UP
 
 ALLOWED_ITEMS = {
@@ -27,6 +29,8 @@ EBITDA_BASE = ("ebit", "depreciation")
 EBITDA_ADJUSTMENTS = ("restructuring", "asset_sale_gain")
 DEBT_ITEMS = ("bank_loans", "bonds")
 RATIOS = {"debt_to_ebitda": "max", "interest_cover": "min"}
+MAY_BE_NEGATIVE = {"ebit"}   # an operating loss is possible; every other required item must be >= 0
+PERIOD_RE = re.compile(r"^\d{4}Q[1-4]$")
 
 SPEC_EXAMPLE = {
     "ebitda": {"add": ["restructuring"], "subtract": [],
@@ -47,18 +51,34 @@ class SpecError(ValueError):
     """The specification is structurally invalid; never guess a fix."""
 
 
+def _is_number(value):
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+
+
+def _duplicates(values):
+    return sorted({v for v in values if values.count(v) > 1})
+
+
 def validate_spec(spec):
     errors = []
     ebitda, debt = spec.get("ebitda") or {}, spec.get("debt") or {}
     for key in ("add", "subtract"):
-        for item in ebitda.get(key, []):
+        values = ebitda.get(key, [])
+        if not isinstance(values, list):
+            errors.append(f"ebitda.{key} must be a list")
+            continue
+        for item in values:
             if item not in EBITDA_ADJUSTMENTS:
                 errors.append(f"ebitda.{key}: item {item!r} not allowed")
+        if _duplicates(values):
+            errors.append(f"ebitda.{key}: duplicate items {_duplicates(values)}")
     if set(ebitda.get("add", [])) & set(ebitda.get("subtract", [])):
         errors.append("ebitda: an item is both added and subtracted")
     include = debt.get("include", [])
-    if not include or any(i not in DEBT_ITEMS for i in include):
+    if not isinstance(include, list) or not include or any(i not in DEBT_ITEMS for i in include):
         errors.append("debt.include must be a nonempty subset of " + ", ".join(DEBT_ITEMS))
+    elif _duplicates(include):
+        errors.append(f"debt.include: duplicate items {_duplicates(include)}")
     if not isinstance(debt.get("deduct_cash"), bool):
         errors.append("debt.deduct_cash must be true or false")
     covenants = spec.get("covenants") or []
@@ -71,11 +91,20 @@ def validate_spec(spec):
         if c.get("ratio") not in RATIOS:
             errors.append(f"covenant {c.get('id')!r}: unknown ratio {c.get('ratio')!r}")
         limit = c.get("limit")
-        if isinstance(limit, bool) or not isinstance(limit, (int, float)) or limit <= 0:
-            errors.append(f"covenant {c.get('id')!r}: limit must be a positive number")
+        if not _is_number(limit) or limit <= 0:
+            errors.append(f"covenant {c.get('id')!r}: limit must be a finite positive number")
+    waiver_keys = []
     for w in spec.get("waivers") or []:
         if w.get("covenant") not in ids:
             errors.append(f"waiver for unknown covenant {w.get('covenant')!r}")
+        if not isinstance(w.get("period"), str) or not PERIOD_RE.match(w["period"]):
+            errors.append(f"waiver period {w.get('period')!r} must look like 2026Q2")
+        citation = w.get("citation")
+        if not isinstance(citation, dict) or not citation.get("document"):
+            errors.append(f"waiver for {w.get('covenant')!r} has no source citation")
+        waiver_keys.append((w.get("covenant"), w.get("period")))
+    if len(set(waiver_keys)) != len(waiver_keys):
+        errors.append("duplicate waiver")
     if errors:
         raise SpecError("; ".join(errors))
 
@@ -92,6 +121,16 @@ def required_items(spec):
 
 def _d(value):
     return Decimal(str(value))
+
+
+def invalid_items(items, names):
+    """Required items must be finite numbers; only EBIT may be negative. Strings are not parsed here."""
+    bad = []
+    for name in names:
+        value = items.get(name)
+        if not _is_number(value) or (value < 0 and name not in MAY_BE_NEGATIVE):
+            bad.append(f"{name}={value!r}")
+    return bad
 
 
 def compute_values(items, spec):
@@ -111,11 +150,15 @@ def evaluate(items, spec, period, review_band=REVIEW_BAND):
     """Return status breach / no_breach / human_review with reasons; deterministic."""
     try:
         validate_spec(spec)
-    except SpecError as exc:
+    except (SpecError, AttributeError, TypeError, KeyError) as exc:   # malformed spec -> human, never a guess
         return {"status": "human_review", "reasons": ["invalid_spec: " + str(exc)], "covenants": []}
-    missing = [i for i in required_items(spec) if items.get(i) is None]
+    needed = required_items(spec)
+    missing = [i for i in needed if items.get(i) is None]
     if missing:
         return {"status": "human_review", "reasons": ["missing_item: " + ", ".join(missing)], "covenants": []}
+    invalid = invalid_items(items, needed)
+    if invalid:
+        return {"status": "human_review", "reasons": ["invalid_item: " + ", ".join(invalid)], "covenants": []}
     values = compute_values(items, spec)
     if values["ebitda"] <= 0:
         return {"status": "human_review", "reasons": ["non_positive_ebitda"], "covenants": [],
