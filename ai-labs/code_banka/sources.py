@@ -9,13 +9,17 @@ Documents mark pages with "[strana N]" and articles with "## Článek N – ..."
 import re
 from datetime import date
 
-from covenants import evaluate
+from covenants import evaluate, validate_spec, PERIOD_RE
+from contract_rules import definitions, contract_limits, amendment
+from decimal import Decimal
 
 PAGE_RE = re.compile(r"^\[strana (\d+)\]\s*$", re.MULTILINE)
 NOTES_PREFIX = "poznamky_"    # analyst notes are context, never evidence of a waiver or limit
 
 
 def quarter_end(period):
+    if not isinstance(period, str) or not PERIOD_RE.fullmatch(period):
+        raise ValueError("invalid period")
     year, quarter = int(period[:4]), int(period[-1])
     return {1: date(year, 3, 31), 2: date(year, 6, 30), 3: date(year, 9, 30), 4: date(year, 12, 31)}[quarter]
 
@@ -56,20 +60,74 @@ def page_text(documents, citation):
     return content, None
 
 
-def verify_sources(spec, documents):
+def resolved_limits(documents, period):
+    """Resolve the supported contract plus supplied amendments, never an LLM-selected date."""
+    test_day = quarter_end(period)
+    contract = documents.get("smlouva.md", "")
+    articles = []
+    for page, content in pages(contract).items():
+        for match in re.finditer(r"^## Článek (\d+) – Finanční ukazatele\s*$", content, re.MULTILINE):
+            cite = {"document": "smlouva.md", "article": match[1], "page": page}
+            text, error = page_text(documents, cite)
+            if error:
+                raise ValueError(error)
+            articles.append((cite, contract_limits(text, test_day)))
+    if len(articles) != 1:
+        raise ValueError("expected exactly one supported covenant article")
+    cite, rules = articles[0]
+    resolved = {ratio: (limit, cite) for ratio, (limit, _) in rules.items()}
+    amendments = [name for name in documents if name.startswith("dodatek")]
+    # Multiple amendments need explicit precedence rules; never guess their order.
+    if len(amendments) > 1:
+        raise ValueError("multiple amendments require human review")
+    for name in amendments:
+        amended_cite = {"document": name, "article": "1", "page": 1}
+        text, error = page_text(documents, amended_cite)
+        if error:
+            raise ValueError(error)
+        article, subarticle, start, old, new = amendment(text)
+        base = rules.get("debt_to_ebitda")
+        if article != cite["article"] or base is None or subarticle != base[1] or old != base[0]:
+            raise ValueError("amendment conflicts with the cited base limit")
+        if test_day >= start:
+            resolved["debt_to_ebitda"] = (new, amended_cite)
+    return resolved
+
+
+def verify_sources(spec, documents, period=None):
     """Return a list of problems; empty means every citation is grounded."""
     problems = []
     for part in ("ebitda", "debt"):
-        _, error = page_text(documents, (spec.get(part) or {}).get("citation"))
+        text, error = page_text(documents, (spec.get(part) or {}).get("citation"))
         if error:
             problems.append(f"{part}: {error}")
+        else:
+            try:
+                expected = definitions(text, part)
+                for key, value in expected.items():
+                    actual = spec[part].get(key, [] if isinstance(value, list) else None)
+                    matches = sorted(actual) == sorted(value) if isinstance(value, list) else actual == value
+                    if not matches:
+                        problems.append(f"{part}.{key}: does not match the cited definition")
+            except ValueError as exc:
+                problems.append(str(exc))
+    try:
+        limits = resolved_limits(documents, period)
+    except ValueError as exc:
+        problems.append(f"limit: {exc}")
+        limits = {}
+    proposed_ratios = [c.get("ratio") for c in spec.get("covenants") or []]
+    if set(proposed_ratios) != set(limits) or len(proposed_ratios) != len(set(proposed_ratios)):
+        problems.append("limit: specification must include every contractual covenant exactly once")
     for covenant in spec.get("covenants") or []:
         text, error = page_text(documents, covenant.get("citation"))
         if error:
             problems.append(f"covenant {covenant.get('id')}: {error}")
-        elif isinstance(covenant.get("limit"), (int, float)) and cz_number(covenant["limit"]) not in text:
-            problems.append(f"covenant {covenant.get('id')}: limit {cz_number(covenant['limit'])} "
-                            "not stated in the cited source")
+        elif covenant.get("ratio") in limits:
+            limit, cite = limits[covenant["ratio"]]
+            if Decimal(str(covenant.get("limit"))) != limit or covenant.get("citation") != cite:
+                problems.append(f"covenant {covenant.get('id')}: limit or citation does not match "
+                                f"the effective rule for {period}")
     for waiver in spec.get("waivers") or []:
         text, error = page_text(documents, waiver.get("citation"))
         label = f"waiver {waiver.get('covenant')}/{waiver.get('period')}"
@@ -91,8 +149,9 @@ def verify_sources(spec, documents):
 def evaluate_with_sources(items, spec, period, documents):
     """covenants.evaluate, but only after every citation has been verified."""
     try:
-        problems = verify_sources(spec, documents)
-    except (AttributeError, TypeError) as exc:
+        validate_spec(spec)
+        problems = verify_sources(spec, documents, period)
+    except (AttributeError, TypeError, KeyError, ValueError) as exc:
         problems = [f"malformed spec: {exc}"]
     if problems:
         return {"status": "human_review", "reasons": ["unverified_source: " + p for p in problems],

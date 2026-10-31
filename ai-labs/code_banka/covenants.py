@@ -52,7 +52,8 @@ class SpecError(ValueError):
 
 
 def _is_number(value):
-    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+    return (isinstance(value, int) and not isinstance(value, bool)
+            or isinstance(value, float) and math.isfinite(value))
 
 
 def _duplicates(values):
@@ -60,6 +61,15 @@ def _duplicates(values):
 
 
 def validate_spec(spec):
+    if not isinstance(spec, dict):
+        raise SpecError("spec must be an object")
+    for part in ("ebitda", "debt"):
+        if not isinstance(spec.get(part), dict):
+            raise SpecError(f"{part} must be an object")
+    if not isinstance(spec.get("covenants"), list):
+        raise SpecError("covenants must be a list")
+    if not isinstance(spec.get("waivers", []), list):
+        raise SpecError("waivers must be a list")
     errors = []
     ebitda, debt = spec.get("ebitda") or {}, spec.get("debt") or {}
     for key in ("add", "subtract"):
@@ -85,6 +95,8 @@ def validate_spec(spec):
     if not covenants:
         errors.append("at least one covenant is required")
     ids = [c.get("id") for c in covenants]
+    if any(not isinstance(cid, str) or not cid.strip() for cid in ids):
+        raise SpecError("covenant id must be nonempty text")
     if len(set(ids)) != len(ids):
         errors.append("duplicate covenant id; conflicting articles must go to human review")
     for c in covenants:
@@ -141,7 +153,7 @@ def compute_values(items, spec):
     if spec["debt"]["deduct_cash"]:
         debt -= _d(items["cash"])
     values = {"ebitda": ebitda, "debt": debt}
-    if items.get("interest_expense") is not None:
+    if any(c["ratio"] == "interest_cover" for c in spec["covenants"]):
         values["interest_expense"] = _d(items["interest_expense"])
     return values
 
@@ -152,6 +164,14 @@ def evaluate(items, spec, period, review_band=REVIEW_BAND):
         validate_spec(spec)
     except (SpecError, AttributeError, TypeError, KeyError) as exc:   # malformed spec -> human, never a guess
         return {"status": "human_review", "reasons": ["invalid_spec: " + str(exc)], "covenants": []}
+    if not isinstance(items, dict):
+        return {"status": "human_review", "reasons": ["invalid_items: expected an object"], "covenants": []}
+    if not isinstance(period, str) or not PERIOD_RE.fullmatch(period):
+        return {"status": "human_review", "reasons": ["invalid_period"], "covenants": []}
+    if (isinstance(review_band, bool) or not isinstance(review_band, (int, float, Decimal))
+            or not _d(review_band).is_finite() or not 0 <= _d(review_band) < 1):
+        return {"status": "human_review", "reasons": ["invalid_review_band"], "covenants": []}
+    review_band = _d(review_band)
     needed = required_items(spec)
     missing = [i for i in needed if items.get(i) is None]
     if missing:

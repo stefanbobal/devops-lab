@@ -101,11 +101,18 @@ Najprv sa zistí, **čo** a **podľa akej definície** sa má počítať, až po
    - `covenants.validate_spec`: položky iba z povoleného zoznamu a bez duplicít, limit je konečné
      kladné číslo, žiadne dva ukazovatele s rovnakým id, každá výnimka má citáciu a platné obdobie;
    - `sources.verify_sources`: citovaný dokument existuje, citovaný článok leží na citovanej strane,
-     limit je v citovanom texte uvedený, výnimka cituje dokument, ktorý ju výslovne udeľuje
+     definícia EBITDA aj dlhu zodpovedá podporovanému textovému vzoru (`contract_rules.py`),
+     limit patrí konkrétnemu ukazovateľu a testovanému obdobiu vrátane dodaného účinného dodatku.
+     Špecifikácia musí obsahovať všetky zmluvné ukazovatele práve raz. Výnimka cituje dokument, ktorý ju výslovne udeľuje
      („prominuje“) pre daný Deň testování; poznámky analytika nie sú dôkaz výnimky ani limitu.
    Čokoľvek neoverené → `human_review`. Vymyslená výnimka tak nemôže zmeniť `breach` na `no_breach`.
    Textové kontroly sú šité na formát vygenerovaných dokumentov; skutočné dokumenty by potrebovali
    robustnejšie overenie (napr. štruktúrovaný register výnimiek).
+   Volanie `verify_sources(spec, documents, period)` potrebuje testované obdobie.
+   Validátor dostáva úplné zdrojové dokumenty jednej firmy, nie iba úryvky vybrané LLM;
+   zoznam dokumentov musí zostaviť aplikácia z dôveryhodného úložiska. Vynechaný dodatok
+   nemožno odhaliť iba z jeho neprítomnosti v tomto zozname. Neznáme definície, klauzuly,
+   chýbajúce obdobie alebo viac dodatkov bez podporovaných pravidiel priority vedú na `human_review`.
 6. **Výpočet a stav (Python, `covenants.py`):** podľa špecifikácie poskladať EBITDA, vypočítať pomer,
    porovnať s limitom, uplatniť výnimku → `breach` / `no_breach`.
 7. **Pravidlá pre `human_review` (Python):** chýba položka alebo nie je konečné nezáporné číslo

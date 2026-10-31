@@ -35,7 +35,7 @@ class SourceTests(unittest.TestCase):
 
     def test_all_expected_specs_are_grounded(self):
         for case_id, case in self.cases.items():
-            self.assertEqual(verify_sources(case["expected_spec"], self.docs(case["company_id"])), [], case_id)
+            self.assertEqual(verify_sources(case["expected_spec"], self.docs(case["company_id"]), case["period"]), [], case_id)
             self.assertEqual(self.run_case(case_id)["status"], case["expected_status"], case_id)
 
     def fake_waiver(self, case_id, citation):
@@ -85,6 +85,72 @@ class SourceTests(unittest.TestCase):
         spec["covenants"][0]["citation"] = self.cases["C10-2026Q1"]["expected_spec"]["covenants"][0]["citation"]
         result = self.run_case("C10-2026Q2", spec)   # 3,75 is not written in the original contract
         self.assertEqual(result["status"], "human_review")
+
+    def test_old_step_down_limit_cannot_hide_breach(self):
+        spec = copy.deepcopy(self.cases["C04-2026Q3"]["expected_spec"])
+        spec["covenants"][0]["limit"] = 4.5
+        self.assertEqual(self.run_case("C04-2026Q3", spec)["status"], "human_review")
+
+    def test_future_limit_cannot_be_used_before_effective_date(self):
+        spec = copy.deepcopy(self.cases["C04-2026Q2"]["expected_spec"])
+        spec["covenants"][0]["limit"] = 4.0
+        self.assertEqual(self.run_case("C04-2026Q2", spec)["status"], "human_review")
+
+    def test_old_limit_and_original_citation_cannot_bypass_amendment(self):
+        spec = copy.deepcopy(self.cases["C10-2026Q2"]["expected_spec"])
+        spec["covenants"] = copy.deepcopy(self.cases["C10-2026Q1"]["expected_spec"]["covenants"])
+        self.assertEqual(self.run_case("C10-2026Q2", spec)["status"], "human_review")
+
+    def test_definition_mutations_cannot_hide_breach(self):
+        for cid, section, key, value in (
+            ("C03-2026Q2", "ebitda", "subtract", []),
+            ("C01-2026Q3", "ebitda", "add", ["restructuring"]),
+            ("C02-2026Q2", "ebitda", "add", []),
+            ("C08-2026Q2", "debt", "deduct_cash", True),
+            ("C03-2026Q2", "debt", "include", ["bank_loans"]),
+        ):
+            with self.subTest(cid=cid, section=section, key=key):
+                spec = copy.deepcopy(self.cases[cid]["expected_spec"])
+                spec[section][key] = value
+                self.assertEqual(self.run_case(cid, spec)["status"], "human_review")
+
+    def test_omitted_or_swapped_covenant_is_rejected(self):
+        spec = copy.deepcopy(self.cases["C07-2026Q2"]["expected_spec"])
+        spec["covenants"].pop()
+        self.assertEqual(self.run_case("C07-2026Q2", spec)["status"], "human_review")
+        spec = copy.deepcopy(self.cases["C07-2026Q2"]["expected_spec"])
+        spec["covenants"][0]["ratio"] = "interest_cover"
+        self.assertEqual(self.run_case("C07-2026Q2", spec)["status"], "human_review")
+
+    def test_unknown_definition_or_clause_goes_to_human(self):
+        case = self.cases["C03-2026Q2"]
+        items = {k: v["value"] for k, v in case["expected_items"].items()}
+        for old, new in (("EBITDA snižuje.", "EBITDA snižuje pouze po schválení."),
+                         ("hodnotu 4,25.", "hodnotu 4,25 s výjimkou sezónního období.")):
+            docs = self.docs("C03")
+            self.assertIn(old, docs["smlouva.md"])
+            docs["smlouva.md"] = docs["smlouva.md"].replace(old, new)
+            self.assertEqual(evaluate_with_sources(items, case["expected_spec"], case["period"], docs)["status"],
+                             "human_review")
+
+    def test_invalid_period_goes_to_human(self):
+        case = self.cases["C01-2026Q1"]
+        items = {k: v["value"] for k, v in case["expected_items"].items()}
+        for period in (None, "2026Q9", "2026garbageQ1"):
+            self.assertEqual(evaluate_with_sources(items, case["expected_spec"], period,
+                                                  self.docs("C01"))["status"], "human_review")
+
+    def test_supported_wording_and_article_order_across_seeds(self):
+        for seed in (1, 7, 42):
+            with self.subTest(seed=seed), tempfile.TemporaryDirectory() as folder:
+                root = Path(folder) / "data"
+                generate_data.main(["--seed", str(seed), "--out", str(root)])
+                for case in json.loads((root / "expected.json").read_text(encoding="utf-8")):
+                    docs = {p.name: p.read_text(encoding="utf-8")
+                            for p in (root / "companies" / case["company_id"]).glob("*.md")}
+                    items = {k: v["value"] for k, v in case["expected_items"].items()}
+                    result = evaluate_with_sources(items, case["expected_spec"], case["period"], docs)
+                    self.assertEqual(result["status"], case["expected_status"], (seed, case["case_id"], result))
 
 
 if __name__ == "__main__":

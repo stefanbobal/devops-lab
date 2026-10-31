@@ -114,9 +114,9 @@ class CovenantTests(unittest.TestCase):
 
 
     def test_duplicate_add_back_cannot_hide_breach(self):
-        # Counting restructuring twice would give 400/140 = 2.86 and hide a breach of 3.50.
+        # Single add-back: 400/120 = 3.33 > 3.00; duplicate: 400/140 = 2.86.
         s = spec(ebitda__add=["restructuring", "restructuring"],
-                 covenants=[{"id": "leverage", "ratio": "debt_to_ebitda", "limit": 3.5}])
+                 covenants=[{"id": "leverage", "ratio": "debt_to_ebitda", "limit": 3.0}])
         self.assertEqual(evaluate(ITEMS, s, "2026Q2")["status"], "human_review")
 
     def test_invalid_numbers_go_to_human(self):
@@ -131,6 +131,31 @@ class CovenantTests(unittest.TestCase):
     def test_operating_loss_is_allowed(self):
         # EBIT may be negative: -10 + 40 = 30; 400/30 = 13.33 > 4.5 -> breach, not invalid
         self.assertEqual(evaluate(dict(ITEMS, ebit=-10), SPEC, "2026Q2")["status"], "breach")
+
+    def test_missing_sections_and_malformed_items_go_to_human(self):
+        for part in ("ebitda", "debt", "covenants"):
+            for value in (None, "wrong type"):
+                bad = copy.deepcopy(SPEC)
+                bad[part] = value
+                self.assertEqual(evaluate(ITEMS, bad, "2026Q2")["status"], "human_review")
+            bad = copy.deepcopy(SPEC)
+            del bad[part]
+            self.assertEqual(evaluate(ITEMS, bad, "2026Q2")["status"], "human_review")
+        for items in (None, [], "wrong type"):
+            self.assertEqual(evaluate(items, SPEC, "2026Q2")["status"], "human_review")
+
+    def test_unused_interest_is_not_converted(self):
+        for value in ("bad", float("nan"), True):
+            items = dict(ITEMS, interest_expense=value)
+            self.assertEqual(evaluate(items, SPEC, "2026Q2")["status"], "no_breach")
+            with_interest = spec(covenants=[{"id": "icr", "ratio": "interest_cover", "limit": 3}])
+            self.assertEqual(evaluate(items, with_interest, "2026Q2")["status"], "human_review")
+
+    def test_invalid_review_band_and_period_go_to_human(self):
+        for band in (True, "0.02", float("nan"), float("inf"), -0.1, 1):
+            self.assertEqual(evaluate(ITEMS, SPEC, "2026Q2", review_band=band)["status"], "human_review")
+        for period in (None, "2026Q9", "2026Q2\n"):
+            self.assertEqual(evaluate(ITEMS, SPEC, period)["status"], "human_review")
 
 
 if __name__ == "__main__":
