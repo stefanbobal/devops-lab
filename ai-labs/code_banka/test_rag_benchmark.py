@@ -3,6 +3,7 @@ import contextlib
 import csv
 import io
 import json
+import os
 import sys
 import tempfile
 import types
@@ -118,6 +119,9 @@ class AdapterTests(unittest.TestCase):
                 self.assertEqual(result["output_tokens"], 15 if provider == "vertex" else 10)
                 self.assertGreater(result["llm_latency_s"], 0)
                 self.assertEqual(result["answer"], "partial")
+                if provider == "ollama":
+                    self.assertEqual(client.chat.call_args.kwargs["options"], {"num_predict": 100, "num_ctx": 8192})
+                    self.assertEqual(result["ollama_num_ctx"], 8192)
 
 
 class MatrixTests(unittest.TestCase):
@@ -125,13 +129,12 @@ class MatrixTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
-        self.scenarios = self.root / "scenarios.json"
-        runner.write_json(self.scenarios, [dict(id="one", incident="Current failure", domain=None, db_type=None)])
         self.thresholds = self.root / "thresholds.json"
         runner.write_json(self.thresholds, [{"model": m, "threshold": 0.5} for m in ("gemini", "bge")])
+        self.scenarios = self.root / "scenarios.json"
+        runner.write_json(self.scenarios, [dict(id="one", incident="Current failure", domain=None, db_type=None)])
         self.args = ["--embeddings", "gemini", "--llms", "gemma,haiku", "--scenarios", str(self.scenarios),
-                     "--thresholds-file", str(self.thresholds),
-                     "--out", str(self.root / "run"), "--pricing-date", "2026-10-30"]
+                     "--thresholds-file", str(self.thresholds), "--out", str(self.root / "run"), "--pricing-date", "2026-10-30"]
         # Load real config without requiring python-dotenv in an offline test environment.
         stub = types.ModuleType("dotenv")
         stub.load_dotenv = lambda: None
@@ -223,6 +226,35 @@ class MatrixTests(unittest.TestCase):
     def test_duplicate_scenarios_rejected(self):
         with self.assertRaises(ValueError):
             runner.validate_scenarios([{"id": "a", "incident": "text"}] * 2)
+
+    def test_prepare_then_resume_has_no_interleaved_retrieval_and_groups_models(self):
+        self.args[1] = "gemini,bge"
+        self.assertEqual(self.run_main("--execute", "--prepare-contexts", "--order", "by-model"), 0)
+        self.assertEqual(len(self.requests), 2)
+        self.assertTrue(all(r[0]["operation"] == "retrieve" for r in self.requests))
+        self.requests.clear()
+        self.assertEqual(self.run_main("--execute", "--resume", "--order", "by-model"), 0)
+        self.assertEqual(len(self.requests), 4)
+        self.assertTrue(all(r[0]["operation"] == "chat" for r in self.requests))
+        self.assertEqual([r[2] for r in self.requests], ["gemma", "gemma", "haiku", "haiku"])
+        self.assertTrue(all(r[0]["ollama_num_ctx"] == 8192 for r in self.requests))
+
+    def test_context_must_leave_room_for_input(self):
+        with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+            self.run_main("--ollama-num-ctx", "4096")
+        self.assertFalse(self.requests)
+
+    def test_changed_context_rejects_resume(self):
+        self.run_main("--execute", "--max-calls", "1")
+        with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+            self.run_main("--execute", "--resume", "--ollama-num-ctx", "16384")
+
+    def test_local_only_needs_no_cloud_credentials(self):
+        self.args[1], self.args[3] = "bge", "gemma"
+        with patch.dict(os.environ, {"ANTHROPIC_API_KEY": "", "AZURE_OPENAI_API_KEY": "",
+                                     "AZURE_OPENAI_ENDPOINT": ""}):
+            self.assertEqual(self.run_main("--execute"), 0)
+        self.assertTrue(all(r[1:3] == ("bge", "gemma") for r in self.requests))
 
 
 if __name__ == "__main__":

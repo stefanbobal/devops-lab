@@ -121,7 +121,7 @@ def estimate_cost(provider, model, usage, prices, pricing_date):
             "price_source": rate.get("source")}
 
 
-def chat_measured(system, user, max_tokens=4096, timeout=180):
+def chat_measured(system, user, max_tokens=4096, timeout=180, ollama_num_ctx=8192):
     from config import LLM_MODEL, LLM_PROVIDER, GCP_PROJECT, VERTEX_LLM_LOCATION
     provider, model = LLM_PROVIDER, LLM_MODEL
     messages = [{"role": "system", "content": system}, {"role": "user", "content": user}]
@@ -165,8 +165,11 @@ def chat_measured(system, user, max_tokens=4096, timeout=180):
         complete = finish == "STOP"
     elif provider == "ollama":
         import ollama
+        if ollama_num_ctx <= max_tokens:
+            raise ValueError("Ollama context must exceed output cap to leave room for the prompt")
         response = ollama.Client(timeout=timeout).chat(model=model, messages=messages, stream=False,
-                                                      options={"num_predict": max_tokens})
+            options={"num_predict": max_tokens, "num_ctx": ollama_num_ctx})
+        extra["ollama_num_ctx"] = ollama_num_ctx
         data = plain(response)
         raw = {k: v for k, v in data.items() if k.endswith("_count") or k.endswith("_duration")}
         answer = (data.get("message") or {}).get("content", "")

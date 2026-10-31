@@ -58,7 +58,8 @@ def worker(request):
                     candidates=rows, history=history, context=format_context(history),
                     context_hash=digest(history), created_at=utc_now())
     from llm_metrics import chat_measured
-    return chat_measured(request["system"], request["user"], request["max_tokens"], request["timeout"])
+    return chat_measured(request["system"], request["user"], request["max_tokens"], request["timeout"],
+                         request.get("ollama_num_ctx", 8192))
 
 
 def safe_error(exc):
@@ -120,7 +121,7 @@ def export_results(out):
               "status", "model", "resolved_model", "embedding_model", "threshold", "finish_reason", "retrieval_latency_s",
               "llm_latency_s", "worker_wall_s", "pipeline_latency_estimate_s", "input_tokens",
               "output_tokens", "reasoning_tokens", "cached_input_tokens", "cache_creation_tokens",
-              "output_tokens_per_wall_second", "load_duration_s", "generation_tokens_per_second",
+              "output_tokens_per_wall_second", "load_duration_s", "generation_tokens_per_second", "ollama_num_ctx",
               "estimated_cost_usd", "cost_status", "context_hash", "answer", "error"]
     with (out / "results.csv").open("w", newline="", encoding="utf-8") as stream:
         writer = csv.DictWriter(stream, fieldnames=fields, extrasaction="ignore")
@@ -170,6 +171,12 @@ def main(argv=None):
     parser.add_argument("--repeats", type=int, default=1)
     parser.add_argument("--top-k", type=int, default=3)
     parser.add_argument("--max-output-tokens", type=int, default=4096)
+    parser.add_argument("--ollama-num-ctx", type=int, default=8192,
+                        help="Explicit Ollama context allocation; verify prompt headroom and GPU residency")
+    parser.add_argument("--order", choices=("shuffled", "by-model"), default="shuffled",
+                        help="Group shuffled jobs by LLM to reduce local model swaps")
+    parser.add_argument("--prepare-contexts", action="store_true",
+                        help="With --execute: retrieve/cache all contexts and exit without LLM calls")
     parser.add_argument("--timeout", type=float, default=180)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--max-calls", type=int, help="Stop after this many new LLM calls; resume later")
@@ -189,6 +196,12 @@ def main(argv=None):
             raise ValueError("Repeats, top-k, token cap and timeout must be positive")
         if args.max_calls is not None and args.max_calls < 1:
             raise ValueError("max-calls must be positive")
+        if args.ollama_num_ctx < 1:
+            raise ValueError("ollama-num-ctx must be positive")
+        if any(LLMS[p]["provider"] == "ollama" for p in llms) and args.ollama_num_ctx <= args.max_output_tokens:
+            raise ValueError("ollama-num-ctx must exceed max-output-tokens; also allow room for input tokens")
+        if args.prepare_contexts and "rag" not in modes:
+            raise ValueError("prepare-contexts requires rag mode")
         datetime.strptime(args.pricing_date, "%Y-%m-%d")
         if "curated" in modes and any(not s.get("curated_context") for s in scenarios):
             raise ValueError("Every scenario needs curated_context for curated mode")
@@ -208,9 +221,13 @@ def main(argv=None):
                         job["call_id"] = digest(job)[:24]
                         jobs.append(job)
     random.Random(args.seed).shuffle(jobs)
+    if args.order == "by-model":
+        jobs.sort(key=lambda job: llms.index(job["llm_profile"]))
     print(f"{len(scenarios)} scenarios; {len(embeddings)} embeddings; {len(llms)} LLMs; {len(jobs)} calls")
     print("Pricing date:", args.pricing_date, "| output:", args.out.resolve())
     print("Cloud cost is an estimate; missing prices/usage remain unknown. Retrieval cost is excluded.")
+    if args.prepare_contexts:
+        print(f"Prepare-only stage: {len(scenarios) * len(embeddings)} contexts; zero LLM calls")
     if not args.execute:
         print("Dry run: no database or model calls. Add --execute to run.")
         return 0
@@ -220,11 +237,12 @@ def main(argv=None):
             versions[package] = importlib.metadata.version(package)
         except importlib.metadata.PackageNotFoundError:
             versions[package] = "not installed"
-    manifest = dict(schema_version=1, scenarios=scenarios, thresholds=thresholds,
+    manifest = dict(schema_version=2, scenarios=scenarios, thresholds=thresholds,
         embeddings={p: MODELS[p] for p in embeddings}, llms={p: LLMS[p] for p in llms}, prices=prices,
         pricing_date=args.pricing_date, modes=modes, repeats=args.repeats, top_k=args.top_k,
         max_output_tokens=args.max_output_tokens, timeout=args.timeout, seed=args.seed,
-        generation_settings="Provider defaults except output token cap; no automatic retries",
+        ollama_num_ctx=args.ollama_num_ctx, order=args.order,
+        generation_settings="Provider defaults except output cap and explicit Ollama num_ctx; no automatic retries",
         project=GCP_PROJECT, vertex_llm_location=VERTEX_LLM_LOCATION,
         vertex_embed_location=VERTEX_EMBED_LOCATION, azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
         ollama_host=os.getenv("OLLAMA_HOST", "http://localhost:11434"),
@@ -256,6 +274,22 @@ def main(argv=None):
         for folder in ("contexts", "calls"):
             (out / folder).mkdir(exist_ok=True)
         by_id = {s["id"]: s for s in scenarios}
+        if args.prepare_contexts:
+            failures = 0
+            # Embedding outer loop minimizes embedding-model swaps on a single GPU.
+            for embedding in embeddings:
+                for scenario in scenarios:
+                    path = out / "contexts" / (digest([scenario["id"], embedding]) + ".json")
+                    if path.exists():
+                        context = read_json(path)
+                    else:
+                        context = run_worker(dict(operation="retrieve", scenario=scenario, top_k=args.top_k,
+                            threshold=thresholds[embedding]), embedding, llms[0], args.timeout)
+                        write_json(path, context)
+                    failures += context["status"] != "ok"
+                    print(f"Context {scenario['id']}/{embedding}: {context['status']}", flush=True)
+            print(f"Prepared contexts; failures={failures}. No LLM calls. Continue with --resume without --prepare-contexts.")
+            return 1 if failures else 0
         completed_now = 0
         for job in jobs:
             target = out / "calls" / (job["call_id"] + ".json")
@@ -294,7 +328,7 @@ def main(argv=None):
                       "cost_status": "unknown", "estimated_cost_usd": None}
             write_json(target, record)
             result = run_worker(dict(operation="chat", system=system, user=user,
-                max_tokens=args.max_output_tokens, timeout=args.timeout),
+                max_tokens=args.max_output_tokens, timeout=args.timeout, ollama_num_ctx=args.ollama_num_ctx),
                 embeddings[0] if embedding == "none" else embedding, job["llm_profile"], args.timeout)
             record.update(result)
             if "input_tokens" in result:
