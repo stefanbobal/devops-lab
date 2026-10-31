@@ -106,8 +106,7 @@
       ],
       "values": {
         "ebitda": "145680",
-        "debt": "451608",
-        "interest_expense": "17844"
+        "debt": "451608"
       }
     },
     "expected_status": "no_breach",
@@ -222,8 +221,7 @@
       ],
       "values": {
         "ebitda": "265368",
-        "debt": "902251",
-        "interest_expense": "40953"
+        "debt": "902251"
       }
     },
     "expected_status": "no_breach",
@@ -338,8 +336,7 @@
       ],
       "values": {
         "ebitda": "409934",
-        "debt": "1803710",
-        "interest_expense": "83403"
+        "debt": "1803710"
       }
     },
     "expected_status": "breach",
@@ -456,8 +453,7 @@
       ],
       "values": {
         "ebitda": "105182",
-        "debt": "305028",
-        "interest_expense": "21918"
+        "debt": "305028"
       }
     },
     "expected_status": "no_breach",
@@ -574,8 +570,7 @@
       ],
       "values": {
         "ebitda": "277302",
-        "debt": "887366",
-        "interest_expense": "34179"
+        "debt": "887366"
       }
     },
     "expected_status": "no_breach",
@@ -692,8 +687,7 @@
       ],
       "values": {
         "ebitda": "452228",
-        "debt": "1763689",
-        "interest_expense": "60847"
+        "debt": "1763689"
       }
     },
     "expected_status": "breach",
@@ -810,8 +804,7 @@
       ],
       "values": {
         "ebitda": "420620",
-        "debt": "1514232",
-        "interest_expense": "63496"
+        "debt": "1514232"
       }
     },
     "expected_status": "no_breach",
@@ -928,8 +921,7 @@
       ],
       "values": {
         "ebitda": "212340",
-        "debt": "955530",
-        "interest_expense": "52144"
+        "debt": "955530"
       }
     },
     "expected_status": "breach",
@@ -1046,8 +1038,7 @@
       ],
       "values": {
         "ebitda": "168242",
-        "debt": "740265",
-        "interest_expense": "29045"
+        "debt": "740265"
       }
     },
     "expected_status": "breach",
@@ -1162,8 +1153,7 @@
       ],
       "values": {
         "ebitda": "354034",
-        "debt": "1522346",
-        "interest_expense": "49491"
+        "debt": "1522346"
       }
     },
     "expected_status": "no_breach",
@@ -1278,8 +1268,7 @@
       ],
       "values": {
         "ebitda": "400066",
-        "debt": "1740287",
-        "interest_expense": "86759"
+        "debt": "1740287"
       }
     },
     "expected_status": "no_breach",
@@ -1394,8 +1383,7 @@
       ],
       "values": {
         "ebitda": "592136",
-        "debt": "2516578",
-        "interest_expense": "106242"
+        "debt": "2516578"
       }
     },
     "expected_status": "breach",
@@ -1521,8 +1509,7 @@
       ],
       "values": {
         "ebitda": "161266",
-        "debt": "516051",
-        "interest_expense": "38896"
+        "debt": "516051"
       }
     },
     "expected_status": "no_breach",
@@ -1648,8 +1635,7 @@
       ],
       "values": {
         "ebitda": "441516",
-        "debt": "1810216",
-        "interest_expense": "93232"
+        "debt": "1810216"
       }
     },
     "expected_status": "no_breach",
@@ -1775,8 +1761,7 @@
       ],
       "values": {
         "ebitda": "420618",
-        "debt": "1640410",
-        "interest_expense": "48569"
+        "debt": "1640410"
       }
     },
     "expected_status": "breach",
@@ -1891,8 +1876,7 @@
       ],
       "values": {
         "ebitda": "99242",
-        "debt": "297726",
-        "interest_expense": "11951"
+        "debt": "297726"
       }
     },
     "expected_status": "no_breach",
@@ -2007,8 +1991,7 @@
       ],
       "values": {
         "ebitda": "526804",
-        "debt": "1949175",
-        "interest_expense": "97483"
+        "debt": "1949175"
       }
     },
     "expected_status": "breach",
@@ -2123,8 +2106,7 @@
       ],
       "values": {
         "ebitda": "471022",
-        "debt": "1554373",
-        "interest_expense": "80831"
+        "debt": "1554373"
       }
     },
     "expected_status": "no_breach",
@@ -2647,8 +2629,7 @@
       ],
       "values": {
         "ebitda": "166740",
-        "debt": "566916",
-        "interest_expense": "22643"
+        "debt": "566916"
       }
     },
     "expected_status": "no_breach",
@@ -2763,8 +2744,7 @@
       ],
       "values": {
         "ebitda": "167790",
-        "debt": "721497",
-        "interest_expense": "24540"
+        "debt": "721497"
       }
     },
     "expected_status": "breach",
@@ -2879,8 +2859,7 @@
       ],
       "values": {
         "ebitda": "260012",
-        "debt": "936043",
-        "interest_expense": "32811"
+        "debt": "936043"
       }
     },
     "expected_status": "no_breach",
@@ -2995,8 +2974,7 @@
       ],
       "values": {
         "ebitda": "289930",
-        "debt": "956769",
-        "interest_expense": "41810"
+        "debt": "956769"
       }
     },
     "expected_status": "no_breach",
@@ -3215,8 +3193,7 @@
       ],
       "values": {
         "ebitda": "452354",
-        "debt": "1786798",
-        "interest_expense": "78994"
+        "debt": "1786798"
       }
     },
     "expected_status": "human_review",
@@ -3332,8 +3309,7 @@
       ],
       "values": {
         "ebitda": "293286",
-        "debt": "821201",
-        "interest_expense": "33546"
+        "debt": "821201"
       }
     },
     "expected_status": "no_breach",
@@ -3449,8 +3425,7 @@
       ],
       "values": {
         "ebitda": "435248",
-        "debt": "1479843",
-        "interest_expense": "102217"
+        "debt": "1479843"
       }
     },
     "expected_status": "no_breach",
@@ -3566,8 +3541,7 @@
       ],
       "values": {
         "ebitda": "135840",
-        "debt": "529776",
-        "interest_expense": "25129"
+        "debt": "529776"
       }
     },
     "expected_status": "breach",
@@ -3682,8 +3656,7 @@
       ],
       "values": {
         "ebitda": "466924",
-        "debt": "1680926",
-        "interest_expense": "59801"
+        "debt": "1680926"
       }
     },
     "expected_status": "no_breach",
@@ -3798,8 +3771,7 @@
       ],
       "values": {
         "ebitda": "89386",
-        "debt": "429053",
-        "interest_expense": "18999"
+        "debt": "429053"
       }
     },
     "expected_status": "breach",
@@ -3916,8 +3888,7 @@
       ],
       "values": {
         "ebitda": "486062",
-        "debt": "2187279",
-        "interest_expense": "64665"
+        "debt": "2187279"
       }
     },
     "expected_status": "human_review",
@@ -4032,8 +4003,7 @@
       ],
       "values": {
         "ebitda": "495562",
-        "debt": "1536242",
-        "interest_expense": "72538"
+        "debt": "1536242"
       }
     },
     "expected_status": "no_breach",
@@ -4148,8 +4118,7 @@
       ],
       "values": {
         "ebitda": "229442",
-        "debt": "963656",
-        "interest_expense": "50461"
+        "debt": "963656"
       }
     },
     "expected_status": "breach",
@@ -4264,8 +4233,7 @@
       ],
       "values": {
         "ebitda": "362914",
-        "debt": "1161325",
-        "interest_expense": "74456"
+        "debt": "1161325"
       }
     },
     "expected_status": "no_breach",
