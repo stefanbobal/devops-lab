@@ -18,7 +18,10 @@ odovzdá iba prípady, ktoré si vyžadujú pozornosť.
   Mení sa iba LLM profil, zvyšok pipeline je rovnaký.
 - Zodpovedá to modelu „vlastná agentská platforma + modely z Foundry“.
 - Foundry Agent Service je voliteľný bonus na konci, nie základ testu.
-- **LLM nikdy nepočíta peniaze ani pomery.** Iba vyťahuje údaje a zdôvodňuje rozhodnutie.
+- **Výsledný stav určuje overiteľný kód, nie LLM.** LLM vyťahuje údaje, prevádza zmluvný text
+  na štruktúrovanú špecifikáciu s citáciou a píše vysvetlenie. Výpočet pomeru, porovnanie
+  s limitom a stav `breach` / `no_breach` / `human_review` určuje Python, ktorý sa dá otestovať.
+- Smerovanie k človeku určujú **pravidlá v kóde**, nie istota, ktorú si LLM samo ohlási.
 
 ## 1. Testovacie dáta (`data/`)
 
@@ -30,7 +33,7 @@ odovzdá iba prípady, ktoré si vyžadujú pozornosť.
 - voliteľne **list s výnimkou (waiver)** a **poznámky analytika**.
 
 `data/expected.json`: pre každý testovací prípad správne vytiahnuté hodnoty, vypočítaný pomer,
-rozhodnutie (`breach` / `no_breach` / `human_review`) a citovaný článok.
+zmluvná špecifikácia, výsledný stav (`breach` / `no_breach` / `human_review`) a citované články.
 
 Typy prípadov (spolu 30–40):
 
@@ -57,23 +60,37 @@ Inak porovnanie s RAG a bez RAG nič neukáže.
 
 ## 3. Kroky agenta
 
-1. **Vytiahnutie údajov (LLM):** JSON s hodnotami a číslom strany, kde boli nájdené.
-2. **Kontrola (Python):** schéma, súčty, chýbajúce polia → pri chybe `human_review`.
-3. **Výpočet (Python, `covenants.py`):** pomery a porovnanie s limitom pre dané obdobie.
-4. **Vyhľadanie v zmluve (RAG):** definícia, aktuálny limit, výnimky, poznámky analytika.
-5. **Rozhodnutie (LLM):** `breach` / `no_breach` / `human_review`, citácia článku a strany, miera istoty.
-6. **Smerovanie:** istota pod prahom → vždy `human_review`.
-7. **Akcia:** úloha pre analytika. V labe simulovaná zápisom do tabuľky; agent nemá iné nástroje
+Najprv sa zistí, **čo** a **podľa akej definície** sa má počítať, až potom sa počíta.
+
+1. **Vytiahnutie položiek z výkazu (LLM):** JSON s jednotlivými položkami (tržby, prevádzkový zisk,
+   odpisy, jednorazové náklady, dlh, hotovosť…) a stranou, kde boli nájdené.
+   **Nie hotová EBITDA firmy**, pretože zmluvná definícia môže byť iná.
+2. **Kontrola položiek (Python):** schéma, súčty, chýbajúce polia.
+3. **Vyhľadanie v zmluve (RAG):** definícia EBITDA a čistého dlhu, limit platný pre dané obdobie,
+   výnimky (waivers), poznámky analytika.
+4. **Zmluvná špecifikácia (LLM → JSON):** z nájdeného textu štruktúrovaný predpis, napríklad
+   `{"ratio": "net_debt/ebitda", "ebitda_adds_back": ["one_off_restructuring"], "limit": 4.5,
+   "valid_from": "2026-01-01", "valid_to": "2026-12-31", "waiver": null, "citations": [{"article": "7.2", "page": 4}]}`.
+   Hodnoty sa vyberajú iba z pevného zoznamu povolených položiek.
+5. **Overenie špecifikácie (Python):** citované články sú v nájdenom texte, položky sú z povoleného
+   zoznamu, obdobie sedí na výkaz, limit je kladné číslo, žiadne dva články si neodporujú.
+6. **Výpočet a stav (Python, `covenants.py`):** podľa špecifikácie poskladať EBITDA, vypočítať pomer,
+   porovnať s limitom, uplatniť výnimku → `breach` / `no_breach`.
+7. **Pravidlá pre `human_review` (Python):** chýba položka, špecifikácia neprešla overením,
+   nečitateľný dokument, výsledok v pásme blízko limitu, rozpor medzi článkami.
+8. **Vysvetlenie (LLM):** zrozumiteľné zdôvodnenie s citáciami. Stav nemení; kód overí,
+   že vysvetlenie uvádza rovnaký stav a iba citácie zo špecifikácie.
+9. **Akcia:** úloha pre analytika. V labe simulovaná zápisom do tabuľky; agent nemá iné nástroje
    ani oprávnenia (least privilege).
 
 ## 4. Testy
 
 | # | Test | Metrika |
 | --- | --- | --- |
-| T1 | vyťahovanie údajov | podiel presne správnych polí, pre každý LLM |
+| T1 | vyťahovanie položiek z výkazu | podiel presne správnych polí, pre každý LLM |
 | T2 | retrieval | správny článok v top-k, pre každý embedding profil |
-| T3 | rozhodnutie v 3 režimoch | správnosť rozhodnutia, správnosť citácie, podiel `human_review` |
-| T4 | prompt injection | zmenil agent rozhodnutie alebo vykonal nežiadanú akciu? |
+| T3 | zmluvná špecifikácia a výsledný stav v 3 režimoch | správnosť špecifikácie (definícia, limit, výnimka), správnosť citácie, výsledný stav, podiel `human_review` |
+| T4 | prompt injection | zmenila sa špecifikácia alebo stav, prípadne nastala nežiadaná akcia? |
 | T5 | opakovanie 3× | konzistentnosť odpovedí (nedeterminizmus) |
 | T6 | prevádzka | tokeny, cena a latencia na jeden beh |
 
@@ -84,6 +101,10 @@ Režimy pre T3 (mapa na existujúci runner):
 | bez RAG | výkaz a všeobecné pravidlo | `no_history` |
 | RAG | výkaz a nájdené články, výnimky, poznámky | `rag` |
 | celá zmluva | výkaz a všetky dokumenty klienta | `curated` |
+
+Keďže stav počíta kód, každú chybu stavu sa dá priradiť konkrétnemu kroku:
+zlá položka (T1), nenájdený článok (T2) alebo zlá špecifikácia (T3). `covenants.py` má vlastné
+unit testy so známymi vstupmi a výsledkami.
 
 **Prehliadnuté porušenie** (agent povie `no_breach`, správne je `breach`) vykazovať zvlášť.
 Pre banku je to najhoršia chyba, horšia než falošný poplach.
@@ -126,8 +147,9 @@ Zámerne **neprevzaté**: incidenty, scenáre, testovacie otázky, thresholdy a 
 - [ ] `data/`: firmy, zmluvy, výkazy, výnimky, poznámky a `expected.json`
 - [ ] `load_documents.py`: chunking po článkoch s metadátami
 - [ ] `search.py`: stĺpce a filtre pre dokumenty (firma, typ dokumentu, obdobie) namiesto domain/db_type
-- [ ] `covenants.py` + testy: deterministický výpočet pomerov a porovnanie s limitom podľa obdobia
-- [ ] `rag_prompt.py`: prompty pre vyťahovanie a rozhodnutie; štruktúrovaný JSON výstup
+- [ ] schéma zmluvnej špecifikácie a zoznam povolených položiek; validátor špecifikácie
+- [ ] `covenants.py` + testy: výpočet podľa špecifikácie, porovnanie s limitom, výnimky, pravidlá pre `human_review`
+- [ ] `rag_prompt.py`: prompty pre vyťahovanie položiek, zmluvnú špecifikáciu a vysvetlenie; štruktúrovaný JSON výstup
 - [ ] scenáre pre runner (`incident` → text výkazu, `curated_context` → celá zmluva)
 - [ ] automatické hodnotenie T1–T4 voči `expected.json` (runner zatiaľ hodnotí iba ručne)
 - [ ] kalibrácia thresholdov
