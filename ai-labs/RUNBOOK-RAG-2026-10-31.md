@@ -4,6 +4,9 @@
 Python venv `~/devops-lab/ai-labs/code/.venv`.
 Príkazy sú pre **Bash na Ubuntu**, okrem osobitne označenej kontroly Windows GPU.
 
+**Revízia 31.10.:** explicitné Ollama num_ctx, príprava kontextov pred LLM a poradie podľa modelu.
+Staré behy majú iný manifest/kód; pokračuj v nich iba so starou verziou. Pre túto revíziu sú priečinky označené v2.
+
 **Cieľ dňa:** overiť celý tok a porovnať modely na **6 vývojových scenároch**.
 Finálnych 24 návrhov zatiaľ nepoužívať na ladenie.
 Úspešný technický beh neznamená správnu investigáciu — tú hodnotíme ručne.
@@ -84,7 +87,7 @@ export VERTEX_LLM_LOCATION=global
 export AZURE_OPENAI_LLM_DEPLOYMENT=gpt-5-mini
 export PYTHONUNBUFFERED=1
 set -o pipefail
-mkdir -p results/preflight-2026-10-31
+mkdir -p results/preflight-2026-10-31-v2
 ```
 
 Exporty platia pre aktuálny terminál a majú prednosť pred `.env`.
@@ -123,7 +126,7 @@ python -m pip check
 python -m unittest -v test_rag_benchmark
 ```
 
-**Kontrola:** bez konfliktov balíkov, **16 testov, OK** podľa tejto verzie kódu.
+**Kontrola:** bez konfliktov balíkov, **20 testov, OK** podľa tejto verzie kódu.
 Testy používajú simulované odpovede; nevolajú cloud ani databázu.
 
 ```bash
@@ -135,10 +138,10 @@ for module in ("numpy", "dotenv", "psycopg", "pgvector.psycopg", "ollama", "anth
 types.HttpOptions(timeout=180000, retry_options=types.HttpRetryOptions(attempts=1))
 print("Imports and Vertex retry options OK")
 PY
-git rev-parse HEAD > results/preflight-2026-10-31/git-head.txt
-git status --short > results/preflight-2026-10-31/git-status.txt
-python -m pip freeze > results/preflight-2026-10-31/packages.txt
-sha256sum config.py providers.py search.py rag.py rag_prompt.py rag_test.py llm_metrics.py rag_scenarios.json thresholds_FROZEN.json llm_prices.json > results/preflight-2026-10-31/input-sha256.txt
+git rev-parse HEAD > results/preflight-2026-10-31-v2/git-head.txt
+git status --short > results/preflight-2026-10-31-v2/git-status.txt
+python -m pip freeze > results/preflight-2026-10-31-v2/packages.txt
+sha256sum config.py providers.py search.py rag.py rag_prompt.py rag_test.py llm_metrics.py rag_scenarios.json thresholds_FROZEN.json llm_prices.json > results/preflight-2026-10-31-v2/input-sha256.txt
 ```
 
 **Pri chybe:** zastaviť. Opraviť len konkrétny chýbajúci/nekompatibilný balík v tejto venv,
@@ -213,7 +216,7 @@ with psycopg.connect(PG_DSN, connect_timeout=10) as conn:
         report[profile] = {"rows": len(rows), "dims": dims, "filters": filters,
                            "incident_ids": sorted(ids)}
         print(profile, "rows=", len(rows), "dims=", dims, "filters=", filters)
-Path("results/preflight-2026-10-31/database-check.json").write_text(
+Path("results/preflight-2026-10-31-v2/database-check.json").write_text(
     json.dumps(report, indent=2, default=str))
 print("Database structure, row counts, dimensions and IDs OK")
 PY
@@ -255,7 +258,7 @@ for name in sorted(wanted):
     details[name] = {"listed": installed[canonical], "details": info.get("details"),
                      "parameters": info.get("parameters"), "model_info": info.get("model_info")}
     print(name, installed[canonical].get("digest"), info.get("details"))
-Path("results/preflight-2026-10-31/ollama-models.json").write_text(
+Path("results/preflight-2026-10-31-v2/ollama-models.json").write_text(
     json.dumps(details, indent=2, default=str))
 print("Required local models present")
 PY
@@ -275,6 +278,31 @@ Zaznamenať GPU, VRAM a spôsob spracovania. Ak Ollama používa CPU alebo CPU/G
 výsledok tak označiť; neprezentovať ho ako čisté GPU meranie.
 Nespúšťať zbytočne druhý model mimo benchmarku.
 
+### Kontext, thinking a timeout pred hlavným behom
+
+- Meraný adaptér teraz explicitne posiela `num_ctx=8192`; nespolieha sa na serverový default.
+  Aktuálne defaulty Ollamy sa môžu líšiť podľa verzie a VRAM. Overiť `CONTEXT` v `ollama ps`
+  počas volania, nie odhadovať hodnotu.
+- Kontext musí pokryť vstupný prompt aj generovanie. Podmienka `num_ctx > output cap`
+  je iba základná kontrola, nie presný tokenizer ani záruka proti orezaniu.
+  Skontrolovať `input_tokens`, veľkosť promptu a logy servera.
+- Väčší kontext zvyšuje pamäťové nároky. Pre porovnanie označené ako čisto GPU
+  vyžadovať `100% GPU`; ak je CPU/GPU mix, zaznamenať ho a podľa potreby
+  upraviť experiment pred hlavným behom.
+- Pri Qwen prezrieť `output_tokens`, `finish_reason` a skutočný text odpovede.
+  Limit takmer vyčerpaný a neúplná/prázdna odpoveď sú dôvod na diagnostiku thinking budgetu,
+  nie dôkaz slabého modelu. Nenastavovať neoverený think parameter univerzálne.
+- Ak smoke ukáže nedostatočný output cap, zvoľ pre nový porovnateľný beh napríklad
+  `--max-output-tokens 8192 --ollama-num-ctx 16384`; znovu over GPU/VRAM.
+  Potrebný kontext závisí aj od reálneho vstupu.
+- Timeout 300 s je počiatočné nastavenie. Pri CPU offloade alebo dlhej generácii nemusí stačiť.
+  Zmenu urob pred hlavným behom, zopakuj smoke a používaj ju konzistentne.
+- Túto explicitnú konfiguráciu používa `rag_test.py`; jednoduchý `rag.py` a
+  `check_cloud.py` naďalej používajú pôvodný jednoduchý provider.
+
+Oficiálne podklady: [Ollama context length](https://docs.ollama.com/context-length),
+[Ollama chat options a timing](https://docs.ollama.com/api/chat).
+
 ## 6. Retrieval probe: jeden vývojový scenár cez všetkých 8 profilov
 
 **Toto už volá embedding modely**, vrátane cloudových; nevolá žiadny LLM.
@@ -286,7 +314,7 @@ from pathlib import Path
 from config import MODELS
 from rag import load_threshold
 from rag_test import read_json, write_json, run_worker
-out = Path("results/preflight-2026-10-31")
+out = Path("results/preflight-2026-10-31-v2")
 scenario = read_json("rag_scenarios.json")[0]
 write_json(out / "smoke-scenario.json", [scenario])
 failed = []
@@ -321,15 +349,15 @@ PY
 
 ## 7. Smoke test: všetkých 10 LLM cez meraný adaptér
 
-Tento krok je dôležitejší než samotný pozdrav cez `check_cloud.py):
+Tento krok je dôležitejší než samotný pozdrav cez `check_cloud.py`:
 používa presne ten meraný adaptér, aký použije hlavný test.
 
 ```bash
 python rag_test.py \
-  --scenarios results/preflight-2026-10-31/smoke-scenario.json \
+  --scenarios results/preflight-2026-10-31-v2/smoke-scenario.json \
   --embeddings gemini --llms all --modes rag --repeats 1 \
-  --top-k 3 --max-output-tokens 4096 --timeout 300 --seed 42 \
-  --pricing-date 2026-10-31 --out results/rag-smoke-2026-10-31
+  --top-k 3 --max-output-tokens 4096 --ollama-num-ctx 8192 --order by-model --timeout 300 --seed 42 \
+  --pricing-date 2026-10-31 --out results/rag-smoke-2026-10-31-v2
 ```
 
 **Očakávané:** `1 scenarios; 1 embeddings; 10 LLMs; 10 calls` a `Dry run`.
@@ -338,11 +366,11 @@ Až potom reálny beh:
 
 ```bash
 python rag_test.py \
-  --scenarios results/preflight-2026-10-31/smoke-scenario.json \
+  --scenarios results/preflight-2026-10-31-v2/smoke-scenario.json \
   --embeddings gemini --llms all --modes rag --repeats 1 \
-  --top-k 3 --max-output-tokens 4096 --timeout 300 --seed 42 \
-  --pricing-date 2026-10-31 --out results/rag-smoke-2026-10-31 --execute \
-  2>&1 | tee results/preflight-2026-10-31/smoke-console.log
+  --top-k 3 --max-output-tokens 4096 --ollama-num-ctx 8192 --order by-model --timeout 300 --seed 42 \
+  --pricing-date 2026-10-31 --out results/rag-smoke-2026-10-31-v2 --execute \
+  2>&1 | tee results/preflight-2026-10-31-v2/smoke-console.log
 rag_rc=${PIPESTATUS[0]}
 printf 'Smoke exit code: %s\n' "$rag_rc"
 ```
@@ -354,7 +382,7 @@ python - <<'PY'
 from pathlib import Path
 from collections import Counter
 from rag_test import read_json
-out = Path("results/rag-smoke-2026-10-31")
+out = Path("results/rag-smoke-2026-10-31-v2")
 rows = [read_json(p) for p in sorted((out / "calls").glob("*.json"))]
 print("Rows:", len(rows), "Statuses:", Counter(r["status"] for r in rows))
 for r in rows:
@@ -384,7 +412,7 @@ Použijeme tie isté parametre pri spustení aj pokračovaní.
 Nasledujúce premenné nastav v aktuálnom Bash okne:
 
 ```bash
-export RUN=results/rag-dev-2026-10-31
+export RUN=results/rag-dev-2026-10-31-v2
 RAG_ARGS=(
   --scenarios rag_scenarios.json
   --thresholds-file thresholds_FROZEN.json
@@ -392,6 +420,7 @@ RAG_ARGS=(
   --embeddings all --llms all
   --modes rag --repeats 1
   --top-k 3 --max-output-tokens 4096
+  --ollama-num-ctx 8192 --order by-model
   --timeout 300 --seed 42
   --pricing-date 2026-10-31
   --out "$RUN"
@@ -403,11 +432,43 @@ python rag_test.py "${RAG_ARGS[@]}"
 Ak priečinok už obsahuje manifest, nezačínaj doň nový beh; použi resume iba pre
 identickú konfiguráciu, inak nový názov priečinka.
 
-Spusti prvých najviac 20 nových LLM volaní:
+Najprv priprav všetkých 48 kontextov. Táto fáza vykonáva iba retrieval,
+po embedding profiloch; nevykoná žiadne LLM volanie. Vytvorí manifest a contexts,
+ale ešte nie výsledkové CSV.
 
 ```bash
-python rag_test.py "${RAG_ARGS[@]}" --execute --max-calls 20 \
-  2>&1 | tee results/preflight-2026-10-31/dev-first20.log
+python rag_test.py "${RAG_ARGS[@]}" --execute --prepare-contexts \
+  2>&1 | tee results/preflight-2026-10-31-v2/prepare-contexts.log
+rag_rc=${PIPESTATUS[0]}
+printf 'Prepare exit code: %s\n' "$rag_rc"
+```
+
+**Kontrola:** 48 kontextov a `failures=0`. Pri chybe nepokračovať.
+Prerušenú prípravu možno dokončiť tým istým príkazom s `--resume`;
+už uložené chybné kontexty sa však automaticky neopakujú.
+
+Na Windows hoste skontroluj `ollama ps`. Ak zostali rezidentné embedding modely,
+ukonči ich pred LLM fázou; rob to iba vtedy, keď ich nepoužíva iný proces.
+Nasledujúce príkazy uvoľnia rezidentné modely, nevymažú ich súbory:
+
+```powershell
+ollama ps
+ollama stop nomic-embed-text
+ollama stop bge-m3
+ollama stop qwen3-embedding:4b
+ollama stop qwen3-embedding:8b
+ollama ps
+```
+
+Niektoré už nemusia bežať. Na hoste počas testu nespúšťaj ďalšie modely.
+Lokalita Ollamy zostáva tá, ktorú má VM nastavenú cez OLLAMA_HOST.
+
+Potom spusti prvých najviac 20 nových LLM volaní. Použi už `--resume`,
+pretože prípravná fáza vytvorila manifest:
+
+```bash
+python rag_test.py "${RAG_ARGS[@]}" --execute --resume --max-calls 20 \
+  2>&1 | tee results/preflight-2026-10-31-v2/dev-first20.log
 rag_rc=${PIPESTATUS[0]}
 printf 'First batch exit code: %s\n' "$rag_rc"
 ```
@@ -416,7 +477,7 @@ Pozri výsledky podľa kroku 9. Ak sú v poriadku, pokračuj:
 
 ```bash
 python rag_test.py "${RAG_ARGS[@]}" --execute --resume \
-  2>&1 | tee results/preflight-2026-10-31/dev-resume.log
+  2>&1 | tee results/preflight-2026-10-31-v2/dev-resume.log
 rag_rc=${PIPESTATUS[0]}
 printf 'Resume exit code: %s\n' "$rag_rc"
 ```
@@ -427,8 +488,12 @@ limituje nové LLM volania, nie záznamy retrieval_error.
 
 **Kontrola ukončenia:** 480 záznamov, ideálne všetky `ok`, 48 uložených retrieval kontextov.
 Exit code 0 po prvých 20 volaniach neznamená dokončenú celú maticu.
-Predvolené premiešanie poradia spôsobí aj striedanie lokálnych modelov a cold loads;
-latenciu interpretovať s poľami pre model loading, nie ako čisto warm inference.
+V tomto runbooku používame `--order by-model`: najprv sa premiešajú scenáre
+podľa seedu a potom sa zoskupia podľa LLM. Po príprave kontextov sa už embeddingy
+medzi LLM volania nevkladajú. Prvé volanie každého modelu, vypršanie keep-alive,
+resume alebo iná GPU záťaž stále môžu spôsobiť cold load.
+Poradie po modeloch môže priniesť časový bias; zaznamenať ho a nevyhlasovať celý beh
+za čisto warm meranie. `load_duration_s` a engine throughput posudzovať osobitne.
 
 ## 9. Kontrola výsledkov, promptov a ceny
 
@@ -615,12 +680,113 @@ Zachovaj pôvodné výsledky aj ich náklady; neopravuj ich prepísaním úspeš
 
 ## 12. Voliteľné kontroly a finálna sada
 
+### Samostatná čisto lokálna vetva: 144 volaní bez API poplatkov
+
+Ak chceš iba túto vetvu, vykonaj krok 1 a offline unit testy z kroku 3.
+**Vynechaj cloudové kontroly kľúčov v kroku 2, cloudové importy a kroky 6–8 plného behu.**
+Cloudové kľúče nie sú pre tento výber potrebné. Potrebuješ však funkčný PG_DSN,
+OLLAMA_HOST, numpy, python-dotenv, psycopg, pgvector a ollama v existujúcej venv.
+Kontrolu lokálnych modelov a GPU z kroku 5 zachovaj.
+
+Over šesť lokálnych tabuliek bez cloudových volaní:
+
+```bash
+python - <<'PY'
+import psycopg
+from psycopg import sql
+from config import MODELS, PG_DSN
+profiles = ["nomic", "nomic_prefix", "bge", "qwen", "qwen_instr", "qwen8"]
+baseline = None
+with psycopg.connect(PG_DSN, connect_timeout=10) as conn:
+    conn.execute("SET TRANSACTION READ ONLY")
+    conn.execute("SET statement_timeout = '30s'")
+    for p in profiles:
+        rows = conn.execute(sql.SQL(
+            "SELECT incident_id, vector_dims(embedding) FROM {}"
+        ).format(sql.Identifier("incident_memory_" + p))).fetchall()
+        ids = {str(r[0]) for r in rows}
+        assert len(rows) == len(ids) == 200, p
+        assert all(r[1] == MODELS[p]["dim"] for r in rows), p
+        if baseline is None:
+            baseline = ids
+        assert ids == baseline, p
+        print(p, "OK", len(rows), MODELS[p]["dim"])
+PY
+```
+
+Priprav parametre. Rovnakú konfiguráciu použi pri príprave, spustení a resume:
+
+```bash
+set -o pipefail
+export RUN=results/rag-local-2026-10-31-v2
+LOCAL_ARGS=(
+  --scenarios rag_scenarios.json
+  --embeddings nomic,nomic_prefix,bge,qwen,qwen_instr,qwen8
+  --llms gemma,qwen36,qwen38,llama
+  --modes rag --repeats 1 --top-k 3
+  --max-output-tokens 4096 --ollama-num-ctx 8192
+  --timeout 300 --order by-model --seed 42
+  --pricing-date 2026-10-31 --out "$RUN"
+)
+python rag_test.py "${LOCAL_ARGS[@]}"
+```
+
+**Kontrola:** 6 scenárov × 6 embedding profilov × 4 LLM = **144 LLM volaní**.
+Najprv retrieval a kontrola `failures=0`:
+
+```bash
+python rag_test.py "${LOCAL_ARGS[@]}" --execute --prepare-contexts
+```
+
+Po pripravení 36 kontextov uvoľni rezidentné embeddingy na hoste podľa kroku 8.
+Spusti postupne krátke bloky a kontroluj GPU, výstupné tokeny a status.
+Zoskupené poradie znamená, že prvý blok nemusí obsahovať všetky štyri LLM:
+
+```bash
+python rag_test.py "${LOCAL_ARGS[@]}" --execute --resume --max-calls 4
+```
+
+Keď sú výsledky v poriadku, doplň zvyšok:
+
+```bash
+python rag_test.py "${LOCAL_ARGS[@]}" --execute --resume
+```
+
+```bash
+python - <<'PY'
+import os
+from pathlib import Path
+from collections import Counter
+from rag_test import read_json
+out = Path(os.environ["RUN"])
+rows = [read_json(p) for p in (out / "calls").glob("*.json")]
+print("Records", len(rows), "/ 144", Counter(r["status"] for r in rows))
+print("Contexts", len(list((out / "contexts").glob("*.json"))), "/ 36")
+assert len(rows) == 144
+assert all(r["status"] == "ok" for r in rows)
+print("Local matrix complete")
+PY
+```
+
+Export z kroku 10 funguje aj pre tento RUN. Počty 480/48 z kroku 9 a cloudové
+smoke priečinky z archivácie pre túto vetvu nepoužívaj.
+Archivácia iba lokálneho behu:
+
+```bash
+tar -czf "results/rag-local-session-2026-10-31-$(date +%H%M%S).tar.gz" "$RUN"
+```
+
+API poplatok je nulový; GPU, elektrina a čas majú stále náklady.
+
+### Ďalšie kontroly plnej matice
+
+
 **Bez histórie:** až keď je RAG beh funkčný; samostatných 60 LLM volaní:
 
 ```bash
 python rag_test.py --scenarios rag_scenarios.json --embeddings all --llms all \
-  --modes no_history --repeats 1 --max-output-tokens 4096 --timeout 300 \
-  --pricing-date 2026-10-31 --out results/rag-no-history-2026-10-31 --execute
+  --modes no_history --repeats 1 --max-output-tokens 4096 --ollama-num-ctx 8192 --order by-model --timeout 300 \
+  --pricing-date 2026-10-31 --out results/rag-no-history-2026-10-31-v2 --execute
 ```
 
 No-history neposiela query embeddingy ani nečíta DB. Porovnáva iba schopnosť pracovať
@@ -641,11 +807,11 @@ Prompt-injection prípady testujú len generovanú odpoveď, nie reálne tool ca
 Po dokončení exportov a hodnotenia, v Ubuntu:
 
 ```bash
-git rev-parse HEAD > results/preflight-2026-10-31/git-head-end.txt
-sha256sum config.py providers.py search.py rag.py rag_prompt.py rag_test.py llm_metrics.py rag_scenarios.json thresholds_FROZEN.json llm_prices.json > results/preflight-2026-10-31/input-sha256-end.txt
-diff -u results/preflight-2026-10-31/input-sha256.txt results/preflight-2026-10-31/input-sha256-end.txt
-tar -czf "results/rag-session-2026-10-31-$(date +%H%M%S).tar.gz" \
-  results/preflight-2026-10-31 "$RUN" results/rag-smoke-2026-10-31
+git rev-parse HEAD > results/preflight-2026-10-31-v2/git-head-end.txt
+sha256sum config.py providers.py search.py rag.py rag_prompt.py rag_test.py llm_metrics.py rag_scenarios.json thresholds_FROZEN.json llm_prices.json > results/preflight-2026-10-31-v2/input-sha256-end.txt
+diff -u results/preflight-2026-10-31-v2/input-sha256.txt results/preflight-2026-10-31-v2/input-sha256-end.txt
+tar -czf "results/rag-session-2026-10-31-v2-$(date +%H%M%S).tar.gz" \
+  results/preflight-2026-10-31-v2 "$RUN" results/rag-smoke-2026-10-31-v2
 ```
 
 **Kontrola:** diff bez zmien, archív existuje. Voliteľný no-history priečinok archivovať

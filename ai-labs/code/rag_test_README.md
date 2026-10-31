@@ -62,8 +62,13 @@ inspect load/cache fields rather than assuming every call is warm.
 Azure completion tokens already include reasoning: do not add reasoning a second time.
 Vertex output accounting adds candidate and thought tokens. Anthropic total input sums
 uncached input, cache reads and cache creation. Provider defaults for temperature/reasoning
-are retained; a common output cap of 4096 is requested (provider cap semantics differ).
-Use `--max-output-tokens` to change it. Truncation, refusal, empty content and other
+are retained except Ollama explicitly receives `num_ctx=8192`; a common output cap of 4096 is requested (provider cap semantics differ).
+Use `--max-output-tokens` to change it and `--ollama-num-ctx` to size local context.
+The context must exceed the output cap and also fit the actual input. This validation
+is not an exact tokenizer or a guarantee against truncation. Check Ollama's allocated
+CONTEXT and PROCESSOR during smoke testing; a larger context increases VRAM usage.
+Both context size and ordering are included in the manifest; older runs cannot resume
+under this changed code/schema. Use a fresh output directory. Truncation, refusal, empty content and other
 non-success finish reasons are saved as `incomplete`, with their usage retained.
 
 ## Pricing and limits
@@ -106,7 +111,9 @@ not guarantee that the remote provider stopped processing/billing the request.
   known LLM costs and count of calls whose costs are unknown. Quantiles use nearest rank.
 - `quality_review.csv`: blank human-scoring sheet; existing scores survive resume.
 
-Requests are sequential in a seeded shuffled order. Profiles run in isolated subprocesses
+Requests are sequential. The default is a seeded shuffled order; `--order by-model`
+groups those shuffled jobs by the selected LLM order, reducing model swaps.
+Ordering is recorded in the manifest and grouped order may introduce time-of-run bias. Profiles run in isolated subprocesses
 so module-level configuration cannot leak from one model to the next. A context is retrieved
 only once per scenario/embedding and saved. Resume validates the manifest fingerprint;
 changed settings, prices, scenarios, code or SDK versions require a new output directory.
@@ -171,3 +178,37 @@ live SDK compatibility or service availability; the Ubuntu smoke run does that.
 - [Google Gen AI SDK retry options](https://googleapis.github.io/python-genai/genai.html)
 - [Anthropic cache token accounting](https://platform.claude.com/docs/en/build-with-claude/prompt-caching)
 - [Azure chat reference](https://learn.microsoft.com/en-in/azure/foundry/openai/latest?view=foundry-classic)
+
+## Single-GPU workflow (31 October revision)
+
+For local LLMs, running one model at a time alone does not prevent embedding/LLM swaps.
+First prepare all retrieval contexts, then run grouped LLM calls against the saved contexts:
+
+```bash
+# Dry run first (no model calls).
+python rag_test.py --order by-model --ollama-num-ctx 8192 --out results/rag-v2
+# Retrieves 48 contexts, no LLM calls. Check failures=0.
+python rag_test.py --order by-model --ollama-num-ctx 8192 --out results/rag-v2 --execute --prepare-contexts
+# Continue the same manifest without prepare-only; first 20 LLM calls.
+python rag_test.py --order by-model --ollama-num-ctx 8192 --out results/rag-v2 --execute --resume --max-calls 20
+# Finish remaining calls.
+python rag_test.py --order by-model --ollama-num-ctx 8192 --out results/rag-v2 --execute --resume
+```
+
+Use a fixed `--pricing-date` on all four commands if a run may cross midnight.
+Preparation loops over embedding profiles first. It reuses saved contexts (including
+failures), creates the run manifest, and returns before LLM calls or CSV export.
+The prepare-only switch is a stage selector, not part of the manifest fingerprint.
+After preparation, unload idle embedding models on the Ollama host if no other process
+needs them. The runner does not automatically stop models used by other applications.
+First calls, model switching, server eviction and keep-alive expiry can still be cold.
+No warm-only latency claim is made.
+
+For fully local inference select
+`--llms gemma,qwen36,qwen38,llama --embeddings nomic,nomic_prefix,bge,qwen,qwen_instr,qwen8`.
+This is 144 LLM calls and 36 contexts; no Anthropic, Azure or Vertex credentials are required.
+Use the same selection during preparation and resume. See the updated
+[dated runbook](../RUNBOOK-RAG-2026-10-31.md) for the local-only preflight and commands.
+
+References: [Ollama context allocation](https://docs.ollama.com/context-length) and
+[chat metrics/options](https://docs.ollama.com/api/chat).
