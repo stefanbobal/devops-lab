@@ -50,6 +50,27 @@ Typy prípadov (spolu 30–40):
 Asi polovica prípadov musí byť postavená tak, aby sa bez zmluvy pokazila.
 Inak porovnanie s RAG a bez RAG nič neukáže.
 
+### Vygenerované dáta
+
+```bash
+python generate_data.py          # deterministicky prepíše data/ (seed 20261101)
+```
+
+- `data/companies/<Cxx>/`: `smlouva.md`, voliteľne `dodatek_1.md` a `waiver_<obdobie>.md`,
+  `poznamky_analytika.md`, `vykaz_2026Q1–Q3.md` (strany označené `[strana N]`);
+- `data/expected.json`: správne položky so stranami, zmluvná špecifikácia s citáciami, výsledok,
+  stav podľa všeobecného pravidla a príznak `fails_without_contract`;
+- `data/scenarios.json`: formát pre `rag_test.py` (`incident` = výkaz, `curated_context` = všetky dokumenty klienta);
+- `data/generic_rule.md`: všeobecné pravidlo pre režim bez zmluvy;
+- `data/SUMMARY.md`: prehľad 36 prípadov (12 firiem × 3 štvrťroky).
+
+Stav: 21 `no_breach`, 12 `breach`, 3 `human_review`; 12 prípadov sa podľa všeobecného pravidla pokazí.
+Navyše C10-2026Q2 zlyhá, ak RAG nájde zmluvu, ale nie dodatok. C04 má v poznámkach analytika
+zavádzajúce tvrdenie klienta, C06 žiadosť o výnimku, ktorá ešte nebola udelená.
+Čísla a očakávané výsledky počíta kód; `test_generate_data.py` overuje determinizmus,
+zhodu s `covenants.py` a existenciu citovaných článkov a strán. Dokumenty nikdy neupravovať ručne,
+iba cez generátor.
+
 ## 2. Načítanie do vektorovej DB (`load_documents.py`)
 
 - Zmluvy rozdeliť **po článkoch** (chunking); metadáta: firma, typ dokumentu, článok, strana, platnosť od–do.
@@ -144,11 +165,11 @@ Zámerne **neprevzaté**: incidenty, scenáre, testovacie otázky, thresholdy a 
 
 ## TODO
 
-- [ ] `data/`: firmy, zmluvy, výkazy, výnimky, poznámky a `expected.json`
+- [x] `data/`: firmy, zmluvy, výkazy, výnimky, poznámky a `expected.json` (`generate_data.py`)
 - [ ] `load_documents.py`: chunking po článkoch s metadátami
 - [ ] `search.py`: stĺpce a filtre pre dokumenty (firma, typ dokumentu, obdobie) namiesto domain/db_type
-- [ ] schéma zmluvnej špecifikácie a zoznam povolených položiek; validátor špecifikácie
-- [ ] `covenants.py` + testy: výpočet podľa špecifikácie, porovnanie s limitom, výnimky, pravidlá pre `human_review`
+- [x] schéma zmluvnej špecifikácie a zoznam povolených položiek; validátor špecifikácie (`covenants.py`)
+- [x] `covenants.py` + testy: výpočet podľa špecifikácie, porovnanie s limitom, výnimky, pravidlá pre `human_review`
 - [ ] `rag_prompt.py`: prompty pre vyťahovanie položiek, zmluvnú špecifikáciu a vysvetlenie; štruktúrovaný JSON výstup
 - [ ] scenáre pre runner (`incident` → text výkazu, `curated_context` → celá zmluva)
 - [ ] automatické hodnotenie T1–T4 voči `expected.json` (runner zatiaľ hodnotí iba ručne)
