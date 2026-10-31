@@ -25,17 +25,17 @@ odovzdá iba prípady, ktoré si vyžadujú pozornosť.
 
 ## 1. Testovacie dáta (`data/`)
 
-10–12 vymyslených firiem. Pre každú:
+Skutočný stav: **12 vymyslených firiem** (plán bol 10–12). Pre každú:
 
-- **úverová zmluva** (~10 článkov): definície (EBITDA, čistý dlh), podmienky s limitmi,
-  limit meniaci sa v čase (step-down), povinnosť reportovať, postup pri porušení;
-- **2–4 štvrťročné výkazy**: najprv Markdown tabuľky, neskôr PDF;
-- voliteľne **list s výnimkou (waiver)** a **poznámky analytika**.
+- **úverová zmluva** (10 článkov): definície (EBITDA, čistý dlh), podmienky s limitmi,
+  pri niektorých limit meniaci sa v čase (step-down), povinnosť reportovať, postup pri porušení;
+- **3 štvrťročné výkazy** (2026Q1–Q3) ako Markdown tabuľky (plán bol 2–4; PDF je neskoršie rozšírenie);
+- podľa scenára **dodatok**, **list s výnimkou (waiver)** a vždy **poznámky analytika**.
 
 `data/expected.json`: pre každý testovací prípad správne vytiahnuté hodnoty, vypočítaný pomer,
 zmluvná špecifikácia, výsledný stav (`breach` / `no_breach` / `human_review`) a citované články.
 
-Typy prípadov (spolu 30–40):
+Typy prípadov (skutočne 36; plán bol 30–40; presné rozdelenie v `data/SUMMARY.md`):
 
 | Typ | Čo testuje |
 | --- | --- |
@@ -75,7 +75,7 @@ zhodu s `covenants.py` a to, že citovaný článok leží na citovanej strane. 
 neupravovať ručne, iba cez generátor. Generátor maže iba priečinok, ktorý sám vytvoril
 (značka `.generated-by-generate_data`); cudzí neprázdny priečinok ani priečinok s kódom nezmaže.
 
-## 2. Načítanie do vektorovej DB (`load_documents.py`)
+## 2. Načítanie do vektorovej DB (plán; `load_documents.py` zatiaľ neexistuje)
 
 - Zmluvy rozdeliť **po článkoch** (chunking); metadáta: firma, typ dokumentu, článok, strana, platnosť od–do.
 - Tabuľky `covenant_docs_<profil>`; vlastný kontajner `pgvector-banka` na porte 5433.
@@ -169,9 +169,19 @@ Modely: 1–2 z Foundry a 1–2 lokálne, aby matica ostala zvládnuteľná.
 
 ## Čo je prevzaté z `../code`
 
-Motor bez dát: `config.py`, `providers.py`, `llm_metrics.py`, `rag_test.py`,
-`test_rag_benchmark.py`, `search.py`, `rag_prompt.py`, `sweep_eval.py`,
-`check_cloud.py`, `llm_prices.json`, `requirements.txt`, `docker-compose.yml`.
+Použiteľné bez zmeny obsahu (spoločný motor): `config.py`, `providers.py`, `llm_metrics.py`,
+`rag_test.py`, `test_rag_benchmark.py`, `check_cloud.py`, `llm_prices.json`, `requirements.txt`,
+`docker-compose.yml`.
+
+Prevzaté **iba ako kostra, stále incidentové a treba ich prepísať** (pozri TODO):
+
+- `search.py`: stále stĺpce a filtre incidentov (`incident_id`, `sid`, `domain`, `db_type`);
+- `rag_prompt.py`: stále prompt „SAP operations investigation assistant“;
+- `sweep_eval.py`: stále načítava testy z `eval.py`, ktorý tu neexistuje.
+
+`requirements.txt` pochádza zo spoločného motora: `openai` sa používa pre Azure OpenAI a Foundry,
+`ollama` pre lokálne modely; `anthropic` a `google-genai` slúžia profilom Claude a Gemini
+z incidentového labu, ktoré tento lab zatiaľ nepoužíva.
 
 Zmeny oproti originálu:
 
@@ -191,17 +201,24 @@ Zámerne **neprevzaté**: incidenty, scenáre, testovacie otázky, thresholdy a 
 - [x] `covenants.py` + testy: výpočet podľa špecifikácie, porovnanie s limitom, výnimky, pravidlá pre `human_review`
 - [x] `sources.py` + testy: overenie citácií, limitov a výnimok voči dokumentom (`evaluate_with_sources`)
 - [ ] `rag_prompt.py`: prompty pre vyťahovanie položiek, zmluvnú špecifikáciu a vysvetlenie; štruktúrovaný JSON výstup
-- [ ] scenáre pre runner (`incident` → text výkazu, `curated_context` → celá zmluva)
+- [x] scenáre pre runner (`data/scenarios.json`: `incident` → text výkazu, `curated_context` → všetky dokumenty klienta)
 - [ ] automatické hodnotenie T1–T4 voči `expected.json` (runner zatiaľ hodnotí iba ručne)
 - [ ] kalibrácia thresholdov
 - [ ] OpenTelemetry, YAML konfigurácia agenta, GitHub Actions
 - [ ] Foundry: deploymenty modelov, ceny v `llm_prices.json`
 
-## Spustenie (zatiaľ iba motor)
+## Spustenie (zatiaľ iba dáta, výpočet a offline testy)
 
 ```bash
 cd ~/devops-lab/ai-labs/code_banka
 docker compose up -d          # vlastná DB na porte 5433
-python generate_data.py
+python generate_data.py       # na VM, nie vo OneDrive na Windows
 python -m unittest discover -v -p "test_*.py"
 ```
+
+Vyhľadávanie nad zmluvami a kroky s LLM sa zatiaľ spustiť nedajú: chýba `load_documents.py`
+a `search.py` s `rag_prompt.py` sú ešte incidentové.
+
+API kľúče a prípadné prepísania nastavení (napr. `PG_DSN`, `AZURE_OPENAI_ENDPOINT`,
+`AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_LLM_DEPLOYMENT`) patria do súboru `.env` v tomto priečinku.
+`config.py` ho načíta cez python-dotenv; `.env` je v `.gitignore` a necommituje sa.
