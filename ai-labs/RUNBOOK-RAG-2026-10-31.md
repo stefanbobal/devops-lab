@@ -974,3 +974,123 @@ nie všeobecné prvenstvo modelu ani úspešne vykonaná agentová investigácia
 Postup bol pripravený podľa aktuálneho rozhrania skriptov na GitHube 30.10.2026.
 Python bloky sú syntakticky kontrolované; reálne DB/API/GPU kroky sa musia overiť na VM.
 Žiadne platené benchmark volania neboli pri príprave runbooku vykonané.
+
+
+## 14. Porovnanie LLM bez RAG po dokončení hlavného behu
+
+Cieľ: porovnať rovnaké LLM a aktuálne incidenty s historickým kontextom a bez neho.
+No-history režim nevolá embedding model ani databázu. Model dostane aktuálne signály,
+rovnaké systémové pravidlá a úlohu; v sekcii histórie bude informácia, že história
+nie je dostupná. Výsledok nie je úplne bezpromptový test — ide o kontrolu bez retrievalu.
+
+### Najprv rozlíš dokončenie a úspech hlavného behu
+
+`Saved 480/480 records` znamená, že existuje záznam pre každú kombináciu.
+**Exit code 1 znamená aspoň jeden status iný než ok.**
+Technické chyby, timeouty, neúplné odpovede či pending nie sú automaticky zlé
+diagnostické odpovede. Resume existujúce neúspešné záznamy neopakuje.
+
+Použi skutočný priečinok hlavného behu:
+
+```bash
+python - <<'PY'
+from pathlib import Path
+from collections import Counter
+from rag_test import read_json
+out = Path("results/rag-dev-2026-10-31-v2")
+rows = [read_json(p) for p in sorted((out / "calls").glob("*.json"))]
+print("Records:", len(rows), "/ 480")
+print("Statuses:", dict(Counter(r["status"] for r in rows)))
+bad = [r for r in rows if r["status"] != "ok"]
+for r in bad:
+    print("\nCALL:", r["call_id"])
+    print("Scenario:", r["scenario_id"], "| embedding:", r["embedding_profile"], "| LLM:", r["llm_profile"])
+    print("Status:", r["status"], "| finish_reason:", r.get("finish_reason"))
+    print("Tokens:", r.get("input_tokens"), r.get("output_tokens"))
+    print("Error:", r.get("error", ""))
+    print("Answer preview:", (r.get("answer") or "")[:300])
+print("\nNon-OK records:", len(bad))
+PY
+```
+
+Pred interpretáciou výsledkov chyby vysvetli. Pôvodné záznamy zachovaj.
+Ak treba meniť timeout alebo token cap, priprav nový porovnateľný experiment;
+nezamiešaj odpovede z rôznych nastavení bez označenia.
+
+### Nový no-history beh
+
+Po diagnostike hlavného behu ponechaj jeho kód, modely, scenáre, tokenové limity,
+Ollama kontext, timeout, opakovania, seed a pricing date rovnaké.
+V pôvodnom Bash termináli musí zostať nastavené pole RAG_ARGS z kroku 8.
+Over jeho existenciu:
+
+```bash
+declare -p RAG_ARGS
+```
+
+Ak chýba, obnov presné argumenty podľa svojho pôvodného príkazu a manifestu;
+nepouži náhodou defaulty. Nasledujúce koncové prepínače zmenia iba režim a priečinok.
+
+Najprv dry run:
+
+```bash
+python rag_test.py "${RAG_ARGS[@]}" \
+  --modes no_history \
+  --out results/no-history-dev-2026-11-01
+```
+
+**Kontrola:** 6 scenárov, 10 LLM, 60 plánovaných volaní.
+V hlavičke sa môže stále uvádzať 8 vybraných embedding profilov; v režime
+no_history sa nepoužijú a nevykoná sa žiadne retrieval volanie.
+
+Potom samostatný platený beh, pri prvom spustení bez resume:
+
+```bash
+set -o pipefail
+python rag_test.py "${RAG_ARGS[@]}" \
+  --modes no_history \
+  --out results/no-history-dev-2026-11-01 \
+  --execute \
+  2>&1 | tee results/no-history-dev-2026-11-01-console.log
+rag_rc=${PIPESTATUS[0]}
+printf 'No-history exit code: %s\n' "$rag_rc"
+```
+
+Ak sa tento nový beh preruší, pokračuj rovnakým príkazom s `--resume`.
+Ak priečinok už obsahuje iný experiment, zvoľ nový názov.
+Kód na VM počas behu neaktualizuj. Ide o 60 ďalších LLM volaní a ďalšie náklady.
+
+### Kontrola výsledkov bez histórie
+
+```bash
+python - <<'PY'
+from pathlib import Path
+from collections import Counter
+from rag_test import read_json
+out = Path("results/no-history-dev-2026-11-01")
+rows = [read_json(p) for p in (out / "calls").glob("*.json")]
+print("Records:", len(rows), "/ 60")
+print("Statuses:", dict(Counter(r["status"] for r in rows)))
+assert len(rows) == 60
+assert all(r["mode"] == "no_history" and r["embedding_profile"] == "none" for r in rows)
+assert all(not r.get("retrieved_ids") for r in rows)
+assert len(list((out / "contexts").glob("*.json"))) == 0
+print("No retrieval contexts or historical IDs")
+print("Successful:", sum(r["status"] == "ok" for r in rows))
+PY
+```
+
+### Čo porovnať
+
+- Rovnaký scenár a LLM: kvalitu návrhov pri každom RAG profile oproti jednej
+  no-history odpovedi. Na jeden scenár/LLM je osem RAG výsledkov a jeden bez histórie.
+- Nepodložené závery, relevantnosť, prácu s aktuálnymi dôkazmi a konkrétnosť krokov.
+- Bez histórie nepenalizovať neprítomnosť historickej citácie; vymyslená citácia je chyba.
+- Latenciu LLM a tokeny porovnávať osobitne od retrieval latencie.
+  RAG prompt je prirodzene dlhší, práve tento prínos a náklad meriame.
+- Technické zlyhania vykazovať osobitne; neoznačovať ich automaticky nulovým skóre diagnózy.
+- Jednu no-history odpoveď nekopírovať ako osem nezávislých pozorovaní.
+- Súčet nákladov zahŕňa oba experimenty; pôvodné query embedding náklady zatiaľ nemeriame.
+
+Manuálne hodnotenie ulož do quality_review.csv príslušného behu podľa call_id.
+Všetko sa týka šiestich vývojových scenárov; finálny draft nepoužívaj na ladenie.
