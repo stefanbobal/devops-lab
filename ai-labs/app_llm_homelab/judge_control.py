@@ -5,7 +5,7 @@ import math
 import uuid
 
 from db_store import BASE, read_json
-from judge_core import SYSTEM, CONTRACT, approved_references, digest, packet, prompt, sample_rows
+from judge_core import SYSTEM, CONTRACT, VALIDATOR_VERSION, approved_references, digest, packet, prompt, sample_rows
 from judge_providers import prices, estimated_call_cost
 
 
@@ -78,7 +78,7 @@ def build_config(model,settings,rubrics,refs,pricebook):
         system=SYSTEM,contract_version='judge-v2',contract_hash=digest(CONTRACT),rubrics=rubrics,
         approved_references=approved_references(refs),rubrics_hash=digest(rubrics),references_hash=digest(refs),
         rubrics_version=rubrics['version'],references_version=refs['version'],prices=pricebook,
-        pricing_date=settings['pricing_date'],adapter_version='judge-cloud-ui-v1')
+        pricing_date=settings['pricing_date'],adapter_version='judge-cloud-ui-v1',validator_version=VALIDATOR_VERSION)
 
 
 def previous_job(conn,row,data,config):

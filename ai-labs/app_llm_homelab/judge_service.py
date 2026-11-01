@@ -5,7 +5,7 @@ import uuid
 
 from db_store import connect
 from judge_control import init_judge, previous_job
-from judge_core import digest, prompt
+from judge_core import SYSTEM, CONTRACT, VALIDATOR_VERSION, digest, prompt
 from judge_providers import available_models, estimated_call_cost
 from judge_worker import reserve, finish, evaluate, make_system, should_skip
 
@@ -33,6 +33,8 @@ def complete_batch(conn,batch,status,error=None):
 
 
 def run_batch(conn,batch,settings,config):
+    if config.get('contract_hash')!=digest(CONTRACT) or config.get('system')!=SYSTEM or config.get('validator_version')!=VALIDATOR_VERSION:
+        complete_batch(conn,batch,'failed','Pravidlá alebo validátor sa od náhľadu zmenili. Vytvor nový náhľad.');return
     models=available_models()
     live=next((m for m in models if m['id']==config['model_id'] and m.get('ready')),None)
     if not live or any(live.get(k)!=config.get(v) for k,v in (('model','model'),('provider','provider'),('digest','model_digest'),('host','host'),('project','project'),('location','location'))):

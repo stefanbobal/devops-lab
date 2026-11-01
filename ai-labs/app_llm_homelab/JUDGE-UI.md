@@ -123,3 +123,9 @@ node test_judge_ui.cjs
 ```
 
 Unit testy používajú simulované DB/provider objekty; browser test simuluje HTTP odpovede. Overujú náhľad bez inferencie, cloudové potvrdenie, zastavenie, ochranu pred duplicitným spustením, nezmenené ručné skóre, účtovanie tokenov a mobilný layout. Nie je to živý Docker/PostgreSQL/cloud integračný test. Runtime kontrolu na VM vykonaj prvými dvoma výslovne spustenými hodnoteniami; počas implementácie sa žiadne platené volania nespúšťali.
+
+## Oprava validácie technických tvrdení
+
+Validátor `judge-validation-v3` zachová inak platný posudok, ak sudca označí technickú správnosť ako supported/incorrect bez skutočnej schválenej referencie. Toto pole zníži na unverified, odstráni nepodloženú referenciu a uloží viditeľné validation_warnings a presný záznam úpravy. Pôvodný raw_output ostáva nezmenený. Ide o označenie neistoty, nie o potvrdenie správnosti príkazu. Kritické zistenia, kontrola doslovných citácií odpovede a ostatné štrukturálne kontroly ostávajú zachované. Nepodložené pozitívne celkové odporúčanie sa zmení na needs_review.
+
+Staré invalid pokusy ostávajú v histórii. Po aktualizácii oboch image priprav nový náhľad a spusti opäť najviac 2 volania. Nová verzia validátora/kontraktu je súčasťou auditu konfigurácie, takže pôvodné dva chybné pokusy neblokujú nový pokus a netreba ich mazať. Náhľady vytvorené pred aktualizáciou sa nevykonajú s inými pravidlami; treba ich pripraviť nanovo.

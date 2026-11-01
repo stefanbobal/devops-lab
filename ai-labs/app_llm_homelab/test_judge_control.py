@@ -101,6 +101,14 @@ class ControlTests(unittest.TestCase):
             service.run_batch(MagicMock(),RID,settings,cfg)
         evaluate.assert_not_called();self.assertEqual(complete.call_args.args[2],'failed')
 
+    def test_old_preview_cannot_execute_after_validator_update(self):
+        settings=control.validate_settings(self.settings())
+        cfg=control.build_config(MODEL,settings,read_json(BASE/'judge_rubrics.json'),read_json(BASE/'judge_references.json'),providers.prices())
+        cfg.pop('validator_version')
+        with patch('judge_service.available_models') as models,patch('judge_service.evaluate') as evaluate,patch('judge_service.complete_batch') as complete:
+            service.run_batch(MagicMock(),RID,settings,cfg)
+        evaluate.assert_not_called();models.assert_not_called();self.assertEqual(complete.call_args.args[2],'failed')
+
     def test_success_commits_reservation_before_call_and_obeys_new_call_cap(self):
         settings=control.validate_settings(self.settings(max_calls=1))
         cfg=control.build_config(MODEL,settings,read_json(BASE/'judge_rubrics.json'),read_json(BASE/'judge_references.json'),providers.prices())

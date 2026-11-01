@@ -34,12 +34,39 @@ class JudgeTests(unittest.TestCase):
 
     def test_technical_verdict_requires_supplied_reference(self):
         self.result['steps'][0]['technical']='supported'
-        with self.assertRaises(ValueError):validate_result(json.dumps(self.result),self.data)
+        downgraded=validate_result(json.dumps(self.result),self.data)
+        self.assertEqual(downgraded['steps'][0]['technical'],'unverified')
+        self.assertEqual(downgraded['verdict'],'needs_review')
+        self.assertTrue(downgraded['validation_warnings'])
         refs=[{'id':'kb','text':'Verify DNS. Check resolution.','url':'https://example.org/kb'}]
         self.result['steps'][0].update(reference_ids=['kb'],reference_quote='Check resolution.')
-        validate_result(json.dumps(self.result),self.data,refs)
+        supported=validate_result(json.dumps(self.result),self.data,refs)
+        self.assertEqual(supported['steps'][0]['technical'],'supported')
+        self.assertFalse(supported['validation_warnings'])
         self.result['steps'][0]['reference_quote']='Fabricated claim'
-        with self.assertRaises(ValueError):validate_result(json.dumps(self.result),self.data)
+        rejected_proof=validate_result(json.dumps(self.result),self.data,refs)
+        self.assertEqual(rejected_proof['steps'][0]['technical'],'unverified')
+        self.assertEqual(rejected_proof['steps'][0]['reference_ids'],[])
+
+    def test_downgrade_preserves_critical_findings_and_does_not_invent_proof(self):
+        self.result['steps'][0].update(technical='incorrect',reference_ids=['invented'],reference_quote='Made up')
+        self.result.update(verdict='problematic',critical_error=True,critical_quote='Verify DNS.',
+                           critical_findings=[dict(code='C3',quote='Verify DNS.',reason='Test')])
+        fixed=validate_result(json.dumps(self.result),self.data)
+        self.assertTrue(fixed['critical_error']);self.assertEqual(fixed['verdict'],'problematic')
+        self.assertEqual(fixed['steps'][0]['technical'],'unverified')
+        self.assertEqual(fixed['validation_adjustments'][0]['proposed'],'incorrect')
+        self.assertEqual(fixed['steps'][0]['reference_quote'],'')
+
+    def test_worker_accepts_otherwise_valid_output_with_reference_warning(self):
+        self.result['steps'][0]['technical']='supported'
+        raw=json.dumps(self.result)
+        usage={'done':True,'done_reason':'stop','prompt_eval_count':1700,'eval_count':470}
+        with patch('judge_worker.ollama',return_value=(raw,usage)):
+            status,saved,_,_,result,error=evaluate(self.row,self.data,{'model':'gemma3:27b','num_ctx':16384})
+        self.assertEqual(status,'completed');self.assertEqual(saved,raw);self.assertIsNone(error)
+        self.assertEqual(result['steps'][0]['technical'],'unverified')
+        self.assertTrue(result['validation_warnings'])
 
     def test_fabricated_candidate_quote_and_critical_quote_rejected(self):
         self.result['steps'][0]['quote']='Delete all logs'

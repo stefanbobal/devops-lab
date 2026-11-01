@@ -15,7 +15,7 @@ const http=require('node:http'),fs=require('node:fs/promises'),path=require('nod
  const models=[{id:'ollama/gemma3:27b',provider:'ollama',model:'gemma3:27b',label:'gemma3:27b · lokálny',ready:true,reason:'Installed'},
    {id:'anthropic/claude-sonnet-5-5',provider:'anthropic',model:'claude-sonnet-5-5',label:'Claude Sonnet · cloud',ready:true,reason:'Configured, quota not verified'}];
  const worker={online:true,models},plans=[],starts=[],stops=[];let running=null,failPlan=false;
- await page.route('**/api/dataset',r=>r.fulfill({json:{reviewer:'sapops',files:[
+ await page.route('**/api/dataset',r=>r.fulfill({json:{reviewer:'sapops',judge_evaluations:[{run_id:rid,call_id:'a',job_id:bid,status:'completed',config:{provider:'ollama',model:'gemma3:27b'},result:{summary:'Needs review',verdict:'needs_review',steps:[{quote:'Get the backup error.',technical:'unverified',reference_ids:[],reference_quote:'',reason:'Need current evidence',grounding:'current_evidence',priority:'now',citation:'none',risk:'diagnostic'}],validation_warnings:['test-warning-unverified <img src=x onerror=alert(1)>'],suggested_scores:{},critical_error:false}}],files:[
    {path:'db/manifest.json',text:JSON.stringify({fingerprint:'judge-ui',created_at:'now',_database_id:rid,_database_name:'rag-dev-2026-10-31-v2',scenarios:[{id:'dev-hana-insufficient',incident:'Backup failed.',review_guidance:'Get logs.'}]})},
    {path:'db/calls/a.json',text:JSON.stringify({call_id:'a',scenario_id:'dev-hana-insufficient',status:'ok',llm_profile:'qwen38',embedding_profile:'bge',mode:'rag',answer:'Get the backup error.'})}]} }));
  await page.route('**/api/judge/options',r=>r.fulfill({json:{worker,runs:[{id:rid,name:'rag-dev-2026-10-31-v2',calls:480}],scenarios:['dev-hana-insufficient'],candidate_models:['qwen38'],modes:['rag'],rubrics_version:'v2',references_version:'empty',approved_references:0,prices:{models:{'anthropic:claude-sonnet-5-5':{input_per_million:2,output_per_million:10}}}}}));
@@ -52,6 +52,8 @@ const http=require('node:http'),fs=require('node:fs/promises'),path=require('nod
  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1));
  await page.locator('#judge-results').click();await page.waitForFunction(()=>!document.querySelector('#review').hidden);
  assert.equal(await page.locator('#judged-only').isChecked(),true);
+ assert.match(await page.locator('.judge-panel').innerText(),/test-warning-unverified/);
+ assert.equal(await page.locator('.judge-panel img').count(),0);
  assert.deepEqual(errors,[]);
  console.log('PASS: judge form, local/cloud selection, preview-only behavior, explicit cloud start, stale-plan invalidation, stop, reload persistence, errors, result navigation and mobile layout. Simulated API only.');
  }finally{if(browser)await browser.close();await new Promise(r=>server.close(r));}
