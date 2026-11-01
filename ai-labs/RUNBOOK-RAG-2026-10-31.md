@@ -108,52 +108,119 @@ Všetky ďalšie kroky vykonávaj v tom istom okne. Odpojenie: Ctrl+B, potom D.
 Návrat: `tmux attach -t rag-20261031`.
 Bez tmux nechaj SSH reláciu otvorenú; odpojenie môže prerušiť beh.
 
-## 2. Konfigurácia — bez vypisovania tajných kľúčov
+## 2. Skontroluj existujúcu konfiguráciu a porovnaj modely
 
-Nastav iba verejné identifikátory; existujúce kľúče, GCP projekt, DB a OLLAMA_HOST
-ponechaj z funkčnej konfigurácie. Nesourceuj naslepo celý `.env` ako shell skript;
-`config.py` ho načíta cez python-dotenv.
+**Najprv skontroluj aktuálne nastavenia. Ak sedia s plánom testu, nič neexportuj ani neprepisuj.**
+Používame tvoju existujúcu konfiguráciu v prostredí a v `ai-labs/code/.env`.
+`config.py` načíta .env cez python-dotenv; už exportované hodnoty majú prednosť
+pred .env, potom sa použijú predvolené hodnoty z config.py.
+Rozhodujúca je teda efektívna konfigurácia, ktorú vidí Python, nie samotný obsah .env.
+
+Nesourceuj celý .env ako shell skript a nevypisuj ho cez cat — môže obsahovať API kľúče.
+Nasledujúci blok nič nemení; vypíše iba verejné identifikátory modelov a výsledok porovnania:
 
 ```bash
-export EMBED_PROFILE=nomic
-export LLM_PROFILE=gemma
-export VERTEX_LLM_MODEL=gemini-3.1-flash-lite
-export VERTEX_ARGON_MODEL=gemini-4-argon
-export VERTEX_LLM_LOCATION=global
-export AZURE_OPENAI_LLM_DEPLOYMENT=gpt-5-mini
-export PYTHONUNBUFFERED=1
-set -o pipefail
-mkdir -p results/preflight-2026-10-31-v2
+python - <<'PY'
+from config import LLMS, MODELS, VERTEX_LLM_LOCATION
+expected = {
+    "gemma": "gemma3:27b",
+    "qwen36": "qwen3.6:27b",
+    "qwen38": "qwen3.8:27b",
+    "llama": "llama3.1:8b",
+    "claude": "claude-sonnet-5-5",
+    "haiku": "claude-haiku-5-5",
+    "opus": "claude-opus-5-5",
+    "gemini": "gemini-3.1-flash-lite",
+    "gemini_argon": "gemini-4-argon",
+    "azure": "gpt-5-mini",
+}
+mismatches = []
+for profile, wanted in expected.items():
+    actual = LLMS.get(profile, {}).get("name")
+    status = "OK" if actual == wanted else "CHECK"
+    print(f"{status:5} {profile:14} actual={actual!r} expected={wanted!r}")
+    if actual != wanted:
+        mismatches.append(profile)
+print("Vertex LLM location:", VERTEX_LLM_LOCATION, "| expected: global")
+if VERTEX_LLM_LOCATION != "global":
+    mismatches.append("VERTEX_LLM_LOCATION")
+for profile, spec in MODELS.items():
+    print("EMBED", profile, spec["provider"], spec["name"], spec["dim"])
+assert len(LLMS) == 10 and len(MODELS) == 8, "Unexpected profile count"
+if mismatches:
+    raise SystemExit("Review configuration before continuing: " + ", ".join(mismatches))
+print("Model configuration matches the test plan; no model exports needed.")
+PY
 ```
 
-Exporty platia pre aktuálny terminál a majú prednosť pred `.env`.
-Flash-Lite je nové LLM, Gemini embedding zostáva `gemini-embedding-001`.
-Ak máš zámerne iný názov Azure deploymentu, použi jeho skutočný názov a uprav
-príslušný kľúč cenníka pred začatím testu.
+**Kontrola:** všetkých 10 LLM má OK, Vertex location je global.
+Gemini embedding zostáva `gemini-embedding-001`; LLM Flash-Lite je samostatný model.
+Embedding modely porovnaj s tými, ktorými boli vytvorené existujúce DB tabuľky.
+Počas tejto kontroly ich nemeň a negeneruj nové embeddingy.
+
+### Iba pri nesúlade
+
+Skontroluj príslušnú hodnotu vo svojej .env a prípadné staršie exporty.
+Tieto nastaviteľné identifikátory majú pre plánovaný test nasledujúce hodnoty:
+
+| Premenná | Očakávaná hodnota |
+| --- | --- |
+| VERTEX_LLM_MODEL | gemini-3.1-flash-lite |
+| VERTEX_ARGON_MODEL | gemini-4-argon |
+| VERTEX_LLM_LOCATION | global |
+| CLAUDE_MODEL | claude-sonnet-5-5 |
+| AZURE_OPENAI_LLM_DEPLOYMENT | gpt-5-mini |
+
+**Nepridávaj ich opakovane, ak už správne fungujú alebo sa používa správny default.**
+Ak treba, uprav len nesúlad v .env, ulož súbor a znova spusti porovnanie.
+Existujúce kľúče, GCP projekt, PG_DSN a OLLAMA_HOST zachovaj.
+Lokálne modely a Haiku/Opus sú aktuálne definované priamo v config.py.
+
+Ak po oprave .env stále vidíš starý model, pre danú premennú môže existovať starý export.
+Odstráň iba takýto preukázaný konflikt z aktuálneho terminálu
+(napríklad `unset VERTEX_LLM_MODEL`, ak chceš načítať jeho opravenú hodnotu z .env),
+potom porovnanie zopakuj. Premenné nemaž plošne.
+
+EMBED_PROFILE a LLM_PROFILE netreba nastavovať pre celú maticu:
+runner ich prepína pre jednotlivé volania podľa --embeddings a --llms.
+Ich predvolené hodnoty sú nomic a gemma; už existujúce hodnoty môžu zostať,
+pokiaľ ide o platné profily.
+
+Ak máš zámerne iný názov Azure deploymentu, over jeho skutočný model a uprav plán
+porovnania aj zodpovedajúci kľúč cenníka pred začatím behu.
+Nezamieňaj názov deploymentu s názvom podkladového modelu.
+
+### Prítomnosť cloudovej konfigurácie
+
+Pre plnú cloudovú maticu over prítomnosť nastavení bez vypisovania kľúčov.
+Pri čisto lokálnom teste tento cloudový blok vynechaj a použi lokálnu vetvu nižšie.
 
 ```bash
 python - <<'PY'
 import os
-from config import LLMS, MODELS, GCP_PROJECT, VERTEX_LLM_LOCATION
+import config
 for key in ("ANTHROPIC_API_KEY", "AZURE_OPENAI_API_KEY", "AZURE_OPENAI_ENDPOINT"):
     assert os.getenv(key, "").strip(), f"Missing: {key}"
 endpoint = os.environ["AZURE_OPENAI_ENDPOINT"].rstrip("/")
 assert not endpoint.endswith(("/responses", "/chat/completions")), "Use resource root or /openai/v1/"
 print("Required cloud settings: present (values hidden)")
-print("GCP project:", GCP_PROJECT, "| LLM location:", VERTEX_LLM_LOCATION)
-for profile, spec in LLMS.items():
-    print("LLM", profile, spec["provider"], spec["name"])
-for profile, spec in MODELS.items():
-    print("EMBED", profile, spec["provider"], spec["name"], spec["dim"])
-assert len(LLMS) == 10 and len(MODELS) == 8
-assert LLMS["gemini"]["name"] == "gemini-3.1-flash-lite"
-assert LLMS["gemini_argon"]["name"] == "gemini-4-argon"
-print("Configuration OK")
+print("GCP project:", config.GCP_PROJECT)
+print("Presence check OK; actual authentication is checked by smoke calls.")
 PY
 ```
 
-**Kontrola:** 10 LLM profilov, 8 embedding profilov; žiadny vypísaný API kľúč.
-Samotná prítomnosť konfigurácie nepotvrdzuje funkčné prihlásenie — to overia volania nižšie.
+Samotná prítomnosť nastavení nepotvrdzuje funkčné prihlásenie — to overia volania nižšie.
+
+### Prevádzkové nastavenia terminálu
+
+Toto nie je prepísanie modelov v .env. Nastaví priebežný výpis, správne spracovanie
+návratového kódu pri tee a vytvorí pracovný priečinok pre nasledujúce kroky:
+
+```bash
+export PYTHONUNBUFFERED=1
+set -o pipefail
+mkdir -p results/preflight-2026-10-31-v2
+```
 
 ## 3. Offline kontroly a záznam verzií
 
