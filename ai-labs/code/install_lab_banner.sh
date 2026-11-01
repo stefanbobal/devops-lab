@@ -47,6 +47,31 @@ cat <<'TEXT'
 ======================================================================
 
 TEXT
+
+# Docker stav: co bezi a co treba spustit.
+if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+  _lab_missing=()
+  printf '  DOCKER STAV:\n'
+  for _c in pgvector app_llm_homelab-app-1 app_llm_homelab-judge-1; do
+    _st="$(docker inspect -f '{{.State.Status}}{{if .State.Health}}/{{.State.Health.Status}}{{end}}' "$_c" 2>/dev/null)"
+    if [[ "$_st" == running* && "$_st" != *unhealthy* && "$_st" != *starting* ]]; then
+      printf '    [ OK ] %-26s %s\n' "$_c" "$_st"
+    else
+      printf '    [ !! ] %-26s %s\n' "$_c" "${_st:-neexistuje}"
+      _lab_missing+=("$_c")
+    fi
+  done
+  if (( ${#_lab_missing[@]} )); then
+    printf '\n  TREBA SPUSTIT:\n'
+    [[ " ${_lab_missing[*]} " == *" pgvector "* ]] && printf '    docker start pgvector\n'
+    [[ " ${_lab_missing[*]} " == *app_llm_homelab-* ]] && printf '    cd ~/devops-lab/ai-labs/app_llm_homelab && bash docker_lab.sh up -d\n'
+    printf '    Po zmene kodu: bash docker_lab.sh build app judge && bash docker_lab.sh up -d\n'
+  fi
+  printf '\n'
+  unset _lab_missing _c _st
+else
+  printf '  DOCKER STAV: docker nie je dostupny (spusti docker / skontroluj prava)\n\n'
+fi
 BANNER
 LAB_BANNER_SOURCE='[[ -r "$HOME/.config/ai-lab/login-banner.sh" ]] && source "$HOME/.config/ai-lab/login-banner.sh"'
 touch "$HOME/.bashrc"
