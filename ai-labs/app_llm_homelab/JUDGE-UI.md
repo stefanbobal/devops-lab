@@ -135,3 +135,11 @@ Staré invalid pokusy ostávajú v histórii. Po aktualizácii oboch image pripr
 Verzia `judge-validation-v4` posiela do Ollamy celú typovanú JSON schému namiesto samotného `format: json`. Pole critical_error je v schéme boolean, všetky skóre a kritické zistenia sú povinné polia. Bez schválených referencií je technická klasifikácia obmedzená na unverified. Aj prompt vysvetľuje rozdiel medzi skutočnou hodnotou a popisom typu. Kontroly zmyslu, doslovných citácií a C1–C4 ostávajú vo validátore; neznámu hodnotu kritickej chyby nekonvertujeme na false. Typovaný formát rieši štruktúru, nie vecnú správnosť posudku. [Ollama structured outputs](https://docs.ollama.com/capabilities/structured-outputs).
 
 Priebeh neprekresľuje nezmenenú históriu. Pri zmenách zachová otvorenie aj zatvorenie panelov podľa stabilnej identity dávky/volania. Pri každom poslednom volaní možno rozbaliť Pôvodný výstup sudcu a načítať uložený raw_output cez lokálny GET /api/judge/output?id=UUID. Tento krok iba číta už uložený text, nespúšťa LLM; text sa vkladá bezpečne ako text a zostáva načítaný aj pri ďalšej obnove. Funguje aj pre staré invalid pokusy.
+
+## Platné posudky a história pokusov pri konkrétnej odpovedi
+
+Tlačidlo Načítať posudky do aplikácie iba číta uložené výsledky z PostgreSQL, neimportuje ich znovu a nespúšťa model. Filter Iba odpovede s platným posudkom judge vyberá iba odpovede, pri ktorých existuje completed pokus s použiteľným posudkom. Samotný invalid/error/running pokus na zaradenie nestačí.
+
+Pri odpovedi sa predvolene zobrazí jej najnovší platný posudok, nie automaticky prvý alebo posledný ľubovoľný pokus. Výber Posudok pre túto odpoveď LLM ukazuje model sudcu, dátum/čas v Europe/Prague, stav a ID jednotlivých pokusov. Ak je platný posudok starší než posledný neúspešný pokus, rozhranie to výslovne oznámi. Neplatné pokusy ostávajú dostupné na kontrolu, ale ich skóre nemožno prevziať. Prevzatie návrhov vždy používa práve vybraný platný posudok. Prepnutie histórie nemení neuložené ručné skóre.
+
+Platný posudok inej odpovede ani iného behu sa nepriraďuje automaticky: rovnaký názov scenára nestačí. Identitou je konkrétna odpoveď podľa run_id a call_id. Ak odpoveď nemá platný pokus, UI to uvedie a nedosadí hodnotenie z inej odpovede. Staré chybné pokusy netreba mazať.

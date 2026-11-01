@@ -7,3 +7,5 @@
 .judge-columns>section{min-width:0}.judge-control select{max-width:none}
 
 .judge-raw{white-space:pre-wrap;overflow-wrap:anywhere;width:min(560px,60vw);max-height:320px;overflow:auto;font-size:11px;padding:12px;background:#121827;border:1px solid var(--border);border-radius:8px}.judge-batch td details{white-space:normal;margin-top:8px}.judge-batch td details button{margin-top:8px}
+
+.judge-attempts{border:1px solid var(--border);border-radius:10px;padding:16px;margin:20px 0}.judge-attempts select{width:100%;max-width:none;margin-top:8px}.review-toolbar{flex-wrap:wrap}

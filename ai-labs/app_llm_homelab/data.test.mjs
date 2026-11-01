@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {csvParse,csvExport,importDataset,number,summarize,quality,pairedComparisons,pearson} from './data.mjs';
+import {csvParse,csvExport,importDataset,number,summarize,quality,pairedComparisons,pearson,validJudge,selectedJudge,orderedJudges} from './data.mjs';
 test('CSV handles multiline answers, escaped quotes, BOM, CRLF and roundtrip',()=>{
  const rows=[{call_id:'a',answer:'Text, "quote"\nand another line',estimated_cost_usd:''}];
  assert.deepEqual(csvParse(csvExport(rows,['call_id','answer','estimated_cost_usd'])),rows);
@@ -39,4 +39,20 @@ test('database transport preserves names and database run identity for review wr
  const d=importDataset([{path:'database/id/manifest.json',text:JSON.stringify({...manifest,_database_id:dbId,_database_name:'rag-development'})},{path:'database/id/calls/a.json',text:JSON.stringify(call)}]);
  assert.equal(d.records[0].db_run_id,dbId);assert.equal(d.records[0].run_name,'rag-development');
  assert.equal(d.records[0].run_id,manifest.fingerprint+':'+manifest.created_at);
+});
+
+test('judge selection uses latest valid result, preserves explicit history choice and never treats invalid as valid',()=>{
+ const result={summary:'Valid assessment',steps:[]};
+ const old={job_id:'old',status:'invalid',created_at:'2026-11-01T10:00:00Z',result:null};
+ const good={job_id:'good',status:'completed',created_at:'2026-11-01T11:00:00Z',result};
+ const newerBad={job_id:'bad',status:'invalid',created_at:'2026-11-01T12:00:00Z',result:null};
+ assert.equal(selectedJudge([old,good,newerBad]).job_id,'good');
+ assert.equal(selectedJudge([old,good,newerBad],'old').job_id,'old');
+ assert.equal(orderedJudges([old,good,newerBad])[0].job_id,'bad');
+ assert.equal(validJudge(newerBad),false);assert.equal(validJudge(good),true);
+ assert.equal(selectedJudge([old,newerBad]).job_id,'bad');
+ assert.equal(selectedJudge([]),null);
+});
+test('completed without usable result is not a valid judge assessment',()=>{
+ for(const result of [null,{},[],{summary:'',steps:[]}])assert.equal(validJudge({status:'completed',result}),false);
 });

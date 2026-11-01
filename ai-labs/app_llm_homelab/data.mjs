@@ -1,4 +1,7 @@
 export const SCORE_FIELDS = ['relevance_0_2','evidence_0_2','citations_0_2','uncertainty_0_2','actionability_0_2'];
+export function validJudge(job){return job?.status==='completed'&&!!job.result&&typeof job.result.summary==='string'&&!!job.result.summary.trim()&&Array.isArray(job.result.steps);}
+export function orderedJudges(jobs=[]){return [...jobs].sort((a,b)=>(Date.parse(b.created_at)||0)-(Date.parse(a.created_at)||0)||String(b.job_id||'').localeCompare(String(a.job_id||'')));}
+export function selectedJudge(jobs=[],preferredId=null){const ordered=orderedJudges(jobs);return ordered.find(j=>preferredId&&j.job_id===preferredId)||ordered.find(validJudge)||ordered[0]||null;}
 export function number(v) { if (v === null || v === undefined || String(v).trim()==='') return null; const n=Number(v); return Number.isFinite(n)?n:null; }
 export function csvParse(text) {
   text=text.replace(/^\uFEFF/,''); const rows=[]; let row=[], cell='', quoted=false;
