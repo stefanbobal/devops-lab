@@ -43,7 +43,7 @@ Výsledkom je stručné odporúčanie `mostly_suitable`, `needs_review` alebo `p
 
 Schválené podklady možno pridať do `judge_references.json`: položka potrebuje `id`, `url`, `text` s presným overeným výňatkom a `approved: true`. Do hodnotenia idú iba schválené položky. Tvrdenie `supported`/`incorrect` bez existujúceho ID a doslovného výňatku validátor označí ako `unverified`, odstráni nepodložené referencie a pripojí viditeľné upozornenie; inak platný posudok zachová. Pôvodný výstup zostáva uložený. Samotná existencia citácie stále negarantuje, že ju judge správne interpretoval. Po zmene podkladov znovu zostav image; hash a verzia rozlíšia nový experiment.
 
-Rubriky pre šesť aktuálnych DEV scenárov sú v `judge_rubrics.json`. Sú to počiatočné pravidlá na kontrolu a kalibráciu, nie nezávislý gold standard. Súčasná sada obsahuje už obohatené incidenty; jej výsledky nepreukazujú schopnosť vyšetrovať surové SolMan alerty. Nové scenáre vyžadujú vlastnú rubriku.
+Aktuálna rubrika `sap-oracle-general-v3` obsahuje iba tri hodnotiace sekcie: `general`, `critical_error_rules` a `score_anchors`. Nemá `scenarios`, `first_checks`, `later_checks` ani `avoid` a nepredpisuje správny diagnostický postup pre jednotlivé prípady. Rovnaké pravidlá sa použijú na každú odpoveď. Nový scenár nevyžaduje doplniť očakávané riešenie. Identifikátor prípadu slúži iba na aplikáciu výslovne ohraničeného pravidla C2. Pôvodné posudky s rubrikou v2 zostávajú historickými výsledkami podľa vtedajšieho zadania; nie sú novým hodnotením podľa všeobecnej rubriky.
 
 ## Nasadenie na Ubuntu VM
 
@@ -71,7 +71,7 @@ bash docker_lab.sh run --rm judge \
   --runs rag-dev-2026-10-31-v2,no-history-dev-2026-11-01
 ```
 
-Plán číta DB, overí rubriky a vyberie 20 úspešných odpovedí, stratifikovane podľa šiestich scenárov a oboch režimov; výber uprednostňuje rôzne LLM. Nejde o presné párovanie rovnakého LLM medzi režimami ani reprezentatívny odhad kvality všetkých 480 odpovedí. Je to kontrola judge. Smoke beh zámerne nevyberáme. Technické chyby pôvodného testu judge nehodnotí ako zlú diagnózu.
+Plán číta DB a vyberie 20 úspešných odpovedí, stratifikovane podľa šiestich scenárov a oboch režimov; výber uprednostňuje rôzne LLM. Nejde o presné párovanie rovnakého LLM medzi režimami ani reprezentatívny odhad kvality všetkých 480 odpovedí. Je to kontrola judge. Smoke beh zámerne nevyberáme. Technické chyby pôvodného testu judge nehodnotí ako zlú diagnózu.
 
 ### Ručné ohodnotenie tých istých 20 odpovedí
 

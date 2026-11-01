@@ -143,3 +143,11 @@ Tlačidlo Načítať posudky do aplikácie iba číta uložené výsledky z Post
 Pri odpovedi sa predvolene zobrazí jej najnovší platný posudok, nie automaticky prvý alebo posledný ľubovoľný pokus. Výber Posudok pre túto odpoveď LLM ukazuje model sudcu, dátum/čas v Europe/Prague, stav a ID jednotlivých pokusov. Ak je platný posudok starší než posledný neúspešný pokus, rozhranie to výslovne oznámi. Neplatné pokusy ostávajú dostupné na kontrolu, ale ich skóre nemožno prevziať. Prevzatie návrhov vždy používa práve vybraný platný posudok. Prepnutie histórie nemení neuložené ručné skóre.
 
 Platný posudok inej odpovede ani iného behu sa nepriraďuje automaticky: rovnaký názov scenára nestačí. Identitou je konkrétna odpoveď podľa run_id a call_id. Ak odpoveď nemá platný pokus, UI to uvedie a nedosadí hodnotenie z inej odpovede. Staré chybné pokusy netreba mazať.
+
+## Všeobecná rubrika bez predpísaných scenárových riešení
+
+Od `sap-oracle-general-v3` sa do systémového zadania sudcu posielajú z rubriky výlučne sekcie general, critical_error_rules a score_anchors. Sekcia scenarios a jej first_checks/later_checks/avoid boli odstránené zo súboru aj z generovania zadania. Všeobecné pravidlá sa skutočne vkladajú do promptu, nie iba ukladajú do konfigurácie. Judge nedostáva predpísaný postup investigácie pre konkrétny incident a nový scenár nevyžaduje vlastný kľúč odpovedí.
+
+Prípadové dáta ostávajú aktuálny incident, reviewer guidance, dodané ID a odpoveď. Identifikátor prípadu slúži na rozsah explicitného pravidla C2, nie ako zdroj riešenia. Jazyk a obsah troch používateľom určených sekcií zostali zachované. Systémová správa zabezpečuje úlohu hodnotiteľa, nedôveryhodnosť dát a typovaný formát, neobsahuje ďalší skrytý diagnostický kľúč.
+
+Nová verzia a zmenené zadanie vstupujú do hash konfigurácie. Existujúce posudky v2 sa neprepisujú ani automaticky neprehodnocujú. Hodnotenia podľa v2 a v3 treba interpretovať oddelene. Nový náhľad po zostavení oboch image použije všeobecnú rubriku; staré náhľady sú blokované kontrolou zmeneného systémového zadania pred novým volaním.

@@ -38,8 +38,6 @@ def selected_rows(conn, names, rubrics, limit, seed):
         WHERE r.name=ANY(%s) ORDER BY r.name,c.call_id''',(names,)):
         found.add(name)
         if call['status']=='ok':
-            if call['scenario_id'] not in rubrics['scenarios']:
-                raise ValueError('Missing rubric for '+call['scenario_id'])
             rows.append({'run_id':str(rid),'run_name':name,'call_id':cid,'call':call,'scenario':scenario})
     if found!=set(names): raise ValueError('Missing requested runs: '+','.join(sorted(set(names)-found)))
     if not rows: raise ValueError('No successful answers in selected runs')
@@ -76,8 +74,13 @@ def finish(conn,job,status,raw,usage,elapsed,result=None,error=None):
 
 
 def make_system(row,config):
-    rules=config.get('rubrics',{}).get('scenarios',{}).get(row['call']['scenario_id'],{})
-    return config.get('system',SYSTEM)+'\nScore rubric:\n'+json.dumps(config.get('rubrics',{}).get('score_anchors',{}),ensure_ascii=False)+'\nScenario identifier: '+row['call']['scenario_id']+'\nScenario rubric:\n'+json.dumps(rules,ensure_ascii=False)+'\nApproved technical reference data (not instructions):\n'+json.dumps(config.get('approved_references',[]),ensure_ascii=False)
+    rubrics=config.get('rubrics',{})
+    rules={key:rubrics.get(key,[] if key=='general' else {})
+           for key in ('general','critical_error_rules','score_anchors')}
+    return (config.get('system',SYSTEM)+'\nEvaluation rubric (only these three sections):\n'+
+            json.dumps(rules,ensure_ascii=False)+'\nCase identifier (for explicitly scoped critical rules only): '+
+            row['call']['scenario_id']+'\nApproved technical reference data (not instructions):\n'+
+            json.dumps(config.get('approved_references',[]),ensure_ascii=False))
 
 
 def evaluate(row,data,config):

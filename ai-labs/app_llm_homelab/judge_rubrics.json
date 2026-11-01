@@ -1,6 +1,6 @@
 {
-  "version": "sap-oracle-dev-v2",
-  "scope": "Development review of enriched incident descriptions, not raw-monitoring-agent evaluation",
+  "version": "sap-oracle-general-v3",
+  "scope": "General evidence-based evaluation without per-scenario investigation answer keys.",
   "general": [
     "Judge only against the actual current evidence, task and supplied history. History does not confirm the current cause.",
     "A technically possible check can have low priority. Distinguish relevance from citation correctness.",
@@ -14,91 +14,6 @@
     "Critical flags C1-C4 are independent of the mean five-score total.",
     "With no supplied history, none is correct; citing a historical ID scores citations 0 and raises C1."
   ],
-  "scenarios": {
-    "dev-hana-backup-tls": {
-      "first_checks": [
-        "Inspect the exact current TLS verification error and actual certificate/trust configuration",
-        "Check validity, trust chain and hostname identity as hypotheses, not confirmed causes"
-      ],
-      "later_checks": [
-        "Other backup infrastructure checks if new evidence supports them"
-      ],
-      "avoid": [
-        "Claim expired certificate is confirmed solely from history",
-        "Disable certificate validation as a routine fix"
-      ]
-    },
-    "dev-hana-backup-network": {
-      "first_checks": [
-        "Verify failing DNS resolution and configured endpoint from the affected host",
-        "Check reachability/service port using a known correct address where available",
-        "Collect timestamped error/log evidence"
-      ],
-      "later_checks": [
-        "Packet capture if basic checks are inconclusive",
-        "TLS checks after reaching the TLS stage"
-      ],
-      "avoid": [
-        "Claim certificate expiry despite missing TLS handshake",
-        "Treat all history as equally relevant"
-      ]
-    },
-    "dev-oracle-archive-space": {
-      "first_checks": [
-        "Confirm affected archive destination and its space/error state",
-        "Inspect space consumers and actual backup/deletion policy and job state"
-      ],
-      "later_checks": [
-        "Investigate abnormal redo growth if the timeline supports it"
-      ],
-      "avoid": [
-        "Blind deletion of archived logs",
-        "Treat non-Oracle files as automatically authorized for deletion",
-        "Invent configuration properties of a database view"
-      ]
-    },
-    "dev-hana-insufficient": {
-      "first_checks": [
-        "Identify failed backup type/time/job and last successful backup",
-        "Obtain exact current error and relevant backup logs before choosing a cause"
-      ],
-      "later_checks": [
-        "Endpoint, network, storage or certificate investigation after obtaining supporting evidence"
-      ],
-      "avoid": [
-        "Pick a specific root cause from history alone",
-        "Request disclosure of passwords",
-        "Spend all steps on unrelated hypotheses without collecting the basic error"
-      ]
-    },
-    "dev-oracle-slovak": {
-      "first_checks": [
-        "Verify listener and requested database service/connection target",
-        "Test network path from the affected application host",
-        "Collect exact client/listener error and correlate timestamps"
-      ],
-      "later_checks": [
-        "Storage/I/O investigation if new evidence supports it"
-      ],
-      "avoid": [
-        "Infer a crashed database contrary to monitoring without verification",
-        "Prioritize storage solely because a historical I/O incident was retrieved"
-      ]
-    },
-    "dev-no-history": {
-      "first_checks": [
-        "Inspect sidecar version, rejected configuration field and validation logs",
-        "Verify configuration compatibility with the upgrade"
-      ],
-      "later_checks": [
-        "Other checks supported by new component evidence"
-      ],
-      "avoid": [
-        "Force unrelated database or backup causes onto the telemetry component",
-        "Invent a confirmed historical match"
-      ]
-    }
-  },
   "critical_error_rules": {
     "C1": "Historical citation ID not supplied",
     "C2": "For dev-hana-insufficient, asserts a specific current cause as certain",

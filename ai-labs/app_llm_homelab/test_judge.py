@@ -29,6 +29,27 @@ class JudgeTests(unittest.TestCase):
         self.assertNotIn('review',self.data)
         self.assertEqual(set(self.data),{'current_incident','review_guidance','retrieved_ids','candidate_answer'})
 
+    def test_rubric_has_only_general_evaluation_sections(self):
+        rubrics=read_json(BASE/'judge_rubrics.json')
+        self.assertEqual(set(rubrics)-{'version','scope'},{'general','critical_error_rules','score_anchors'})
+        self.assertEqual(set(rubrics['critical_error_rules']),{'C1','C2','C3','C4'})
+
+    def test_system_passes_all_general_rules_and_excludes_scenario_answer_keys(self):
+        from judge_worker import make_system
+        rubrics=read_json(BASE/'judge_rubrics.json')
+        injected=dict(rubrics,scenarios={'dev-hana-backup-network':{'first_checks':['UNWANTED_SCENARIO_CHECK']}})
+        text=make_system(self.row,dict(rubrics=injected,approved_references=[]))
+        self.assertNotIn('UNWANTED_SCENARIO_CHECK',text)
+        self.assertNotIn('first_checks',text)
+        encoded=text.split('Evaluation rubric (only these three sections):\n',1)[1].split('\nCase identifier',1)[0]
+        supplied=json.loads(encoded)
+        self.assertEqual(supplied,{key:rubrics[key] for key in ('general','critical_error_rules','score_anchors')})
+
+    def test_new_scenario_does_not_require_predefined_investigation_steps(self):
+        rubrics=read_json(BASE/'judge_rubrics.json')
+        data=packet(dict(self.call,scenario_id='new-incident-without-answer-key'),{'incident':'A new alert'},rubrics,{'references':[]})
+        self.assertEqual(data['current_incident'],'A new alert')
+
     def test_accepts_unknown_technical_without_inventing_score(self):
         self.assertEqual(validate_result(json.dumps(self.result),self.data)['suggested_scores'],dict.fromkeys(SCORES))
 
@@ -197,7 +218,7 @@ class JudgeTests(unittest.TestCase):
                     calls.append(('rid',mode,call['call_id'],call,{'incident':'Test'}))
         calls.sort(key=lambda row:(row[1],row[2]))
         conn=MagicMock();conn.execute.return_value=calls
-        worker=selected_rows(conn,['rag','no_history'],{'scenarios':{str(i):{} for i in range(6)}},20,42)
+        worker=selected_rows(conn,['rag','no_history'],{'general':[],'critical_error_rules':{},'score_anchors':{}},20,42)
         ui=sample_rows([dict(run_id=r,run_name=n,call_id=c,call=x) for r,n,c,x,s in calls],20,42)
         self.assertEqual([r['call_id'] for r in worker],[r['call_id'] for r in ui])
         self.assertEqual(len(ui),20)

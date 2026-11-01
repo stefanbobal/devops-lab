@@ -155,7 +155,7 @@ class ControlTests(unittest.TestCase):
         with patch.dict(sys.modules,{'psycopg.types.json':JSON_MODULE}):control.plan(conn,self.settings())
         config=conn.writes[0][1][2];item=conn.writes[1][1][-1]
         self.assertEqual(set(item['packet']),{'current_incident','review_guidance','retrieved_ids','candidate_answer'})
-        self.assertEqual(config['rubrics_version'],'sap-oracle-dev-v2')
+        self.assertEqual(config['rubrics_version'],'sap-oracle-general-v3')
         self.assertNotIn('api_key',json.dumps(config))
 
     def test_browser_origin_and_payload_guard_for_paid_routes(self):
