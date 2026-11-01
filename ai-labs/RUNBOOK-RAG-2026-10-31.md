@@ -190,10 +190,21 @@ Ak máš zámerne iný názov Azure deploymentu, over jeho skutočný model a up
 porovnania aj zodpovedajúci kľúč cenníka pred začatím behu.
 Nezamieňaj názov deploymentu s názvom podkladového modelu.
 
-### Prítomnosť cloudovej konfigurácie
+### Cloudová konfigurácia — úspešnú kontrolu neopakuj
 
-Pre plnú cloudovú maticu over prítomnosť nastavení bez vypisovania kľúčov.
-Pri čisto lokálnom teste tento cloudový blok vynechaj a použi lokálnu vetvu nižšie.
+**Ak už v aktuálnom prostredí prešlo `bash lab.sh --cloud` s výstupom
+`Completed: 8 passed, 0 failed.` a `Lab ready.`, celý nasledujúci Python blok preskoč.**
+Prítomnosť potrebnej konfigurácie aj skutočné spojenie s cloudovými službami už boli
+overené. Kontrolu neopakuj, pokiaľ nezmeníš prostredie, prihlasovanie alebo modely.
+
+Tento úspech pokrýva Docker, spojenie s PostgreSQL/pgvector, dostupnosť Ollamy,
+dva cloudové embedding profily a šesť cloudových LLM. Zobrazené názvy modelov
+porovnaj s plánom testu. Nemusíš znova spúšťať ani samostatné `python check_cloud.py`.
+
+**Voliteľná diagnostika pri chýbajúcej konfigurácii:** blok nižšie použi iba ak
+cloudová kontrola ešte neprešla a potrebuješ overiť prítomnosť nastavení bez
+ďalších platených volaní. Nie je to ďalší povinný krok.
+Pri čisto lokálnom teste celú cloudovú časť vynechaj.
 
 ```bash
 python - <<'PY'
@@ -209,7 +220,10 @@ print("Presence check OK; actual authentication is checked by smoke calls.")
 PY
 ```
 
-Samotná prítomnosť nastavení nepotvrdzuje funkčné prihlásenie — to overia volania nižšie.
+Samotný tento diagnostický blok overuje iba prítomnosť nastavení.
+Úspešné `lab.sh --cloud` overuje aj skutočné cloudové volania.
+Stále pokračuj kontrolou DB tabuliek, GPU a meraným RAG smoke testom v ďalších krokoch:
+`check_cloud.py` používa jednoduchý provider, nie adaptér `llm_metrics.py`.
 
 ### Prevádzkové nastavenia terminálu
 
