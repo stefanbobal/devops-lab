@@ -1,8 +1,5 @@
 # LLM Homelab · Experiment Studio
 
-Podrobná architektúra, fungovanie, dátový model a návrh využitia pre bankového agenta:
-[APP-LLM-HOMELAB.md](../APP-LLM-HOMELAB.md).
-
 Lokálna aplikácia v HTML, CSS a JavaScripte na analýzu RAG/LLM behov.
 **Odporúčané nasadenie: jeden Docker image pre rozhranie aj Python API.**
 Použi [DOCKER.md](DOCKER.md): build, import existujúcich výsledkov do PostgreSQL,
@@ -13,6 +10,8 @@ cez Python API — postup v [DATABASE.md](DATABASE.md). Pri tomto režime netreb
 kopírovať z VM do Windowsu. Nižšie je pôvodný samostatný súborový režim.
 Samostatný priečinok vedľa `code`; benchmark skripty sa nemenia.
 Žiadny build, framework, CDN, prihlasovanie, platené volania ani upload výsledkov na server.
+
+**Asistované hodnotenie:** samostatný Docker worker, pilot 20 odpovedí a posudky po krokoch — [JUDGE.md](JUDGE.md). Pôvodné ručné skóre sa automaticky nemení.
 
 ## Spustenie
 

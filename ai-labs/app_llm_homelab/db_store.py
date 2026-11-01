@@ -188,11 +188,15 @@ def import_runs(conn, runs, reviewer="sapops"):
 
 def dataset(conn, reviewer="sapops"):
     files = []
+    pilot_rows=[]
+    pilot_names=os.getenv('JUDGE_PILOT_RUNS','rag-dev-2026-10-31-v2,no-history-dev-2026-11-01').split(',')
     for rid, name, manifest in conn.execute("SELECT id,name,manifest FROM llm_eval.runs ORDER BY imported_at,id"):
         prefix = "database/" + str(rid)
         manifest = {**manifest, "_database_id": str(rid), "_database_name": name}
         files.append(dict(path=prefix+"/manifest.json", text=canonical(manifest)))
         for cid, call in conn.execute("SELECT call_id,data FROM llm_eval.calls WHERE run_id=%s ORDER BY call_id", (rid,)):
+            if name in pilot_names:
+                pilot_rows.append(dict(run_id=str(rid),run_name=name,call_id=cid,call=call))
             # IDs in virtual paths are encoded to avoid interpreting embedded separators.
             files.append(dict(path=prefix+"/calls/"+hashlib.sha256(cid.encode()).hexdigest()+".json", text=canonical(call)))
         for key, context in conn.execute("SELECT context_key,data FROM llm_eval.contexts WHERE run_id=%s", (rid,)):
@@ -206,7 +210,24 @@ def dataset(conn, reviewer="sapops"):
             writer.writeheader()
             writer.writerows(reviews)
             files.append(dict(path=prefix+"/quality_review.csv", text=buf.getvalue()))
-    return {"files": files, "reviewer": reviewer}
+    judges=[]
+    # Additive rollout: an existing dashboard works before judge tables are created.
+    if conn.execute("SELECT to_regclass('llm_eval.judge_jobs')").fetchone()[0] is not None:
+        for rid,cid,jid,state,config,usage,elapsed,cost,error,created,result,inputs in conn.execute('''
+            SELECT j.run_id,j.call_id,j.id,j.status,j.config,j.usage,j.elapsed_s,
+                   j.estimated_cost_usd,j.error,j.created_at,e.data,j.input_data
+            FROM llm_eval.judge_jobs j LEFT JOIN llm_eval.judge_evaluations e ON e.job_id=j.id
+            ORDER BY j.created_at DESC,j.id'''):
+            judges.append(dict(run_id=str(rid),call_id=cid,job_id=str(jid),status=state,
+                config={k:config.get(k) for k in ('provider','model','model_digest','rubrics_version','references_version')},
+                usage=usage,elapsed_s=elapsed,estimated_cost_usd=cost,error=error,
+                created_at=created.isoformat(),result=result,
+                references=config.get('approved_references',[])))
+    from judge_core import sample_rows, digest
+    selected=sample_rows(sorted(pilot_rows,key=lambda r:(r['run_name'],r['call_id'])),20,42)
+    selection=[dict(run_id=r['run_id'],call_id=r['call_id']) for r in selected]
+    return {"files": files, "reviewer": reviewer, "judge_evaluations":judges,
+            "judge_pilot":{"size":20,"seed":42,"runs":pilot_names,"selection":selection,"selection_hash":digest(selection)}}
 
 
 def save_review(conn, raw, reviewer="sapops"):

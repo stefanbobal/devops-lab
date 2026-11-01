@@ -5,6 +5,10 @@ v [app_llm_homelab](app_llm_homelab/) a návrh jej ďalšieho využitia.
 Časti označené **plán** zatiaľ nie sú implementované.
 Aplikácia je lokálny nástroj domáceho labu, nie produkčná banková platforma.
 
+## LLM judge: doplnenie z 1. novembra 2026
+
+Samostatný kontajner `judge` číta úspešné odpovede z PostgreSQL a hodnotí jednotlivé kroky cez lokálnu Ollamu. Posudky majú vlastné tabuľky a dashboard ich zobrazuje oddelene od ľudských skóre. Predvolený pilot má 20 odpovedí; najprv sa vykonajú iba dve. Bez schválených technických referencií ostáva technická správnosť neoverená. Presný postup, limity a príkazy sú v [app_llm_homelab/JUDGE.md](app_llm_homelab/JUDGE.md). Toto nie je implementácia bankového agenta.
+
 ## 1. Na čo aplikácia slúži dnes
 
 LLM Homelab spája výsledky experimentov do jedného rozhrania:

@@ -9,6 +9,7 @@ services:
     environment:
       LLM_EVAL_PG_DSN: "${LLM_EVAL_PG_DSN:?Set LLM_EVAL_PG_DSN in app .env}"
       LAB_REVIEWER: "${LAB_REVIEWER:-sapops}"
+      JUDGE_PILOT_RUNS: "${JUDGE_PILOT_RUNS:-rag-dev-2026-10-31-v2,no-history-dev-2026-11-01}"
     volumes:
       - "${LLM_RESULTS_DIR:-../code/results}:/results:ro"
     networks:
@@ -27,6 +28,27 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+  judge:
+    profiles: [judge]
+    image: llm-homelab-judge:local
+    build:
+      context: .
+      dockerfile: Dockerfile.judge
+    user: "${LAB_UID:-10001}:${LAB_GID:-10001}"
+    init: true
+    environment:
+      LLM_EVAL_PG_DSN: "${LLM_EVAL_PG_DSN:?Set LLM_EVAL_PG_DSN in app .env}"
+      JUDGE_OLLAMA_HOST: "${JUDGE_OLLAMA_HOST:-http://192.168.178.25:11434}"
+      JUDGE_MODEL: "${JUDGE_MODEL:-gemma3:27b}"
+      LAB_REVIEWER: "${LAB_REVIEWER:-sapops}"
+    networks: [lab]
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    restart: "no"
 networks:
   lab:
     external: true

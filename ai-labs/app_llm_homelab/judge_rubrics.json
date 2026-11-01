@@ -1,0 +1,136 @@
+{
+  "version": "sap-oracle-dev-v2",
+  "scope": "Development review of enriched incident descriptions, not raw-monitoring-agent evaluation",
+  "general": [
+    "Judge only against the actual current evidence, task and supplied history. History does not confirm the current cause.",
+    "A technically possible check can have low priority. Distinguish relevance from citation correctness.",
+    "Do not reward verbosity or brevity by itself. At most three steps was requested, not three large runbooks.",
+    "Do not infer that a missing symptom has been ruled out unless the input says so.",
+    "For no-history mode do not penalize absence of historical citations.",
+    "Technical correctness is unverified without a supporting approved reference excerpt. Model memory is not a verified reference.",
+    "Suggested scores are proposals for human review, never ground truth. Leave unverifiable dimensions null.",
+    "Evidence is the main facts-versus-hypotheses score; uncertainty only assesses missing verification.",
+    "More than three top-level steps caps actionability at 1. Length alone earns no credit.",
+    "Critical flags C1-C4 are independent of the mean five-score total.",
+    "With no supplied history, none is correct; citing a historical ID scores citations 0 and raises C1."
+  ],
+  "scenarios": {
+    "dev-hana-backup-tls": {
+      "first_checks": [
+        "Inspect the exact current TLS verification error and actual certificate/trust configuration",
+        "Check validity, trust chain and hostname identity as hypotheses, not confirmed causes"
+      ],
+      "later_checks": [
+        "Other backup infrastructure checks if new evidence supports them"
+      ],
+      "avoid": [
+        "Claim expired certificate is confirmed solely from history",
+        "Disable certificate validation as a routine fix"
+      ]
+    },
+    "dev-hana-backup-network": {
+      "first_checks": [
+        "Verify failing DNS resolution and configured endpoint from the affected host",
+        "Check reachability/service port using a known correct address where available",
+        "Collect timestamped error/log evidence"
+      ],
+      "later_checks": [
+        "Packet capture if basic checks are inconclusive",
+        "TLS checks after reaching the TLS stage"
+      ],
+      "avoid": [
+        "Claim certificate expiry despite missing TLS handshake",
+        "Treat all history as equally relevant"
+      ]
+    },
+    "dev-oracle-archive-space": {
+      "first_checks": [
+        "Confirm affected archive destination and its space/error state",
+        "Inspect space consumers and actual backup/deletion policy and job state"
+      ],
+      "later_checks": [
+        "Investigate abnormal redo growth if the timeline supports it"
+      ],
+      "avoid": [
+        "Blind deletion of archived logs",
+        "Treat non-Oracle files as automatically authorized for deletion",
+        "Invent configuration properties of a database view"
+      ]
+    },
+    "dev-hana-insufficient": {
+      "first_checks": [
+        "Identify failed backup type/time/job and last successful backup",
+        "Obtain exact current error and relevant backup logs before choosing a cause"
+      ],
+      "later_checks": [
+        "Endpoint, network, storage or certificate investigation after obtaining supporting evidence"
+      ],
+      "avoid": [
+        "Pick a specific root cause from history alone",
+        "Request disclosure of passwords",
+        "Spend all steps on unrelated hypotheses without collecting the basic error"
+      ]
+    },
+    "dev-oracle-slovak": {
+      "first_checks": [
+        "Verify listener and requested database service/connection target",
+        "Test network path from the affected application host",
+        "Collect exact client/listener error and correlate timestamps"
+      ],
+      "later_checks": [
+        "Storage/I/O investigation if new evidence supports it"
+      ],
+      "avoid": [
+        "Infer a crashed database contrary to monitoring without verification",
+        "Prioritize storage solely because a historical I/O incident was retrieved"
+      ]
+    },
+    "dev-no-history": {
+      "first_checks": [
+        "Inspect sidecar version, rejected configuration field and validation logs",
+        "Verify configuration compatibility with the upgrade"
+      ],
+      "later_checks": [
+        "Other checks supported by new component evidence"
+      ],
+      "avoid": [
+        "Force unrelated database or backup causes onto the telemetry component",
+        "Invent a confirmed historical match"
+      ]
+    }
+  },
+  "critical_error_rules": {
+    "C1": "Historical citation ID not supplied",
+    "C2": "For dev-hana-insufficient, asserts a specific current cause as certain",
+    "C3": "Intervention forbidden by reviewer guidance",
+    "C4": "Historical cause asserted as confirmed for current case without current proof"
+  },
+  "score_anchors": {
+    "relevance_0_2": {
+      "0": "Hlavné kroky nesúvisia s incidentom",
+      "1": "Časť krokov sedí, ďalšie sú predčasné",
+      "2": "Prioritizuje podstatné aktuálne signály"
+    },
+    "evidence_0_2": {
+      "0": "Vymyslené fakty alebo hypotéza vydaná za istú príčinu",
+      "1": "Miestami nejasné fakty oproti hypotézam",
+      "2": "Verne rozlišuje fakty a hypotézy"
+    },
+    "citations_0_2": {
+      "0": "Cituje nedodané historické ID",
+      "1": "Čiastočne vysvetlený vzťah odkazu",
+      "2": "Pri prázdnom kontexte správne none; inak len s overeným obsahovým súladom",
+      "null": "Pri dodaných ID bez obsahu histórie sa obsahový súlad nedá overiť"
+    },
+    "uncertainty_0_2": {
+      "0": "Chýbajú potrebné ďalšie overenia",
+      "1": "Uvádza iba časť potrebných overení",
+      "2": "Jasne povie, čo ešte overiť; nepenalizuj automaticky znova chybu z Dôkazov"
+    },
+    "actionability_0_2": {
+      "0": "Nedá sa podľa toho postupovať",
+      "1": "Čiastočne použiteľné alebo viac než tri hlavné kroky",
+      "2": "Konkrétne, dobre zoradené ďalšie kontroly, najviac tri hlavné kroky"
+    }
+  }
+}
