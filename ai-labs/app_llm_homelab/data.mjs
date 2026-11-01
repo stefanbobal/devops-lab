@@ -37,11 +37,11 @@ export function importDataset(files){
   for(const {run:r,obj,priority}of candidates){const previous=r.calls.get(obj.call_id)||{};const clean=Object.fromEntries(Object.entries(obj).filter(([,v])=>v!==''&&v!==undefined));r.calls.set(obj.call_id,{...previous,...clean});if(priority===3)r.csvOnly=false;}
   const records=[],resultRuns=[];
   for(const r of runs.values()){if(!r.calls.size)continue;
-    const manifest=r.manifest; r.id=manifest?.fingerprint&&manifest?.created_at?manifest.fingerprint+':'+manifest.created_at:r.path;
+    const manifest=r.manifest; if(manifest?._database_name)r.name=manifest._database_name; r.id=manifest?.fingerprint&&manifest?.created_at?manifest.fingerprint+':'+manifest.created_at:r.path;
     if(!manifest)warnings.push(r.name+': chýba manifest; nastavenia a nezávislosť behov nevieme overiť.');
     if(r.csvOnly)warnings.push(r.name+': CSV import; úplné prompty, história alebo guidance môžu chýbať.');
     const scenarios=new Map((manifest?.scenarios||[]).map(s=>[s.id,s]));
-    for(const obj of r.calls.values()){const scenario=scenarios.get(obj.scenario_id)||{};const record={...obj,run_id:r.id,run_name:r.name,key:JSON.stringify([r.id,obj.call_id]),mode:obj.mode|| (obj.embedding_profile==='none'?'no_history':'rag'),incident:scenario.incident||obj.incident||'',review_guidance:scenario.review_guidance||obj.review_guidance||'',review:r.reviews.get(obj.call_id)||{}};records.push(record);}
+    for(const obj of r.calls.values()){const scenario=scenarios.get(obj.scenario_id)||{};const record={...obj,db_run_id:manifest?._database_id||null,run_id:r.id,run_name:r.name,key:JSON.stringify([r.id,obj.call_id]),mode:obj.mode|| (obj.embedding_profile==='none'?'no_history':'rag'),incident:scenario.incident||obj.incident||'',review_guidance:scenario.review_guidance||obj.review_guidance||'',review:r.reviews.get(obj.call_id)||{}};records.push(record);}
     resultRuns.push({...r,calls:undefined,reviews:undefined});
   }
   // Same imported run copied under another folder: one observation per run/call.

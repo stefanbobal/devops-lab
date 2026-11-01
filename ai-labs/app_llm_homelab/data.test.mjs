@@ -34,3 +34,9 @@ test('bad import is reported and cannot prevent valid records loading',()=>{
  const d=importDataset([{path:'r/calls/bad.json',text:'{'},{path:'r/calls/good.json',text:JSON.stringify(call)}]);
  assert.equal(d.records.length,1);assert.ok(d.warnings.length);assert.equal(pearson([[1,2],[2,4],[3,6]]),1);assert.equal(pearson([[1,2]]),null);
 });
+test('database transport preserves names and database run identity for review writes',()=>{
+ const dbId='00000000-0000-0000-0000-000000000001';
+ const d=importDataset([{path:'database/id/manifest.json',text:JSON.stringify({...manifest,_database_id:dbId,_database_name:'rag-development'})},{path:'database/id/calls/a.json',text:JSON.stringify(call)}]);
+ assert.equal(d.records[0].db_run_id,dbId);assert.equal(d.records[0].run_name,'rag-development');
+ assert.equal(d.records[0].run_id,manifest.fingerprint+':'+manifest.created_at);
+});

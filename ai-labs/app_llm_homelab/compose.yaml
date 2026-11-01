@@ -1,0 +1,33 @@
+services:
+  app:
+    image: llm-homelab:local
+    build: .
+    user: "${LAB_UID:-10001}:${LAB_GID:-10001}"
+    init: true
+    ports:
+      - "127.0.0.1:8008:8008"
+    environment:
+      LLM_EVAL_PG_DSN: "${LLM_EVAL_PG_DSN:?Set LLM_EVAL_PG_DSN in app .env}"
+      LAB_REVIEWER: "${LAB_REVIEWER:-sapops}"
+    volumes:
+      - "${LLM_RESULTS_DIR:-../code/results}:/results:ro"
+    networks:
+      - lab
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8008/api/health', timeout=5).read()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+networks:
+  lab:
+    external: true
+    name: llm-homelab

@@ -1,0 +1,10 @@
+.env
+.env.*
+__pycache__
+*.pyc
+.git
+results
+*.csv
+*.log
+node_modules
+test*

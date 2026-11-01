@@ -1,6 +1,13 @@
 # LLM Homelab · Experiment Studio
 
 Lokálna aplikácia v HTML, CSS a JavaScripte na analýzu RAG/LLM behov.
+**Odporúčané nasadenie: jeden Docker image pre rozhranie aj Python API.**
+Použi [DOCKER.md](DOCKER.md): build, import existujúcich výsledkov do PostgreSQL,
+spustenie kontajnera a prístup cez SSH tunel. Existujúci pgvector zostáva databázou.
+
+**PostgreSQL režim je pripravený:** import pôvodných výsledkov a trvalé hodnotenie
+cez Python API — postup v [DATABASE.md](DATABASE.md). Pri tomto režime netreba výsledky
+kopírovať z VM do Windowsu. Nižšie je pôvodný samostatný súborový režim.
 Samostatný priečinok vedľa `code`; benchmark skripty sa nemenia.
 Žiadny build, framework, CDN, prihlasovanie, platené volania ani upload výsledkov na server.
 
