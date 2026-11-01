@@ -219,7 +219,7 @@ def dataset(conn, reviewer="sapops"):
             FROM llm_eval.judge_jobs j LEFT JOIN llm_eval.judge_evaluations e ON e.job_id=j.id
             ORDER BY j.created_at DESC,j.id'''):
             judges.append(dict(run_id=str(rid),call_id=cid,job_id=str(jid),status=state,
-                config={k:config.get(k) for k in ('provider','model','model_digest','rubrics_version','references_version')},
+                config={k:config.get(k) for k in ('provider','model','model_digest','rubrics_version','references_version','pricing_date')},
                 usage=usage,elapsed_s=elapsed,estimated_cost_usd=cost,error=error,
                 created_at=created.isoformat(),result=result,
                 references=config.get('approved_references',[])))

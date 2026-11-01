@@ -1,0 +1,5 @@
+-r requirements.txt
+anthropic==2.3.0
+openai==3.40.0
+google-genai==2.33.0
+google-auth==2.62.0

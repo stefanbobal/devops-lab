@@ -8,7 +8,7 @@ from urllib.parse import urlsplit, unquote
 from db_store import BASE, connect, dataset, save_review
 
 STATIC = {"/": "index.html", "/index.html": "index.html", "/app.mjs": "app.mjs",
-          "/data.mjs": "data.mjs", "/styles.css": "styles.css"}
+          "/data.mjs": "data.mjs", "/styles.css": "styles.css", "/judge_ui.mjs":"judge_ui.mjs"}
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -58,6 +58,10 @@ class Handler(BaseHTTPRequestHandler):
                 with connect() as conn:
                     result = dataset(conn, os.getenv("LAB_REVIEWER", "sapops"))
                 self.respond(200, result)
+            elif route in ('/api/judge/options','/api/judge/batches'):
+                from judge_control import options,batches
+                with connect() as conn:result=(options if route.endswith('options') else batches)(conn)
+                self.respond(200,result)
             else:
                 self.respond(404, {"error": "Not found"})
         except Exception as exc:
@@ -68,7 +72,11 @@ class Handler(BaseHTTPRequestHandler):
         if not self.local_request():
             self.respond(403, {"error": "Local same-origin requests only"})
             return
-        if urlsplit(self.path).path != "/api/reviews":
+        route=urlsplit(self.path).path
+        if route in ('/api/judge/plan','/api/judge/start','/api/judge/stop'):
+            self.judge_post(route)
+            return
+        if route != "/api/reviews":
             self.respond(404, {"error": "Not found"})
             return
         try:
@@ -90,6 +98,23 @@ class Handler(BaseHTTPRequestHandler):
             print("DB write failed:", type(exc).__name__, flush=True)
             self.respond(503, {"error": "Review was not saved. Check database availability."})
 
+    def judge_post(self,route):
+        try:
+            size=int(self.headers.get('Content-Length','0'))
+            if not 0<size<=65536 or self.headers.get('Content-Type','').split(';')[0]!='application/json':
+                raise ValueError('Očakávaný JSON objekt do 64 KiB.')
+            raw=json.loads(self.rfile.read(size).decode('utf-8'))
+            if not isinstance(raw,dict):raise ValueError('Očakávaný JSON objekt.')
+            from judge_control import plan,start,stop
+            with connect() as conn:result={'/api/judge/plan':plan,'/api/judge/start':start,'/api/judge/stop':stop}[route](conn,raw)
+            self.respond(200,result)
+        except (ValueError,KeyError,TypeError) as exc:
+            self.respond(400,{'error':str(exc)[:500] if isinstance(exc,ValueError) else 'Neplatné parametre požiadavky.'})
+        except LookupError:self.respond(404,{'error':'Plán neexistuje.'})
+        except Exception as exc:
+            print('Judge control failed:',type(exc).__name__,flush=True)
+            self.respond(503,{'error':'Požiadavku sa nepodarilo spracovať. Skontroluj DB a službu judge.'})
+
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -101,6 +126,8 @@ def main():
         with connect() as conn:
             if conn.execute("SELECT version FROM llm_eval.schema_version").fetchall() != [(1,)]:
                 raise ValueError("Unsupported schema")
+            from judge_control import init_judge
+            init_judge(conn)
     except Exception as exc:
         raise SystemExit("Database not ready (" + type(exc).__name__ + "). Import results first; see DATABASE.md.")
     server = ThreadingHTTPServer((args.host, args.port), Handler)

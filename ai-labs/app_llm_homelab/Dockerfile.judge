@@ -1,8 +1,11 @@
 FROM python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 WORKDIR /app
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt && useradd --uid 10001 --create-home appuser
-COPY db_store.py judge_core.py judge_worker.py judge_schema.sql judge_rubrics.json judge_references.json ./
+COPY app_llm_homelab/requirements.txt app_llm_homelab/requirements-judge.txt ./
+RUN pip install --no-cache-dir -r requirements-judge.txt && useradd --uid 10001 --create-home appuser
+COPY app_llm_homelab/db_store.py app_llm_homelab/judge_core.py app_llm_homelab/judge_worker.py app_llm_homelab/judge_control.py app_llm_homelab/judge_providers.py app_llm_homelab/judge_service.py ./
+COPY app_llm_homelab/judge_schema.sql app_llm_homelab/judge_rubrics.json app_llm_homelab/judge_references.json ./
+COPY code/llm_metrics.py ./bench_metrics.py
+COPY code/llm_prices.json ./judge_prices.json
 USER appuser
 ENTRYPOINT ["python", "judge_worker.py"]

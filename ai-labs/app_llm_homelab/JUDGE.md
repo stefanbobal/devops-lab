@@ -1,9 +1,9 @@
 # LLM judge: samostatný kontajner a asistované hodnotenie
 
-Judge je dávkový Python worker v image `llm-homelab-judge:local`, služba `judge` v Compose profile `judge`. Dashboard je samostatná služba `app`, existujúci PostgreSQL kontajner `pgvector` ostáva spoločný. Worker číta už importované odpovede; pôvodný RAG test nespúšťa znova. Nemá otvorený port, cloudové kľúče ani nástroje na vykonávanie diagnostických príkazov.
+Judge je dávkový Python worker v image `llm-homelab-judge:local`, služba `judge` v Compose. Dashboard je samostatná služba `app`, existujúci PostgreSQL kontajner `pgvector` ostáva spoločný. Worker číta už importované odpovede; pôvodný RAG test nespúšťa znova. Nemá otvorený port ani nástroje na vykonávanie diagnostických príkazov. Cloudové kľúče dostáva iba worker, nikdy dashboard.
 
 ```text
-PostgreSQL: calls + scenarios → judge worker → HTTP Ollama na Windows/RTX 4090
+PostgreSQL: calls + scenarios → judge worker → Ollama alebo cloudový poskytovateľ
                                     ↓
                        judge_jobs + judge_evaluations
                                     ↓
@@ -11,6 +11,8 @@ PostgreSQL: calls + scenarios → judge worker → HTTP Ollama na Windows/RTX 40
                                     ↓ až po Uložiť hodnotenie
                            pôvodná tabuľka reviews
 ```
+
+**Spúšťanie priamo z aplikácie, lokálne aj cloudové modely:** aktuálny odporúčaný postup je v [JUDGE-UI.md](JUDGE-UI.md). Nižšie uvedené jednorazové CLI príkazy sú alternatíva; zachovávajú lokálny Ollama adaptér. Súbežne ich nepúšťaj s UI dávkou.
 
 ## Čo hodnotí
 
@@ -49,7 +51,7 @@ Existujúcich 550 odpovedí netreba znovu importovať. V priečinku aplikácie p
 
 ```bash
 cd ~/devops-lab/ai-labs/app_llm_homelab
-bash docker_lab.sh --profile judge build app judge
+bash docker_lab.sh build app judge
 bash docker_lab.sh up -d app
 ```
 
@@ -60,12 +62,12 @@ JUDGE_OLLAMA_HOST=http://192.168.178.25:11434
 JUDGE_MODEL=gemma3:27b
 ```
 
-Výpočet beží vo Windows Ollame. Judge kontajner nepotrebuje GPU passthrough. Predvolený model je jeden z už nainštalovaných lokálnych modelov; nie je kalibrovaný ako objektívny hodnotiteľ. Rovnaký model hodnotiaci vlastný výstup sa v posudku označí. Aj iné modely z rovnakej rodiny môžu mať spoločné preferencie. Pri dôležitých záveroch použi človeka a druhého hodnotiteľa. Prvá verzia má iba Ollama adaptér, cloudového judge automaticky nepoužíva.
+Výpočet beží vo Windows Ollame. Judge kontajner nepotrebuje GPU passthrough. Predvolený model je jeden z už nainštalovaných lokálnych modelov; nie je kalibrovaný ako objektívny hodnotiteľ. Rovnaký model hodnotiaci vlastný výstup sa v posudku označí. Aj iné modely z rovnakej rodiny môžu mať spoločné preferencie. Pri dôležitých záveroch použi človeka a druhého hodnotiteľa. Jednorazové CLI používa Ollamu. Trvalá služba s UI podporuje aj Anthropic, Vertex AI a Azure; platený beh sa spustí až po potvrdení v aplikácii.
 
 ### 1. Suchý plán, bez inferencie a zápisov do DB
 
 ```bash
-bash docker_lab.sh --profile judge run --rm judge \
+bash docker_lab.sh run --rm judge \
   --runs rag-dev-2026-10-31-v2,no-history-dev-2026-11-01
 ```
 
@@ -80,7 +82,7 @@ API aj worker používajú rovnaký výber: názvy dvoch behov vyššie, seed 42
 ### 2. Vytvorenie samostatných tabuliek, bez inferencie
 
 ```bash
-bash docker_lab.sh --profile judge run --rm judge \
+bash docker_lab.sh run --rm judge \
   --runs rag-dev-2026-10-31-v2,no-history-dev-2026-11-01 --init-db
 ```
 
@@ -89,7 +91,7 @@ Pridá iba `llm_eval.judge_jobs` a `llm_eval.judge_evaluations`. Nevytvára nov�
 ### 3. Najprv dve hodnotenia
 
 ```bash
-bash docker_lab.sh --profile judge run --rm judge \
+bash docker_lab.sh run --rm judge \
   --runs rag-dev-2026-10-31-v2,no-history-dev-2026-11-01 \
   --execute --max-calls 2
 ```
@@ -103,7 +105,7 @@ Počas volania na Windows skontroluj `ollama ps`: kontext má byť 16384; CPU/GP
 Ak prvé posudky dávajú zmysel, spusti rovnaký príkaz s vyšším stropom nových volaní:
 
 ```bash
-bash docker_lab.sh --profile judge run --rm judge \
+bash docker_lab.sh run --rm judge \
   --runs rag-dev-2026-10-31-v2,no-history-dev-2026-11-01 \
   --execute --max-calls 20
 ```
@@ -129,7 +131,7 @@ Dokončené, chybné aj neplatné pokusy sú uložené. Bežné opakovanie chybn
 ### 6. Porovnanie s tvojimi skóre
 
 ```bash
-bash docker_lab.sh --profile judge run --rm judge \
+bash docker_lab.sh run --rm judge \
   --runs rag-dev-2026-10-31-v2,no-history-dev-2026-11-01 --calibrate
 ```
 

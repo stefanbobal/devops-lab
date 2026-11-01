@@ -7,6 +7,8 @@ Aplikácia je lokálny nástroj domáceho labu, nie produkčná banková platfor
 
 ## LLM judge: doplnenie z 1. novembra 2026
 
+**Ovládanie priamo v aplikácii:** záložka LLM sudca umožňuje lokálne aj cloudové modely, výber behov/scenárov, náhľad, strop volaní, rozpočet a zastavenie po aktuálnom volaní. Trvalý worker číta front z PostgreSQL; kľúče zostávajú v jeho kontajneri. Presný postup nasadenia a obmedzenia odhadu ceny sú v [JUDGE-UI.md](app_llm_homelab/JUDGE-UI.md).
+
 Samostatný kontajner `judge` číta úspešné odpovede z PostgreSQL a hodnotí jednotlivé kroky cez lokálnu Ollamu. Posudky majú vlastné tabuľky a dashboard ich zobrazuje oddelene od ľudských skóre. Predvolený pilot má 20 odpovedí; najprv sa vykonajú iba dve. Bez schválených technických referencií ostáva technická správnosť neoverená. Presný postup, limity a príkazy sú v [app_llm_homelab/JUDGE.md](app_llm_homelab/JUDGE.md). Toto nie je implementácia bankového agenta.
 
 ## 1. Na čo aplikácia slúži dnes

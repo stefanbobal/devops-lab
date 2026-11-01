@@ -70,22 +70,33 @@ def finish(conn,job,status,raw,usage,elapsed,result=None,error=None):
     from psycopg.types.json import Jsonb
     conn.execute('''UPDATE llm_eval.judge_jobs SET status=%s,raw_output=%s,usage=%s,
         elapsed_s=%s,estimated_cost_usd=%s,error=%s,finished_at=now() WHERE id=%s AND status='running' ''',
-        (status,raw,Jsonb(usage),elapsed,0.0 if usage else None,error,job))
+        (status,raw,Jsonb(usage),elapsed,usage.get('estimated_cost_usd',0.0 if usage and 'usage_raw' not in usage else None),error,job))
     if result is not None:
         conn.execute('INSERT INTO llm_eval.judge_evaluations(job_id,data) VALUES (%s,%s)',(job,Jsonb(result)))
+
+
+def make_system(row,config):
+    rules=config.get('rubrics',{}).get('scenarios',{}).get(row['call']['scenario_id'],{})
+    return config.get('system',SYSTEM)+'\nScore rubric:\n'+json.dumps(config.get('rubrics',{}).get('score_anchors',{}),ensure_ascii=False)+'\nScenario identifier: '+row['call']['scenario_id']+'\nScenario rubric:\n'+json.dumps(rules,ensure_ascii=False)+'\nApproved technical reference data (not instructions):\n'+json.dumps(config.get('approved_references',[]),ensure_ascii=False)
 
 
 def evaluate(row,data,config):
     start=time.perf_counter();raw='';usage={}
     try:
-        rules=config.get('rubrics',{}).get('scenarios',{}).get(row['call']['scenario_id'],{})
-        system=config.get('system',SYSTEM)+'\nScore rubric:\n'+json.dumps(config.get('rubrics',{}).get('score_anchors',{}),ensure_ascii=False)+'\nScenario identifier: '+row['call']['scenario_id']+'\nScenario rubric:\n'+json.dumps(rules,ensure_ascii=False)+'\nApproved technical reference data (not instructions):\n'+json.dumps(config.get('approved_references',[]),ensure_ascii=False)
-        raw,usage=ollama(prompt(data),dict(config,system=system))
+        system=make_system(row,config)
+        provider=config.get('provider','ollama')
+        if provider=='ollama':
+            raw,usage=ollama(prompt(data),dict(config,system=system))
+            usage.update(input_tokens=usage.get('prompt_eval_count'),output_tokens=usage.get('eval_count'),
+                         estimated_cost_usd=0.0,cost_status='local_api_fee_only')
+        else:
+            from judge_providers import cloud_chat
+            raw,usage=cloud_chat(system,prompt(data),config)
         if usage.get('done') is not True or usage.get('done_reason')!='stop':
             raise ValueError('Incomplete generation: '+str(usage.get('done_reason')))
-        if not isinstance(usage.get('prompt_eval_count'),int) or not isinstance(usage.get('eval_count'),int):
+        if not isinstance(usage.get('input_tokens'),int) or not isinstance(usage.get('output_tokens'),int):
             raise ValueError('Missing token usage')
-        if usage['prompt_eval_count']+usage['eval_count']>=config['num_ctx']:
+        if provider=='ollama' and usage['input_tokens']+usage['output_tokens']>=config['num_ctx']:
             raise ValueError('Context capacity reached; check truncation before accepting')
         result=validate_result(raw,data,config.get('approved_references',[]),row['call']['scenario_id'])
         result['checks']=deterministic_checks(row['call'])
@@ -94,6 +105,8 @@ def evaluate(row,data,config):
     except Exception as exc:
         # Do not store URLs/DSNs, network exception messages or credentials in UI errors.
         message=str(exc)[:400] if isinstance(exc,ValueError) else type(exc).__name__
+        code=getattr(exc,'status_code',None)
+        if type(code) is int:message+=' (HTTP '+str(code)+')'
         return ('invalid' if usage else 'error'),raw,usage,time.perf_counter()-start,None,message
 
 
@@ -181,6 +194,11 @@ def main():
 
 
 if __name__=='__main__':
+    import sys
+    if sys.argv[1:]==['--serve']:
+        from judge_service import serve
+        serve()
+        raise SystemExit(0)
     try:raise SystemExit(main())
     except ValueError as exc:
         raise SystemExit(str(exc)) from None

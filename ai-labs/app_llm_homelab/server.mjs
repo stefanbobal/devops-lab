@@ -6,7 +6,7 @@ import {fileURLToPath} from 'node:url';
 const root=path.dirname(fileURLToPath(import.meta.url));
 const port=Number(process.env.PORT||8008);
 const types={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.svg':'image/svg+xml'};
-const allowed=new Set(['index.html','styles.css','app.mjs','data.mjs']);
+const allowed=new Set(['index.html','styles.css','app.mjs','data.mjs','judge_ui.mjs']);
 const server=http.createServer(async(req,res)=>{try{
   const url=new URL(req.url,'http://localhost');const filename=decodeURIComponent(url.pathname)==='/'?'index.html':decodeURIComponent(url.pathname).slice(1);
   if(!['GET','HEAD'].includes(req.method)||!allowed.has(filename)){res.writeHead(404);res.end('Not found');return;}

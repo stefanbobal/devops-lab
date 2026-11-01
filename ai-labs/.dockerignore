@@ -1,0 +1,15 @@
+**
+!app_llm_homelab/
+!app_llm_homelab/**
+!code/
+!code/llm_metrics.py
+!code/llm_prices.json
+**/.env
+**/.env.*
+**/__pycache__
+**/*.pyc
+**/test*
+**/*.csv
+**/*.log
+**/results
+**/node_modules

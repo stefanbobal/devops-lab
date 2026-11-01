@@ -9,9 +9,11 @@ spustenie kontajnera a prístup cez SSH tunel. Existujúci pgvector zostáva dat
 cez Python API — postup v [DATABASE.md](DATABASE.md). Pri tomto režime netreba výsledky
 kopírovať z VM do Windowsu. Nižšie je pôvodný samostatný súborový režim.
 Samostatný priečinok vedľa `code`; benchmark skripty sa nemenia.
-Žiadny build, framework, CDN, prihlasovanie, platené volania ani upload výsledkov na server.
+Samostatný súborový režim nepotrebuje build, framework ani CDN a nespúšťa modelové volania. Databázový režim umožňuje výslovne spustiť aj platený cloudový judge.
 
 **Asistované hodnotenie:** samostatný Docker worker, pilot 20 odpovedí a posudky po krokoch — [JUDGE.md](JUDGE.md). Pôvodné ručné skóre sa automaticky nemení.
+
+**Sudca z aplikácie:** záložka LLM sudca, lokálne aj cloudové modely, náhľad, rozpočet a priebeh — [JUDGE-UI.md](JUDGE-UI.md). Worker je samostatný kontajner; výsledky sa neprenášajú do ručného skóre automaticky.
 
 ## Spustenie
 

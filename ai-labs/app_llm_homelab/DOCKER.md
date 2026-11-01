@@ -4,6 +4,8 @@ Toto je odporúčaný spôsob nasadenia. **Jeden image obsahuje HTML/CSS/JavaScr
 Python API.** Používa existujúci kontajner pgvector, nevytvára druhú databázu.
 Image sa vytvorí lokálne na Ubuntu; zatiaľ ho nepublikujeme do registry.
 
+**LLM sudca:** druhý image/služba `judge` teraz beží ako trvalý worker frontu. Z aplikácie vieš vybrať lokálny aj cloudový model a spustiť posudky; štart kontajnera sám žiadne hodnotenie nespúšťa. Postup a cloudové poverenia sú v [JUDGE-UI.md](JUDGE-UI.md). Build context sa presunul do `ai-labs`; Compose ho nastaví automaticky.
+
 ## 1. Jednorazové nastavenie
 
 Po dokončení oboch benchmarkov v Ubuntu:

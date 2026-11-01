@@ -1,7 +1,9 @@
 services:
   app:
     image: llm-homelab:local
-    build: .
+    build:
+      context: ..
+      dockerfile: app_llm_homelab/Dockerfile
     user: "${LAB_UID:-10001}:${LAB_GID:-10001}"
     init: true
     ports:
@@ -29,18 +31,24 @@ services:
       retries: 3
       start_period: 10s
   judge:
-    profiles: [judge]
     image: llm-homelab-judge:local
     build:
-      context: .
-      dockerfile: Dockerfile.judge
+      context: ..
+      dockerfile: app_llm_homelab/Dockerfile.judge
+    command: ["--serve"]
     user: "${LAB_UID:-10001}:${LAB_GID:-10001}"
     init: true
+    env_file:
+      - path: "${JUDGE_CLOUD_ENV_FILE:-../code/.env}"
+        required: false
     environment:
       LLM_EVAL_PG_DSN: "${LLM_EVAL_PG_DSN:?Set LLM_EVAL_PG_DSN in app .env}"
       JUDGE_OLLAMA_HOST: "${JUDGE_OLLAMA_HOST:-http://192.168.178.25:11434}"
       JUDGE_MODEL: "${JUDGE_MODEL:-gemma3:27b}"
       LAB_REVIEWER: "${LAB_REVIEWER:-sapops}"
+      GOOGLE_APPLICATION_CREDENTIALS: "${JUDGE_GOOGLE_CREDENTIALS:-/gcp/application_default_credentials.json}"
+    volumes:
+      - "${GCP_ADC_DIR:-${HOME}/.config/gcloud}:/gcp:ro"
     networks: [lab]
     read_only: true
     tmpfs:
@@ -48,7 +56,13 @@ services:
     security_opt:
       - no-new-privileges:true
     cap_drop: [ALL]
-    restart: "no"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "from db_store import connect; c=connect(); assert c.execute(\"SELECT updated_at>now()-interval '45 seconds' FROM llm_eval.judge_worker_state WHERE id=1\").fetchone()==(True,)"]
+      interval: 20s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 networks:
   lab:
     external: true
