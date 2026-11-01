@@ -1,5 +1,41 @@
 # Runbook: RAG / LLM test — sobota 31. októbra 2026
 
+## Denný automatický štart labu (doplnok 1.11.2026)
+
+V Ubuntu používaj pri každom začatí práce:
+
+```bash
+cd ~/devops-lab/ai-labs/code
+bash lab.sh
+```
+
+Spustenie ľubovoľného Python skriptu cez kontrolu prostredia:
+
+```bash
+bash lab.sh rag_test.py --help
+```
+
+Platené cloudové probes iba ak ich chceš vykonať:
+
+```bash
+bash lab.sh --cloud
+```
+
+Launcher aktivuje .venv, načíta .env, overí Docker, dostupnosť DB a rozšírenie
+pgvector vrátane read-only vektorovej operácie, potom dostupnosť Ollamy.
+Pri chybe nespustí ďalší skript. Do VM .env nastav
+`OLLAMA_HOST=http://192.168.178.25:11434`, ak je to stále adresa tvojho Windows hosta.
+Používa sa rovnaký Ollama klient a konfigurácia ako pri inferencii.
+Pri vlastnom názve kontajnera možno použiť `LAB_DB_CONTAINER`.
+Podrobnosti a riešenie chýb: [lab_start_README.md](code/lab_start_README.md).
+
+Tento wrapper je vstupný bod labu, nie časovaný cron. Priame volanie
+`python rag_test.py` ho obíde. Služby iba kontroluje, nereštartuje ich.
+Bez argumentu skriptu kontrola skončí; pre manuálnu prácu v aktuálnom termináli
+naďalej aktivuj `source .venv/bin/activate`.
+Denná kontrola nenahrádza modelový smoke test, kontrolu GPU a obsahu databázových tabuliek.
+
+
 **Prostredie:** Ubuntu VM `sapops@k8s-lab`, repozitár `~/devops-lab`,
 Python venv `~/devops-lab/ai-labs/code/.venv`.
 Príkazy sú pre **Bash na Ubuntu**, okrem osobitne označenej kontroly Windows GPU.
