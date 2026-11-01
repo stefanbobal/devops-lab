@@ -397,6 +397,28 @@ Nespúšťať zbytočne druhý model mimo benchmarku.
 
 ### Kontext, thinking a timeout pred hlavným behom
 
+**Teraz podľa týchto bodov nič preventívne neupravuj.** Sú to pozorovania pre
+**smoke test v kroku 7**: časť sleduj počas generovania a časť skontroluj
+v uložených výsledkoch po jeho dokončení.
+
+Úlohou smoke testu je na jednom vývojovom incidente overiť celý tok
+retrieval → zostavenie promptu → volanie každého LLM → uloženie odpovede a metrík.
+Chceme potvrdiť, že všetky modely dostanú rovnaký kontext, vrátia úplnú odpoveď,
+zaznamenajú sa tokeny a časy a lokálne modely používajú očakávaný kontext a GPU.
+Je to krátka technická skúška pred väčšou maticou; samotný status OK ešte
+nepotvrdzuje správnosť navrhnutej investigácie.
+
+Počas lokálneho LLM volania otvor na Windows hoste druhý PowerShell a sleduj
+`ollama ps` a `nvidia-smi`. Ak je `ollama ps` pred testom prázdne, znamená to,
+že práve nie je načítaný žiadny model — nie že modely nie sú nainštalované.
+Načítajú sa až pri volaní. Po dokončení smoke testu skontroluj odpovede,
+`status`, `finish_reason`, `input_tokens` a `output_tokens` podľa kroku 7.
+
+**Kontext, výstupný limit alebo timeout uprav až pri konkrétnom probléme.**
+Potom zopakuj smoke test v novom výstupnom priečinku a overené parametre
+použi konzistentne v hlavnom behu. Nasledujúce body vysvetľujú, čo pozorovať:
+
+
 - Meraný adaptér teraz explicitne posiela `num_ctx=8192`; nespolieha sa na serverový default.
   Aktuálne defaulty Ollamy sa môžu líšiť podľa verzie a VRAM. Overiť `CONTEXT` v `ollama ps`
   počas volania, nie odhadovať hodnotu.
