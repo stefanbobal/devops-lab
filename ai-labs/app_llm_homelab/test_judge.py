@@ -6,7 +6,7 @@ import types
 import unittest
 from unittest.mock import patch
 from db_store import BASE, read_json, dataset
-from judge_core import packet, validate_result, sample_rows, SCORES, deterministic_checks, calibration_report
+from judge_core import packet, validate_result, sample_rows, SCORES, deterministic_checks, calibration_report, output_schema, prompt
 from judge_worker import evaluate, reserve, should_skip
 
 
@@ -82,6 +82,29 @@ class JudgeTests(unittest.TestCase):
         self.result['suggested_scores'][SCORES[0]]=None
         del self.result['critical_error']
         with self.assertRaises(ValueError):validate_result(json.dumps(self.result),self.data)
+
+    def test_critical_error_never_coerces_unknown_or_strings_to_false(self):
+        for value in ('false','true','true | false',None,0,1):
+            self.result['critical_error']=value
+            with self.assertRaisesRegex(ValueError,'expected JSON boolean'):
+                validate_result(json.dumps(self.result),self.data)
+
+    def test_output_schema_requires_real_booleans_and_all_score_fields(self):
+        schema=output_schema()
+        self.assertEqual(schema['properties']['critical_error']['type'],'boolean')
+        self.assertIn('critical_error',schema['required'])
+        self.assertEqual(set(schema['properties']['suggested_scores']['required']),set(SCORES))
+        self.assertEqual(schema['properties']['steps']['items']['properties']['technical']['enum'],['unverified'])
+        self.assertNotIn('"critical_error": "true | false"',prompt(self.data))
+
+    def test_ollama_receives_typed_schema_not_just_json_mode(self):
+        from judge_worker import ollama
+        config=dict(host='http://test.invalid',model='gemma3:27b',system='System',seed=42,num_ctx=8192,max_output_tokens=1024,timeout=60)
+        with patch('judge_worker.request_json',return_value={'message':{'content':'{}'}}) as request:
+            ollama('Case',config)
+        schema=request.call_args.args[1]['format']
+        self.assertIsInstance(schema,dict)
+        self.assertEqual(schema['properties']['critical_error'],{'type':'boolean'})
 
     def test_balanced_pilot_24_is_stable_and_excludes_errors(self):
         rows=[]

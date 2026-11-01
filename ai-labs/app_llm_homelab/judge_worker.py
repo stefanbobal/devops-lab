@@ -9,7 +9,7 @@ from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 
 from db_store import BASE, connect, read_json
-from judge_core import SYSTEM, digest, packet, prompt, sample_rows, validate_result, deterministic_checks, approved_references, CONTRACT, calibration_report
+from judge_core import SYSTEM, digest, packet, prompt, sample_rows, validate_result, deterministic_checks, approved_references, CONTRACT, calibration_report, output_schema, VALIDATOR_VERSION
 
 
 def request_json(url, body=None, timeout=300):
@@ -21,7 +21,7 @@ def request_json(url, body=None, timeout=300):
 
 def ollama(body, config):
     result = request_json(config['host']+'/api/chat', {
-        'model':config['model'], 'stream':False, 'format':'json', 'keep_alive':'5m',
+        'model':config['model'], 'stream':False, 'format':output_schema(config.get('approved_references',[])), 'keep_alive':'5m',
         'messages':[{'role':'system','content':config['system']},{'role':'user','content':body}],
         'options':{'temperature':0,'seed':config['seed'],'num_ctx':config['num_ctx'],
                    'num_predict':config['max_output_tokens']}}, config['timeout'])
@@ -86,12 +86,12 @@ def evaluate(row,data,config):
         system=make_system(row,config)
         provider=config.get('provider','ollama')
         if provider=='ollama':
-            raw,usage=ollama(prompt(data),dict(config,system=system))
+            raw,usage=ollama(prompt(data,config.get('approved_references',[])),dict(config,system=system))
             usage.update(input_tokens=usage.get('prompt_eval_count'),output_tokens=usage.get('eval_count'),
                          estimated_cost_usd=0.0,cost_status='local_api_fee_only')
         else:
             from judge_providers import cloud_chat
-            raw,usage=cloud_chat(system,prompt(data),config)
+            raw,usage=cloud_chat(system,prompt(data,config.get('approved_references',[])),config)
         if usage.get('done') is not True or usage.get('done_reason')!='stop':
             raise ValueError('Incomplete generation: '+str(usage.get('done_reason')))
         if not isinstance(usage.get('input_tokens'),int) or not isinstance(usage.get('output_tokens'),int):
@@ -175,7 +175,8 @@ def main():
         config={'provider':'ollama','host':host,'model':model,'model_digest':found[0]['digest'],
                 'seed':args.seed,'num_ctx':args.num_ctx,'max_output_tokens':args.max_output_tokens,'timeout':args.timeout,
                 'system':SYSTEM,'contract_version':'judge-v2','contract_hash':digest(CONTRACT),'rubrics':rubrics,'approved_references':approved_references(refs),'rubrics_hash':digest(rubrics),'references_hash':digest(refs),
-                'rubrics_version':rubrics['version'],'references_version':refs['version']}
+                'rubrics_version':rubrics['version'],'references_version':refs['version'],
+                'validator_version':VALIDATOR_VERSION,'output_schema_hash':digest(output_schema(approved_references(refs)))}
         made=skipped=failures=consecutive=0
         for row,data in zip(rows,packets):
             if made>=args.max_calls: break

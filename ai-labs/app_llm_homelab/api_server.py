@@ -4,7 +4,7 @@ import json
 import mimetypes
 import os
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import urlsplit, unquote
+from urllib.parse import urlsplit, unquote, parse_qs
 from db_store import BASE, connect, dataset, save_review
 
 STATIC = {"/": "index.html", "/index.html": "index.html", "/app.mjs": "app.mjs",
@@ -62,6 +62,14 @@ class Handler(BaseHTTPRequestHandler):
                 from judge_control import options,batches
                 with connect() as conn:result=(options if route.endswith('options') else batches)(conn)
                 self.respond(200,result)
+            elif route=='/api/judge/output':
+                from judge_control import job_output
+                try:
+                    job_id=parse_qs(urlsplit(self.path).query).get('id',[''])[0]
+                    with connect() as conn:result=job_output(conn,job_id)
+                    self.respond(200,result)
+                except ValueError:self.respond(400,{'error':'Neplatná identita posudku.'})
+                except LookupError:self.respond(404,{'error':'Posudok neexistuje.'})
             else:
                 self.respond(404, {"error": "Not found"})
         except Exception as exc:

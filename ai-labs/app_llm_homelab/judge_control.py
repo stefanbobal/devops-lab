@@ -5,7 +5,7 @@ import math
 import uuid
 
 from db_store import BASE, read_json
-from judge_core import SYSTEM, CONTRACT, VALIDATOR_VERSION, approved_references, digest, packet, prompt, sample_rows
+from judge_core import SYSTEM, CONTRACT, VALIDATOR_VERSION, approved_references, digest, packet, prompt, sample_rows, output_schema
 from judge_providers import prices, estimated_call_cost
 
 
@@ -78,7 +78,8 @@ def build_config(model,settings,rubrics,refs,pricebook):
         system=SYSTEM,contract_version='judge-v2',contract_hash=digest(CONTRACT),rubrics=rubrics,
         approved_references=approved_references(refs),rubrics_hash=digest(rubrics),references_hash=digest(refs),
         rubrics_version=rubrics['version'],references_version=refs['version'],prices=pricebook,
-        pricing_date=settings['pricing_date'],adapter_version='judge-cloud-ui-v1',validator_version=VALIDATOR_VERSION)
+        pricing_date=settings['pricing_date'],adapter_version='judge-cloud-ui-v1',validator_version=VALIDATOR_VERSION,
+        output_schema_hash=digest(output_schema(approved_references(refs))))
 
 
 def previous_job(conn,row,data,config):
@@ -115,7 +116,7 @@ def plan(conn,raw):
         skip=should_skip((previous[1],previous[2]) if previous else None,settings['retry_errors'])
         if skip:skipped+=1
         elif new<settings['max_calls']:
-            new+=1;estimate=estimated_call_cost(make_system(row,config),prompt(data),config)
+            new+=1;estimate=estimated_call_cost(make_system(row,config),prompt(data,config['approved_references']),config)
             if estimate['estimated_cost_usd'] is None:unknown+=1
             else:total+=estimate['estimated_cost_usd']
         self_count+=row['call'].get('model')==config['model']
@@ -167,12 +168,19 @@ def batches(conn):
         cost,unknown=conn.execute('''SELECT sum(j.estimated_cost_usd),count(*) FILTER(WHERE j.estimated_cost_usd IS NULL)
             FROM llm_eval.judge_batch_items i JOIN llm_eval.judge_jobs j ON j.id=i.job_id
             WHERE i.batch_id=%s AND i.status<>'skipped' ''',(bid,)).fetchone()
-        recent=[dict(call_id=cid,scenario_id=sid,status=state,error=message,elapsed_s=elapsed,usage=usage)
-                for cid,sid,state,message,elapsed,usage in conn.execute('''
-                SELECT i.call_id,i.data->'row'->'call'->>'scenario_id',i.status,j.error,j.elapsed_s,j.usage
+        recent=[dict(call_id=cid,scenario_id=sid,status=state,error=message,elapsed_s=elapsed,usage=usage,job_id=str(jid) if jid else None)
+                for cid,sid,state,message,elapsed,usage,jid in conn.execute('''
+                SELECT i.call_id,i.data->'row'->'call'->>'scenario_id',i.status,j.error,j.elapsed_s,j.usage,j.id
                 FROM llm_eval.judge_batch_items i LEFT JOIN llm_eval.judge_jobs j ON j.id=i.job_id
                 WHERE i.batch_id=%s AND i.status NOT IN ('queued','not_run') ORDER BY i.ordinal DESC LIMIT 12''',(bid,))]
         result.append(dict(id=str(bid),status=status,plan=plan,settings=settings,error=error,counts=counts,
             estimated_cost_usd=cost,unknown_cost_calls=unknown,stop_requested=stop_requested,
             recent=recent,created_at=created.isoformat(),started_at=started.isoformat() if started else None,finished_at=finished.isoformat() if finished else None))
     return dict(worker=worker_state(conn),batches=result)
+
+
+def job_output(conn,job_id):
+    job_id=str(uuid.UUID(job_id))
+    row=conn.execute('SELECT status,error,raw_output FROM llm_eval.judge_jobs WHERE id=%s',(job_id,)).fetchone()
+    if not row:raise LookupError('Posudok neexistuje.')
+    return dict(job_id=job_id,status=row[0],error=row[1],raw_output=row[2] or '')

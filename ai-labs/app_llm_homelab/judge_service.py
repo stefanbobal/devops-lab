@@ -5,7 +5,7 @@ import uuid
 
 from db_store import connect
 from judge_control import init_judge, previous_job
-from judge_core import SYSTEM, CONTRACT, VALIDATOR_VERSION, digest, prompt
+from judge_core import SYSTEM, CONTRACT, VALIDATOR_VERSION, digest, prompt, output_schema
 from judge_providers import available_models, estimated_call_cost
 from judge_worker import reserve, finish, evaluate, make_system, should_skip
 
@@ -33,7 +33,7 @@ def complete_batch(conn,batch,status,error=None):
 
 
 def run_batch(conn,batch,settings,config):
-    if config.get('contract_hash')!=digest(CONTRACT) or config.get('system')!=SYSTEM or config.get('validator_version')!=VALIDATOR_VERSION:
+    if config.get('contract_hash')!=digest(CONTRACT) or config.get('system')!=SYSTEM or config.get('validator_version')!=VALIDATOR_VERSION or config.get('output_schema_hash')!=digest(output_schema(config.get('approved_references',[]))):
         complete_batch(conn,batch,'failed','Pravidlá alebo validátor sa od náhľadu zmenili. Vytvor nový náhľad.');return
     models=available_models()
     live=next((m for m in models if m['id']==config['model_id'] and m.get('ready')),None)
@@ -51,7 +51,7 @@ def run_batch(conn,batch,settings,config):
             if should_skip((previous[1],previous[2]) if previous else None,settings['retry_errors']):
                 conn.execute("UPDATE llm_eval.judge_batch_items SET status='skipped',job_id=%s WHERE batch_id=%s AND ordinal=%s",(previous[0],batch,ordinal))
                 continue
-        estimate=estimated_call_cost(make_system(row,config),prompt(data),config)
+        estimate=estimated_call_cost(make_system(row,config),prompt(data,config['approved_references']),config)
         if config['provider']!='ollama':
             if estimate['estimated_cost_usd'] is None and not settings['allow_unknown_cost']:
                 complete_batch(conn,batch,'failed','Neznáma cena; ďalšie volanie nebolo spustené.');return

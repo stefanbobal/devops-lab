@@ -143,6 +143,13 @@ class ControlTests(unittest.TestCase):
             finish(conn,RID,'completed','{}',{'estimated_cost_usd':.035,'usage_raw':{}},1.5)
         self.assertEqual(conn.execute.call_args.args[1][4],.035)
 
+    def test_original_output_is_read_by_uuid_without_inference(self):
+        conn=MagicMock();conn.execute.return_value.fetchone.return_value=('invalid','Invalid critical_error','{"critical_error":"false"}')
+        result=control.job_output(conn,RID)
+        self.assertEqual(result['raw_output'],'{"critical_error":"false"}')
+        self.assertEqual(conn.execute.call_args.args[1],(RID,))
+        with self.assertRaises(ValueError):control.job_output(conn,'../../secrets')
+
     def test_plan_snapshots_are_blind_and_rubric_versioned(self):
         conn=PlanConnection()
         with patch.dict(sys.modules,{'psycopg.types.json':JSON_MODULE}):control.plan(conn,self.settings())
