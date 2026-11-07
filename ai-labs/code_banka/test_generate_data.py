@@ -32,6 +32,30 @@ class GeneratedDataTests(unittest.TestCase):
                                  case["expected_status"], case["case_id"])
                 self.assertTrue((root / case["statement"]).exists())
 
+    def test_test_set_is_separate_deterministic_and_verifiable(self):
+        from sources import evaluate_with_sources
+        with tempfile.TemporaryDirectory() as a, tempfile.TemporaryDirectory() as b, \
+                tempfile.TemporaryDirectory() as c:
+            test_root, dev_root = Path(a) / "t", Path(c) / "d"
+            generate_data.main(["--set", "test", "--out", str(test_root)])
+            first = {p.relative_to(test_root): p.read_bytes() for p in test_root.rglob("*") if p.is_file()}
+            generate_data.main(["--set", "test", "--out", str(Path(b) / "t")])
+            second = {p.relative_to(Path(b) / "t"): p.read_bytes() for p in (Path(b) / "t").rglob("*") if p.is_file()}
+            self.assertEqual(first, second)
+            generate_data.main(["--out", str(dev_root)])
+            test_cases = json.loads((test_root / "expected.json").read_text(encoding="utf-8"))
+            dev_cases = json.loads((dev_root / "expected.json").read_text(encoding="utf-8"))
+            self.assertEqual(len(test_cases), 18)
+            self.assertFalse({c["company_id"] for c in test_cases} & {c["company_id"] for c in dev_cases})
+            for case in test_cases:   # the strict verifier must support the shuffled contracts
+                docs = load_documents(test_root, case["company_id"])
+                items = {k: v["value"] for k, v in case["expected_items"].items()}
+                result = evaluate_with_sources(items, case["expected_spec"], case["period"], docs)
+                self.assertEqual(result["status"], case["expected_status"], case["case_id"])
+            counts = {len([a for a in load_documents(test_root, cid)["smlouva.md"].splitlines()
+                           if a.startswith("## Článek")]) for cid in {c["company_id"] for c in test_cases}}
+            self.assertEqual(counts, {12})
+
     def test_cited_article_is_on_cited_page(self):
         with tempfile.TemporaryDirectory() as a:
             root = Path(a) / "d"

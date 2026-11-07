@@ -1,6 +1,6 @@
 """One place that talks to the models: local Ollama or a cloud API.
 
-embed(text, kind) -> vector     kind = "document" (stored incidents), "query" (a new incident)
+embed(text, kind) -> vector     kind = "document" (stored contract articles), "query" (a search question)
                                 or "similarity" (comparing sentences, Lab 02)
 chat(system, user) -> text      the LLM answer
 """
@@ -9,7 +9,7 @@ import os
 import numpy as np
 
 from config import (EMBED_DIM, EMBED_MODEL, EMBED_PROVIDER, GCP_PROJECT, LLM_MODEL,
-                    LLM_PROVIDER, PROFILE, VERTEX_EMBED_LOCATION, VERTEX_LLM_LOCATION)
+                    LLM_PROVIDER, VERTEX_EMBED_LOCATION, VERTEX_LLM_LOCATION)
 
 _azure_client = None
 
@@ -29,17 +29,8 @@ def _get_azure_client():
 
 
 def embed(text, kind="document"):
-    if PROFILE == "nomic_prefix":
-        if kind == "document":
-            text = "search_document: " + text
-        elif kind == "query":
-            text = "search_query: " + text
-
     if EMBED_PROVIDER == "ollama":
         import ollama
-        if PROFILE == "qwen_instr" and kind == "query":
-            text = ("Instruct: Given an incident description, retrieve the most relevant "
-                    f"historical incidents\nQuery:{text}")
         vector = ollama.embed(model=EMBED_MODEL, input=text)["embeddings"][0]
 
     elif EMBED_PROVIDER == "vertex":

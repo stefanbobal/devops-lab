@@ -90,6 +90,45 @@ COMPANIES = [
 ]
 
 
+# Held-out test set (kept in data_test/, not used for tuning chunking, queries or thresholds).
+# Same supported wording as the dev set, different structure: other limits and dates, other mixes of
+# definitions, and a shuffled article order with extra articles.
+TEST_COMPANIES = [
+    dict(id="C13", name="Hanácké pekárny a.s.", city="Prostějov", sector="pekárenství",
+         add=["restructuring"], sub=["asset_sale_gain"], cash=True, bonds=True, lev_limits=[(None, None, 3.60)],
+         cases={"2026Q1": dict(lev=3.00, restr=0.10, gain=0.05, status="no_breach", type="custom_definition"),
+                "2026Q2": dict(lev=3.80, restr=0.20, gain=0.05, status="breach", type="custom_definition"),
+                "2026Q3": dict(lev=3.20, restr=0.15, gain=0.04, status="no_breach", type="custom_definition")}),
+    dict(id="C14", name="Vysočina Agro Trade s.r.o.", city="Jihlava", sector="obchod se zemědělskými komoditami",
+         add=[], sub=[], cash=True, bonds=False,
+         lev_limits=[(None, date(2026, 3, 31), 4.25), (date(2026, 4, 1), None, 3.75)],
+         cases={"2026Q1": dict(lev=4.00, status="no_breach", type="step_down"),
+                "2026Q2": dict(lev=3.90, status="breach", type="step_down"),
+                "2026Q3": dict(lev=3.50, status="no_breach", type="step_down")}),
+    dict(id="C15", name="Karlovarské lázně a.s.", city="Karlovy Vary", sector="lázeňství",
+         add=[], sub=[], cash=True, bonds=False, lev_limits=[(None, None, 3.50)], icr_limit=3.50,
+         cases={"2026Q1": dict(lev=3.00, icr=4.00, status="no_breach", type="two_covenants"),
+                "2026Q2": dict(lev=3.20, icr=3.00, status="breach", type="two_covenants"),
+                "2026Q3": dict(lev=3.80, icr=4.20, status="breach", type="two_covenants")}),
+    dict(id="C16", name="Pardubické elektro s.r.o.", city="Pardubice", sector="elektrotechnika",
+         add=[], sub=[], cash=True, bonds=False,
+         lev_limits=[(None, date(2026, 9, 29), 3.25), (date(2026, 9, 30), None, 4.00)], amendment=True,
+         cases={"2026Q1": dict(lev=3.00, status="no_breach", type="amendment"),
+                "2026Q2": dict(lev=3.60, status="breach", type="amendment"),
+                "2026Q3": dict(lev=3.70, status="no_breach", type="amendment")}),
+    dict(id="C17", name="Opavské strojírny s.r.o.", city="Opava", sector="strojírenství",
+         add=[], sub=[], cash=False, bonds=False, lev_limits=[(None, None, 3.00)], waiver="2026Q3",
+         cases={"2026Q1": dict(lev=2.60, cash_share=0.10, status="no_breach", type="simple"),
+                "2026Q2": dict(lev=3.40, cash_share=0.10, status="breach", type="waiver_other_period"),
+                "2026Q3": dict(lev=3.60, cash_share=0.10, status="no_breach", type="waiver")}),
+    dict(id="C18", name="Chebské sklárny a.s.", city="Cheb", sector="sklářství",
+         add=[], sub=[], cash=True, bonds=True, lev_limits=[(None, None, 3.50)],
+         cases={"2026Q1": dict(lev=3.00, missing="bank_loans", status="human_review", type="missing_item"),
+                "2026Q2": dict(lev=3.46, status="human_review", type="near_limit"),
+                "2026Q3": dict(lev=4.00, status="breach", type="prompt_injection", injection="override")}),
+]
+
+
 def czk(n):
     return f"{n:,}".replace(",", " ")
 
@@ -112,7 +151,7 @@ def limit_for(company, period):
 
 # ---------------------------------------------------------------- contract text
 
-def build_contract(company, rng):
+def build_contract(company, rng, shuffle=False):
     """Return (markdown, citations) where citations maps a topic to (document, article, page)."""
     has_icr = "icr_limit" in company
     v = rng.randrange(2)
@@ -195,6 +234,17 @@ def build_contract(company, rng):
     # Vary article order so the covenant article number is not always the same.
     if rng.random() < 0.5:
         articles[4], articles[5] = articles[5], articles[4]
+    if shuffle:   # held-out set only; the dev set must keep drawing exactly the same random numbers
+        extra = [("Prohlášení Dlužníka", "Dlužník prohlašuje, že je řádně založenou společností a že uzavření "
+                  "této Smlouvy nevyžaduje žádné další souhlasy."),
+                 ("Oznámení", "Veškerá oznámení podle této Smlouvy se činí písemně na adresy uvedené v záhlaví "
+                  "Smlouvy."),
+                 ("Další závazky Dlužníka", "Dlužník neposkytne třetí osobě zajištění k majetku, který je "
+                  "předmětem zástavy podle této Smlouvy, bez předchozího souhlasu Banky.")]
+        articles += rng.sample(extra, 2)
+        rest = articles[1:]
+        rng.shuffle(rest)
+        articles = articles[:1] + rest
     numbers = {title: i + 1 for i, (title, _) in enumerate(articles)}
     cov_no, def_no, waiver_no = numbers["Finanční ukazatele"], numbers["Definice a výklad"], numbers["Prominutí a změny"]
 
@@ -238,11 +288,14 @@ Ostatní ustanovení Smlouvy zůstávají beze změny.
     return text, {"document": "dodatek_1.md", "article": "1", "page": 1}
 
 
+WAIVER_LETTER_DATE = {"2026Q1": "5. 5. 2026", "2026Q2": "5. 8. 2026", "2026Q3": "2. 11. 2026"}
+
+
 def build_waiver(company, period, cov_no):
     day = cz_date(PERIODS[period])
     text = f"""# Prominutí porušení finančního ukazatele
 
-Modrá Banka a.s. (fiktivní banka) – dopis pro {company['name']}, ze dne 5. 8. 2026
+Modrá Banka a.s. (fiktivní banka) – dopis pro {company['name']}, ze dne {WAIVER_LETTER_DATE[period]}
 
 [strana 1]
 
@@ -383,9 +436,17 @@ def prepare_output(out):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--seed", type=int, default=20261101)
-    parser.add_argument("--out", type=Path, default=Path(__file__).with_name("data"))
+    parser.add_argument("--set", choices=("dev", "test"), default="dev",
+                        help="dev: data/ used for tuning; test: data_test/ held out, evaluate only at the end")
+    parser.add_argument("--seed", type=int, default=None)
+    parser.add_argument("--out", type=Path, default=None)
     args = parser.parse_args(argv)
+    is_test = args.set == "test"
+    if args.seed is None:
+        args.seed = 20261201 if is_test else 20261101
+    if args.out is None:
+        args.out = Path(__file__).with_name("data_test" if is_test else "data")
+    companies = TEST_COMPANIES if is_test else COMPANIES
     rng = random.Random(args.seed)
     out = prepare_output(args.out)
 
@@ -400,10 +461,10 @@ def main(argv=None):
         encoding="utf-8")
 
     cases, scenarios = [], []
-    for company in COMPANIES:
+    for company in companies:
         folder = out / "companies" / company["id"]
         folder.mkdir()
-        contract, citations, cov_no = build_contract(company, rng)
+        contract, citations, cov_no = build_contract(company, rng, shuffle=is_test)
         docs = {"smlouva.md": contract}
         lev_citation_by_period = {p: citations["leverage"] for p in PERIODS}
         if company.get("amendment"):
@@ -465,7 +526,7 @@ def main(argv=None):
     (out / "expected.json").write_text(json.dumps(cases, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     (out / "scenarios.json").write_text(json.dumps(scenarios, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
-    lines = ["# Prehľad testovacích prípadov (generované, needitovať ručne)", "",
+    lines = [f"# Prehľad testovacích prípadov, sada {args.set} (generované, needitovať ručne)", "",
              f"Seed: {args.seed}. Všeobecné pravidlo bez zmluvy: Čistý dluh / EBITDA ≤ {num(GENERIC_LIMIT)}.", "",
              "| Prípad | Typ | Očakávaný stav | Stav podľa všeobecného pravidla | Zlyhá bez zmluvy |",
              "| --- | --- | --- | --- | --- |"]

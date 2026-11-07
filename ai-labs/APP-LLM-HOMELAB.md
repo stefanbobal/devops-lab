@@ -578,16 +578,5 @@ a nespravuje jeho deployment.
 Nie je potrebné vytvárať druhý dashboard pre banku. Je však potrebné pridať doménový
 adaptér a agentový dátový model; samotné premenovanie incidentu na firmu by nestačilo.
 
-## 15. Čo prezentovať na pohovore
-
-Ukázať overiteľný príbeh:
-- prečo bol retrieval oddelený od generovania a od agentových krokov;
-- rovnaké scenáre a podmienky, kontrolu bez RAG a evidované zlyhania;
-- technickú úspešnosť oddelenú od odborného/doménového výsledku;
-- opakovateľný import, databázové väzby, uložené hodnotenia a manifesty;
-- Docker nasadenie s existujúcim PostgreSQL a oddelenou konfiguráciou;
-- pri bankovom agente overiteľné výpočty/citácie, rozumné human_review a simulované akcie;
-- namerané obmedzenia, nie len pekné grafy alebo tvrdenie o najlepšom modeli.
-
 Aktuálny dashboard je funkčná analytická vrstva. Bankový experiment runner a ovládanie
 testov z UI sú ďalšie konkrétne etapy, ktoré tento dokument navrhuje.

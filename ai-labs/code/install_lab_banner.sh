@@ -45,6 +45,25 @@ cat <<'TEXT'
 
   Zobrazenie navodu znova: source ~/.config/ai-lab/login-banner.sh
 ======================================================================
+  CODE_BANKA (covenant agent, vlastna DB pgvector-banka, port 5433)
+======================================================================
+  1. Otvor lab a aktivuj jeho vlastne prostredie:
+     cd ~/devops-lab/ai-labs/code_banka
+     source .venv/bin/activate
+
+  2. DB a kontrola labu:
+     docker compose up -d        (alebo: docker start pgvector-banka)
+     bash lab.sh                 Ocakavany vysledok: Lab ready.
+
+  3. Dokumenty do DB (po zmene chunkovania alebo dat vzdy znova):
+     python generate_data.py
+     for p in bge azure gemini; do EMBED_PROFILE=$p python load_documents.py; done
+
+  4. Test retrievalu T2 na dev sade (testovacia sada iba s --final):
+     python t2_retrieval.py --tag nazov_behu
+
+  Navod a vysledky: code_banka/README.md, T2_retrieval_embeddings.md
+======================================================================
 
 TEXT
 
@@ -52,7 +71,7 @@ TEXT
 if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
   _lab_missing=()
   printf '  DOCKER STAV:\n'
-  for _c in pgvector app_llm_homelab-app-1 app_llm_homelab-judge-1; do
+  for _c in pgvector pgvector-banka app_llm_homelab-app-1 app_llm_homelab-judge-1; do
     _st="$(docker inspect -f '{{.State.Status}}{{if .State.Health}}/{{.State.Health.Status}}{{end}}' "$_c" 2>/dev/null)"
     if [[ "$_st" == running* && "$_st" != *unhealthy* && "$_st" != *starting* ]]; then
       printf '    [ OK ] %-26s %s\n' "$_c" "$_st"
@@ -64,6 +83,7 @@ if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
   if (( ${#_lab_missing[@]} )); then
     printf '\n  TREBA SPUSTIT:\n'
     [[ " ${_lab_missing[*]} " == *" pgvector "* ]] && printf '    docker start pgvector\n'
+    [[ " ${_lab_missing[*]} " == *" pgvector-banka "* ]] && printf '    docker start pgvector-banka   (alebo: cd ~/devops-lab/ai-labs/code_banka && docker compose up -d)\n'
     [[ " ${_lab_missing[*]} " == *app_llm_homelab-* ]] && printf '    cd ~/devops-lab/ai-labs/app_llm_homelab && bash docker_lab.sh up -d\n'
     printf '    Po zmene kodu: bash docker_lab.sh build app judge && bash docker_lab.sh up -d\n'
   fi

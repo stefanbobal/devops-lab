@@ -32,6 +32,13 @@ Skutočný stav: **12 vymyslených firiem** (plán bol 10–12). Pre každú:
 - **3 štvrťročné výkazy** (2026Q1–Q3) ako Markdown tabuľky (plán bol 2–4; PDF je neskoršie rozšírenie);
 - podľa scenára **dodatok**, **list s výnimkou (waiver)** a vždy **poznámky analytika**.
 
+Dáta sú rozdelené na dve sady:
+
+- **dev** (`data/`, 12 firiem, 36 prípadov): na nej sa ladí chunkovanie, dotazy a prahy;
+- **test** (`data_test/`, 6 firiem C13–C18, 18 prípadov): zamknutá, vyhodnocuje sa jednorazovo na konci.
+  Má inú štruktúru zmlúv (zamiešané poradie článkov, 12 článkov) a iné kombinácie, no rovnaké znenie viet,
+  aby ju zvládol striktný overovač (`contract_rules.py`). Tuning na nej nie je dovolený.
+
 `data/expected.json`: pre každý testovací prípad správne vytiahnuté hodnoty, vypočítaný pomer,
 zmluvná špecifikácia, výsledný stav (`breach` / `no_breach` / `human_review`) a citované články.
 
@@ -53,7 +60,8 @@ Inak porovnanie s RAG a bez RAG nič neukáže.
 ### Vygenerované dáta
 
 ```bash
-python generate_data.py          # deterministicky prepíše data/ (seed 20261101)
+python generate_data.py            # dev sada: prepíše data/ (seed 20261101)
+python generate_data.py --set test # zamknutá testovacia sada: prepíše data_test/ (seed 20261201)
 ```
 
 - `data/companies/<Cxx>/`: `smlouva.md`, voliteľne `dodatek_1.md` a `waiver_<obdobie>.md`,
@@ -62,7 +70,7 @@ python generate_data.py          # deterministicky prepíše data/ (seed 2026110
   stav podľa všeobecného pravidla a príznak `fails_without_contract`;
 - `data/scenarios.json`: formát pre `rag_test.py` (`incident` = výkaz, `curated_context` = všetky dokumenty klienta);
 - `data/generic_rule.md`: všeobecné pravidlo pre režim bez zmluvy;
-- `data/SUMMARY.md`: prehľad 36 prípadov (12 firiem × 3 štvrťroky).
+- `data/SUMMARY.md`: prehľad 36 prípadov (12 firiem × 3 štvrťroky); `data_test/` má vlastné rovnaké súbory.
 
 Stav: 21 `no_breach`, 12 `breach`, 3 `human_review`. V 12 prípadoch dáva všeobecné pravidlo
 (`data/generic_rule.md`) iný stav než zmluva. Je to **porovnanie dvoch deterministických pravidiel**,
@@ -75,13 +83,20 @@ zhodu s `covenants.py` a to, že citovaný článok leží na citovanej strane. 
 neupravovať ručne, iba cez generátor. Generátor maže iba priečinok, ktorý sám vytvoril
 (značka `.generated-by-generate_data`); cudzí neprázdny priečinok ani priečinok s kódom nezmaže.
 
-## 2. Načítanie do vektorovej DB (plán; `load_documents.py` zatiaľ neexistuje)
+## 2. Načítanie do vektorovej DB (`load_documents.py`, hotové)
 
-- Zmluvy rozdeliť **po článkoch** (chunking); metadáta: firma, typ dokumentu, článok, strana, platnosť od–do.
+- Zmluvy a dodatky sa delia **po článkoch**; článok „Definice a výklad“ sa delí ešte **po číslovaných bodoch**
+  (2.1 až 2.6), lebo jeden chunk s 6 definíciami zhoršoval retrieval (pozri `T2_retrieval_embeddings.md`).
+  Prepínač `SPLIT_DEFINITIONS=0` vráti chunkovanie po článkoch. Waiver a poznámky sú jeden chunk na dokument.
+  Výkazy sa nenačítavajú, sú vstupom agenta.
+- Metadáta: firma, dokument, typ dokumentu, článok, bod (`clause`), strana. Platnosť od–do sa v DB neukladá,
+  overuje ju `sources.py` z plného textu.
 - Tabuľky `covenant_docs_<profil>`; vlastný kontajner `pgvector-banka` na porte 5433.
-- Pevný SQL filter podľa firmy (a typu dokumentu), až potom vektorové vyhľadávanie.
-- Iba **3–4 embedding profily** (najlepší cloudový, najlepší lokálny, jeden slabší na porovnanie).
-- Thresholdy **znova nakalibrovať** na týchto dokumentoch (`sweep_eval.py`, prepísať na nové testy).
+- Pevný SQL filter podľa firmy (povinný) a voliteľne typu dokumentu, až potom vektorové vyhľadávanie (`search.py`).
+- **3 embedding profily:** `azure` (`text-embedding-3-small`, 1536), `gemini` (`gemini-embedding-001`, 1536,
+  Vertex) a `bge` (`bge-m3`, 1024, lokálna Ollama).
+- Načítanie dev aj testovacej sady do rovnakých tabuliek (firmy majú rôzne ID). Načítanie nie je vyhodnotenie.
+- Thresholdy: kalibrácia iba na dev sade (`t2_retrieval.py`); `sweep_eval.py` je ešte z incidentového labu.
 
 ## 3. Kroky agenta
 
@@ -128,7 +143,7 @@ Najprv sa zistí, **čo** a **podľa akej definície** sa má počítať, až po
 | # | Test | Metrika |
 | --- | --- | --- |
 | T1 | vyťahovanie položiek z výkazu | podiel presne správnych polí, pre každý LLM |
-| T2 | retrieval | správny článok v top-k, pre každý embedding profil |
+| T2 | retrieval | správny článok v top-k, pre každý embedding profil (`t2_retrieval.py`, hotové na dev sade) |
 | T3 | zmluvná špecifikácia a výsledný stav v 3 režimoch | správnosť špecifikácie (definícia, limit, výnimka), správnosť citácie, výsledný stav, podiel `human_review` |
 | T4 | prompt injection | zmenila sa špecifikácia alebo stav, prípadne nastala nežiadaná akcia? |
 | T5 | opakovanie 3× | konzistentnosť odpovedí (nedeterminizmus) |
@@ -175,9 +190,12 @@ Použiteľné bez zmeny obsahu (spoločný motor): `config.py`, `providers.py`, 
 
 Prevzaté **iba ako kostra, stále incidentové a treba ich prepísať** (pozri TODO):
 
-- `search.py`: stále stĺpce a filtre incidentov (`incident_id`, `sid`, `domain`, `db_type`);
 - `rag_prompt.py`: stále prompt „SAP operations investigation assistant“;
-- `sweep_eval.py`: stále načítava testy z `eval.py`, ktorý tu neexistuje.
+- `sweep_eval.py`: stále načítava testy z `eval.py`, ktorý tu neexistuje (nahrádza ho `t2_retrieval.py`);
+- `rag_test.py`: predvolené `rag_scenarios.json` a `thresholds_FROZEN.json` tu neexistujú.
+
+`search.py` je už prepísaný (filter podľa firmy a typu dokumentu). Z `../code` sú navyše skopírované `lab.sh`,
+`lab_start.py`, `lab_start_README.md` a `test_lab_start.py`; kontrolujú kontajner `pgvector-banka` (port 5433).
 
 `requirements.txt` pochádza zo spoločného motora: `openai` sa používa pre Azure OpenAI a Foundry,
 `ollama` pre lokálne modely; `anthropic` a `google-genai` slúžia profilom Claude a Gemini
@@ -185,6 +203,7 @@ z incidentového labu, ktoré tento lab zatiaľ nepoužíva.
 
 Zmeny oproti originálu:
 
+- embedding profily zúžené na 3 (`azure`, `gemini`, `bge`);
 - tabuľky `covenant_docs_<profil>`, nie `incident_memory_<profil>`, aby sa nedotkli incidentového labu;
 - vlastná DB: kontajner `pgvector-banka` na porte **5433**, `PG_DSN` zodpovedá heslu z `docker-compose.yml`;
 - `load_threshold` presunutý z `rag.py` do `thresholds.py` (incidentové demo `rag.py` sa nekopíruje);
@@ -195,29 +214,40 @@ Zámerne **neprevzaté**: incidenty, scenáre, testovacie otázky, thresholdy a 
 ## TODO
 
 - [x] `data/`: firmy, zmluvy, výkazy, výnimky, poznámky a `expected.json` (`generate_data.py`)
-- [ ] `load_documents.py`: chunking po článkoch s metadátami
-- [ ] `search.py`: stĺpce a filtre pre dokumenty (firma, typ dokumentu, obdobie) namiesto domain/db_type
+- [x] `load_documents.py`: chunking po článkoch (definície po bodoch) s metadátami
+- [x] `search.py`: povinný filter podľa firmy a voliteľný podľa typu dokumentu
+- [x] `t2_retrieval.py`: T2 na dev sade (3 profily, hit@1/hit@3, sweep prahov, prísna metrika pre definície)
+- [x] zamknutá testovacia sada `data_test/` (generátor `--set test`, vyhodnotenie `--set test --final`)
+- [ ] vyhodnotiť testovaciu sadu jednorazovo po zamknutí chunkovania, dotazov a prahov
+- [ ] zapísať prahy do `thresholds.json` (nízka poistka, kalibrované na dev); waiver riešiť cez typ dokumentu
+- [ ] aplikovať prah v `search.py` (`find_similar` zatiaľ vracia top-k bez filtrovania podľa prahu)
 - [x] schéma zmluvnej špecifikácie a zoznam povolených položiek; validátor špecifikácie (`covenants.py`)
 - [x] `covenants.py` + testy: výpočet podľa špecifikácie, porovnanie s limitom, výnimky, pravidlá pre `human_review`
 - [x] `sources.py` + testy: overenie citácií, limitov a výnimok voči dokumentom (`evaluate_with_sources`)
 - [ ] `rag_prompt.py`: prompty pre vyťahovanie položiek, zmluvnú špecifikáciu a vysvetlenie; štruktúrovaný JSON výstup
 - [x] scenáre pre runner (`data/scenarios.json`: `incident` → text výkazu, `curated_context` → všetky dokumenty klienta)
 - [ ] automatické hodnotenie T1–T4 voči `expected.json` (runner zatiaľ hodnotí iba ručne)
-- [ ] kalibrácia thresholdov
 - [ ] OpenTelemetry, YAML konfigurácia agenta, GitHub Actions
 - [ ] Foundry: deploymenty modelov, ceny v `llm_prices.json`
 
-## Spustenie (zatiaľ iba dáta, výpočet a offline testy)
+## Spustenie (dáta, výpočet, načítanie do DB a T2; kroky s LLM zatiaľ nie)
 
 ```bash
 cd ~/devops-lab/ai-labs/code_banka
+source .venv/bin/activate     # samostatný venv tohto labu
 docker compose up -d          # vlastná DB na porte 5433
+docker exec pgvector-banka psql -U postgres -c "CREATE EXTENSION IF NOT EXISTS vector"   # raz
+bash lab.sh                   # kontrola labu; očakávaný výsledok: Lab ready.
 python generate_data.py       # na VM, nie vo OneDrive na Windows
+python generate_data.py --set test
+for p in bge azure gemini; do EMBED_PROFILE=$p python load_documents.py; done
+python t2_retrieval.py --tag moj_beh      # T2 na dev sade
 python -m unittest discover -v -p "test_*.py"
 ```
 
-Vyhľadávanie nad zmluvami a kroky s LLM sa zatiaľ spustiť nedajú: chýba `load_documents.py`
-a `search.py` s `rag_prompt.py` sú ešte incidentové.
+Kroky s LLM (extrakcia položiek, zmluvná špecifikácia, vysvetlenie) sa zatiaľ spustiť nedajú:
+`rag_prompt.py` je ešte incidentový. Podrobné výsledky T2: `T2_retrieval_embeddings.md`,
+priebežný záverečný dokument: `LAB_FINAL_DOCUMENT.md`.
 
 API kľúče a prípadné prepísania nastavení (napr. `PG_DSN`, `AZURE_OPENAI_ENDPOINT`,
 `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_LLM_DEPLOYMENT`) patria do súboru `.env` v tomto priečinku.

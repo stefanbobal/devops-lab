@@ -1,0 +1,14 @@
+[
+  {
+    "model": "azure",
+    "threshold": 0.5
+  },
+  {
+    "model": "gemini",
+    "threshold": 0.65
+  },
+  {
+    "model": "bge",
+    "threshold": 0.5
+  }
+]

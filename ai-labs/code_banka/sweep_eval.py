@@ -57,7 +57,7 @@ if len(sys.argv) > 1 and sys.argv[1] == "--worker":
     sys.exit()
 
 profiles = sys.argv[1:] or [
-    "nomic", "nomic_prefix", "bge", "qwen", "qwen8", "qwen_instr", "gemini", "azure",
+    "bge", "gemini", "azure",
 ]
 tests = load_tests()
 thresholds_path = Path(__file__).with_name("thresholds.json")
