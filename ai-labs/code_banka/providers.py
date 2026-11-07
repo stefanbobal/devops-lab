@@ -60,7 +60,23 @@ def embed(text, kind="document"):
     return np.array(vector)
 
 
-def chat(system_prompt, user_prompt):
+def _usage_dict(value):
+    """Provider usage object -> plain dict (llm_metrics.normalize_usage turns it into token counts)."""
+    if value is None:
+        return {}
+    if hasattr(value, "model_dump"):
+        return value.model_dump(mode="json")
+    return dict(value)
+
+
+def chat_with_usage(system_prompt, user_prompt):
+    """Same request as always, but returns (text, info). info: provider, model, latency_s, finish_reason and
+    usage_raw as reported by the provider (no token estimates). Request parameters must stay identical to
+    what T3/T5 used, so measuring does not change the model's behaviour."""
+    import time
+    started = time.perf_counter()
+    raw, finish = {}, None
+
     if LLM_PROVIDER == "azure":
         if not LLM_MODEL:
             raise SystemExit("Set AZURE_OPENAI_LLM_DEPLOYMENT to your Azure chat deployment name.")
@@ -81,26 +97,30 @@ def chat(system_prompt, user_prompt):
             raise RuntimeError(
                 f"Azure did not return a complete text answer (finish_reason={choice.finish_reason})."
             )
-        return choice.message.content
+        text, finish, raw = choice.message.content, choice.finish_reason, _usage_dict(response.usage)
 
-    if LLM_PROVIDER == "ollama":
+    elif LLM_PROVIDER == "ollama":
         import ollama
         response = ollama.chat(model=LLM_MODEL, messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
         ])
-        return response["message"]["content"]
+        text = response["message"]["content"]
+        data = _usage_dict(response)
+        finish = data.get("done_reason")
+        raw = {k: v for k, v in data.items() if k.endswith("_count") or k.endswith("_duration")}
 
-    if LLM_PROVIDER == "anthropic":
+    elif LLM_PROVIDER == "anthropic":
         import anthropic
         client = anthropic.Anthropic()   # reads ANTHROPIC_API_KEY from the environment / .env
         response = client.messages.create(
             model=LLM_MODEL, max_tokens=2000, system=system_prompt,
             messages=[{"role": "user", "content": user_prompt}],
         )
-        return "".join(block.text for block in response.content if block.type == "text")
+        text = "".join(block.text for block in response.content if block.type == "text")
+        finish, raw = response.stop_reason, _usage_dict(response.usage)
 
-    if LLM_PROVIDER == "vertex":
+    elif LLM_PROVIDER == "vertex":
         from google import genai
         from google.genai import types
         client = genai.Client(vertexai=True, project=GCP_PROJECT, location=VERTEX_LLM_LOCATION)
@@ -108,6 +128,18 @@ def chat(system_prompt, user_prompt):
             model=LLM_MODEL, contents=user_prompt,
             config=types.GenerateContentConfig(system_instruction=system_prompt),
         )
-        return response.text
+        text = response.text
+        candidate = response.candidates[0] if response.candidates else None
+        finish = str(getattr(candidate, "finish_reason", None)).split(".")[-1]
+        raw = _usage_dict(response.usage_metadata)
 
-    raise SystemExit(f"Unknown LLM provider: {LLM_PROVIDER}")
+    else:
+        text = None
+
+    info = dict(provider=LLM_PROVIDER, model=LLM_MODEL, latency_s=round(time.perf_counter() - started, 3),
+                finish_reason=finish, usage_raw=raw)
+    return text, info
+
+
+def chat(system_prompt, user_prompt):
+    return chat_with_usage(system_prompt, user_prompt)[0]

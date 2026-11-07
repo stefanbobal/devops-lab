@@ -105,12 +105,23 @@ def run(company_id, period, statement_text=None, documents=None, chat=None, retr
     from covenants import SpecError, evaluate, validate_spec
     from rag_prompt import build_extract_prompts, build_spec_prompts
     from sources import quarter_end, verify_sources
+    chat_with_usage = None
     if chat is None:
-        from providers import chat
+        from providers import chat_with_usage
     retrieve_fn = retrieve_fn or retrieve
     steps = []
+    llm_calls = {}   # step name -> provider-reported usage and latency (only when the real providers are used)
+
+    def ask(name, system, user):
+        """One LLM call. The usage is stored before the answer is parsed, so failed answers are measured too."""
+        if chat_with_usage is None:
+            return chat(system, user)
+        text, llm_calls[name] = chat_with_usage(system, user)
+        return text
 
     def step(name, started, status, **details):
+        if name in llm_calls:
+            details["llm"] = llm_calls[name]
         steps.append(dict(step=name, status=status, seconds=round(time.time() - started, 1), **details))
         log(f"  {name}: {status} ({steps[-1]['seconds']}s)" + (f" {details['summary']}" if details.get("summary") else ""))
 
@@ -127,7 +138,7 @@ def run(company_id, period, statement_text=None, documents=None, chat=None, retr
     t = time.time()
     system, user = build_extract_prompts(statement_text)
     try:
-        extracted = parse_json(chat(system, user))
+        extracted = parse_json(ask("extract", system, user))
     except Exception as exc:
         step("extract", t, "failed", summary=str(exc)[:120])
         return finish("human_review", [f"extraction_failed: {str(exc)[:120]}"])
@@ -156,7 +167,7 @@ def run(company_id, period, statement_text=None, documents=None, chat=None, retr
     t = time.time()
     system, user = build_spec_prompts(period, quarter_end(period).isoformat(), chunks)
     try:
-        spec = parse_json(chat(system, user))
+        spec = parse_json(ask("spec", system, user))
     except Exception as exc:
         step("spec", t, "failed", summary=str(exc)[:120])
         return finish("human_review", [f"spec_failed: {str(exc)[:120]}"], items=items)

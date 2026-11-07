@@ -28,5 +28,21 @@ class SummaryTests(unittest.TestCase):
             t3_chain.main([])
 
 
+    def test_repeats_refuses_to_overwrite_any_existing_run(self):
+        f = t3_chain.BASE / "results" / "t3_chain_zz_unit_r2.json"
+        f.parent.mkdir(exist_ok=True)
+        f.write_text("{}")
+        try:
+            with self.assertRaises(SystemExit) as cm:
+                t3_chain.main(["--tag", "zz_unit", "--repeats", "3"])
+            self.assertIn("t3_chain_zz_unit_r2.json", str(cm.exception))
+        finally:
+            f.unlink()
+
+    def test_repeats_must_be_positive(self):
+        with self.assertRaises(SystemExit):
+            t3_chain.main(["--tag", "zz_unit", "--repeats", "0"])
+
+
 if __name__ == "__main__":
     unittest.main()

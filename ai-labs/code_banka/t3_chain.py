@@ -1,6 +1,7 @@
 """T3: the whole agent on every dev case, compared with expected_status.
 
-Usage: python t3_chain.py [--limit N] [--cases C01-2026Q1,...] --tag name
+Usage: python t3_chain.py [--limit N] [--cases C01-2026Q1,...] [--repeats N] --tag name
+--repeats N runs the agent N times on the same cached search results and writes <tag>_r1 ... <tag>_rN.
 LLM: LLM_PROFILE (default gemma), embedding: EMBED_PROFILE (default bge). A tag is required and an existing
 result file is never overwritten. Dev set only (data/); the held-out data_test/ is not touched.
 Phase 1 searches for all cases (only the embedding model is loaded), phase 2 runs the agent (only the LLM).
@@ -43,12 +44,19 @@ def first_stop(out):
 
 
 def main(argv):
-    opts = {a: argv[i + 1] for i, a in enumerate(argv) if a in ("--limit", "--cases", "--tag") and i + 1 < len(argv)}
+    opts = {a: argv[i + 1] for i, a in enumerate(argv)
+            if a in ("--limit", "--cases", "--tag", "--repeats") and i + 1 < len(argv)}
     if "--tag" not in opts:
         raise SystemExit("Give a tag, e.g. python t3_chain.py --tag qwen_run1 (existing results are never overwritten)")
-    out_file = BASE / "results" / f"t3_chain_{opts['--tag']}.json"
-    if out_file.exists():
-        raise SystemExit(f"{out_file.name} already exists, choose another tag")
+    repeats = int(opts.get("--repeats", 1))
+    if repeats < 1:
+        raise SystemExit("--repeats must be at least 1")
+    # one run -> t3_chain_<tag>.json; several runs -> t3_chain_<tag>_r1.json ... _rN.json
+    names = [opts["--tag"]] if "--repeats" not in opts else [f"{opts['--tag']}_r{i}" for i in range(1, repeats + 1)]
+    out_files = [BASE / "results" / f"t3_chain_{n}.json" for n in names]
+    existing = [f.name for f in out_files if f.exists()]
+    if existing:
+        raise SystemExit(f"{', '.join(existing)} already exists, choose another tag")
     from config import EMBED_MODEL, LLM_MODEL
     cases = json.loads((agent.DATA / "expected.json").read_text("utf-8"))
     if "--cases" in opts:
@@ -74,30 +82,32 @@ def main(argv):
         return retrieve_fn
 
     log("phase 2/2: agent (the first answer can take a minute while a local model loads)")
-    rows, started = [], time.time()
-    for case in cases:
-        t = time.time()
-        out = agent.run(case["company_id"], case["period"], retrieve_fn=cached(case["case_id"]))
-        want = case["expected_result"].get("values")
-        values_ok = out["result"] is not None and want is not None and out["result"].get("values") == want
-        rows.append(dict(case_id=case["case_id"], case_type=case["case_type"], expected=case["expected_status"],
-                         got=out["status"], stage=first_stop(out), reasons=out["reasons"], values_ok=values_ok,
-                         seconds=round(time.time() - t, 1), spec=out["spec"], items=out["items"],
-                         steps=out["steps"]))
-        mark = "ok " if rows[-1]["got"] == rows[-1]["expected"] else "DIFF"
-        log(f"  [{mark}] {case['case_id']} expected {rows[-1]['expected']}, got {rows[-1]['got']}")
+    for run_no, out_file in enumerate(out_files, 1):
+        log(f"--- run {run_no}/{len(out_files)} -> {out_file.name}")
+        rows, started = [], time.time()
+        for case in cases:
+            t = time.time()
+            out = agent.run(case["company_id"], case["period"], retrieve_fn=cached(case["case_id"]))
+            want = case["expected_result"].get("values")
+            values_ok = out["result"] is not None and want is not None and out["result"].get("values") == want
+            rows.append(dict(case_id=case["case_id"], case_type=case["case_type"], expected=case["expected_status"],
+                             got=out["status"], stage=first_stop(out), reasons=out["reasons"], values_ok=values_ok,
+                             seconds=round(time.time() - t, 1), spec=out["spec"], items=out["items"],
+                             steps=out["steps"]))
+            mark = "ok " if rows[-1]["got"] == rows[-1]["expected"] else "DIFF"
+            log(f"  [{mark}] {case['case_id']} expected {rows[-1]['expected']}, got {rows[-1]['got']}")
 
-    summary = summarize(rows)
-    out_file.parent.mkdir(exist_ok=True)
-    out_file.write_text(json.dumps(dict(llm=LLM_MODEL, embedding=EMBED_MODEL, summary=summary, rows=rows),
-                                   ensure_ascii=False, indent=1), encoding="utf-8")
-    log(f"done in {time.time() - started:.0f}s | exact {summary['exact']}/{summary['cases']} | "
-        f"human_review got {summary['review_got']} (expected {summary['review_expected']})")
-    log(f"missed breaches: {summary['missed_breach'] or 'none'} | false alarms: {summary['false_alarm'] or 'none'}")
-    log(f"matrix: {summary['matrix']}")
-    if summary["stopped_at"]:
-        log(f"human_review caused by step: {summary['stopped_at']}")
-    log(f"wrote {out_file.name}")
+        summary = summarize(rows)
+        out_file.parent.mkdir(exist_ok=True)
+        out_file.write_text(json.dumps(dict(llm=LLM_MODEL, embedding=EMBED_MODEL, summary=summary, rows=rows),
+                                       ensure_ascii=False, indent=1), encoding="utf-8")
+        log(f"done in {time.time() - started:.0f}s | exact {summary['exact']}/{summary['cases']} | "
+            f"human_review got {summary['review_got']} (expected {summary['review_expected']})")
+        log(f"missed breaches: {summary['missed_breach'] or 'none'} | false alarms: {summary['false_alarm'] or 'none'}")
+        log(f"matrix: {summary['matrix']}")
+        if summary["stopped_at"]:
+            log(f"human_review caused by step: {summary['stopped_at']}")
+        log(f"wrote {out_file.name}")
     return 0
 
 

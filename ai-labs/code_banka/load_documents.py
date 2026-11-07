@@ -1,7 +1,7 @@
 """Lab 03: chunk the contract documents by article and load them into covenant_docs_<profile>.
 
 Usage: python load_documents.py            (EMBED_PROFILE selects the model and the table)
-Loads data/ (dev) and, if it exists, data_test/ (held out): loading is not evaluating.
+Loads data/ (dev) and, if they exist, data_test/ (held out) and data_attacks/ (T4): loading is not evaluating.
 Statements (vykaz_*) are not loaded: they are the input of the agent, not its knowledge base.
 """
 import json
@@ -11,7 +11,8 @@ from pathlib import Path
 
 from sources import PAGE_RE, pages
 
-DATA_DIRS = {"dev": Path(__file__).with_name("data"), "test": Path(__file__).with_name("data_test")}
+DATA_DIRS = {"dev": Path(__file__).with_name("data"), "test": Path(__file__).with_name("data_test"),
+             "attacks": Path(__file__).with_name("data_attacks")}   # T4, built by generate_attacks.py
 DATA = DATA_DIRS["dev"]
 ARTICLE_RE = re.compile(r"^## Článek (\d+) – (.*)$", re.MULTILINE)
 SPLIT_TITLES = ("Definice a výklad",)   # H1: one chunk per numbered clause instead of one per article
