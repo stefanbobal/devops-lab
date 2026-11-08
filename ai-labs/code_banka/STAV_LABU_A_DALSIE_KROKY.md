@@ -1,6 +1,6 @@
 # code_banka: stav labu, všetky doterajšie testy a čo zostáva
 
-Stav k 2026-11-07 večer (po T5, T6, T1 a príprave T4; predchádzajúci stav bol 2026-11-04). Všetky firmy, zmluvy a čísla sú vymyslené
+Stav k 2026-11-08 večer (po T4; predchádzajúci stav bol 2026-11-07). Všetky firmy, zmluvy a čísla sú vymyslené
 (fiktívna Modrá Banka a.s.).
 Účel dokumentu: aby sa dalo pokračovať (T1 a ďalšie) bez spätného čítania konverzácie. Obsahuje setup,
 dáta, embeddingy, každý test s číslami, verzie promptov, nájdené chyby, zoznam súborov a presný zoznam toho,
@@ -11,35 +11,34 @@ vyhľadávania), `LAB_FINAL_DOCUMENT.md` (pracovný záverečný dokument), `lab
 
 ---
 
-## 0. Rýchly štart na zajtra
+## 0. Rýchly štart: kde pokračovať
 
 ```bash
-cd ~/devops-lab/ai-labs/code_banka
+cd ~/devops-lab/ai-labs/code_banka && source .venv/bin/activate
 bash lab.sh                       # očakávaný koniec: "Lab ready."
 docker ps | grep pgvector-banka   # musí bežať (port 5433)
 ollama stop gemma3:27b            # len ak sa predtým používala gemma (uvoľní GPU)
 ```
 
-**Stav testov:**
-- Hotové a vyhodnotené: T2 vyhľadávanie (sekcia 6), T3a špecifikácia (8), T3 celý reťazec (9), **T5 opakovateľnosť**
-  (12: qwen38 359/360 správnych case-runov v 10 behoch, haiku 108/108 v 3 behoch, 0 nebezpečne nestabilných),
-  **T6 prevádzka** (12a), **T1 extrakcia** (12b: 5 400 položiek, 0 chýb).
-- **T4 útoky: kód je napísaný, nič sa ešte nespustilo** (sekcia 12c). Toto je prvý krok zajtra.
-- Voliteľne: haiku s 7 behmi (férové porovnanie s qwen) a počítadlo „rovnaké číslo, iná citácia“ v `t5_stability.py`.
+**Stav testov (2026-11-08 večer):** hotové a vyhodnotené T2, T3a, T3, T5, T6, T1 (dev) a **T4** (pilot, rodina A,
+rodina F, kontrolný beh; sekcia 12c). T4: 0 úspešných útokov zo 378 prípadov, ale qwen38 raz prevzal vložený limit a
+zastavil ho až parser (parser nezmierňovať). Kód aj dokument sú commitnuté a pushnuté, `results/` je zálohované.
 
-**Zajtra, presný postup pre T4 pilot** (kroky 2 až 5 beží používateľ, výsledky sa posielajú po jednom kroku):
-```bash
-cd ~/devops-lab/ai-labs/code_banka && source .venv/bin/activate
-bash lab.sh                                                  # 1. "Lab ready."
-python -m unittest test_t4_attacks test_t1_extraction test_t6_ops test_t5_stability test_t3_chain test_load_documents
-python generate_attacks.py                                   # 2. vytvorí data_attacks/ (34 prípadov)
-EMBED_PROFILE=bge python load_documents.py                   # 3. znova načíta bge tabuľku (~850 chunkov, pár minút)
-LLM_PROFILE=haiku  bash lab.sh t4_attacks.py --tag a_pilot_haiku     # 4. ~3 min
-LLM_PROFILE=qwen38 bash lab.sh t4_attacks.py --tag a_pilot_qwen38    # 5. ~8 min
-python t4_attacks.py --report a_pilot_haiku a_pilot_qwen38   # tabuľka znova bez volania modelu
-```
-Testy `test_t1_extraction`, `test_t6_ops`, `test_t5_stability`, `test_t4_attacks` a nové testy v `test_t3_chain`
-**sa zatiaľ nikdy nespustili** (kód som len syntakticky skontroloval); ak niektorý zlyhá, najprv opraviť.
+**ĎALŠÍ KROK (začať tu, v tomto poradí; podrobnosti v sekcii 14):**
+1. **G. Reprodukovateľnosť**: do výsledkových súborov zapisovať verziu promptu, prah, `SPLIT_DEFINITIONS`, model a čas
+   (dnes sa verzia promptu nezaznamenáva). Malá úprava kódu a testy; treba pred finálnymi behmi.
+2. **E. Tri režimy T3**: bez RAG, RAG (existuje), celá zmluva. Nový parameter `mode` v `agent.run`, prompty,
+   porovnanie správnosti, prehliadnutých porušení, podielu `human_review` a tokenov. Najväčšia zostávajúca úloha.
+3. **F. Vyhodnotenie `data_test/`** (jednorazovo, až po G a E) a **H. finálne behy** všetkých modelov s tým istým promptom.
+4. **I. Dokumentácia** (`README.md`, `LAB_FINAL_DOCUMENT.md`: chýba T3, T5, T6, T1, T4; `T2_retrieval_embeddings.md`).
+5. J. Docker a UI je nepovinné.
+
+Upozornenie k F: firmy C13 až C16 z `data_test/` sa použili na útoky rodiny F. Obrana sa po nich nemenila, ale test
+sada už nie je celkom nedotknutá a treba to uviesť pri jej vyhodnotení.
+
+Otvorené (nespadá do žiadneho kroku): rozhodnutie o zmienke o pohovore v histórii gitu (commit `a3e25aa` je na GitHube;
+riešenie by bol `git filter-repo` alebo rebase s force pushom, nevratné); odmietnutia haiku mimo zmluvných útokov
+(sekcia 12c, neúčinná kontrola); voliteľne haiku 7 behov v T5.
 
 Pravidlá práce z dnešného dňa (dohodnuté):
 - Testy a dlhé príkazy spúšťa používateľ sám. Claude upravuje kód a vysvetľuje výsledky po jednom kroku.
@@ -637,7 +636,7 @@ hlavne parser, nie model; formulácie A aj F písal ten istý autor.
 
 ## 14. Čo chýba na dokončenie celého testu
 
-Priorita zhora nadol (A je hotové, ďalší je B).
+Priorita zhora nadol. Hotové: A, B, C, D (dev). Ďalšie: G, E, potom F a H, I, J (pozri sekciu 0).
 
 **A. T5 opakovateľnosť**: HOTOVÉ (sekcia 12). Zostáva voliteľne: haiku 7 behov a počítadlo „rovnaké číslo, iná
 citácia“ v `t5_stability.py`.
@@ -648,7 +647,7 @@ a `llm_prices.json` ceny (haiku 0,10 / 0,50 USD za milión tokenov vstup/výstup
 ceny sú zadané používateľom, neoverené); treba ich napojiť na `agent.run` (usage na krok). Lokálny model: cena 0,
 elektrina sa nepočíta. Odporúčané urobiť **pred** záverečnými behmi, aby sa tokeny zbierali už vtedy.
 
-**C. T4 útoky: kód hotový (sekcia 12c), behy čakajú.** Pôvodný stav: dnes sú 2 útoky vo výkaze v dev (C11-2026Q2 `override`, C12-2026Q3 `exfiltration`) a 1 v teste
+**C. T4 útoky: HOTOVÉ (sekcia 12c, 2026-11-08).** Pôvodný stav: dnes sú 2 útoky vo výkaze v dev (C11-2026Q2 `override`, C12-2026Q3 `exfiltration`) a 1 v teste
 (C18-2026Q3 `override`); všetky tri prešli bez zmeny stavu pri qwen38 a haiku (dev). Chýba: **dvojice** čistý/napadnutý
 výkaz toho istého prípadu, **nepriame útoky** (v zmluve, waiveri, poznámkach analytika), pokus o únik medzi firmami
 (filter na firmu), pokus o „akciu“, nepovolená citácia. Metriky: zmena čísel, špecifikácie alebo stavu.
