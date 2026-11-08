@@ -7,12 +7,15 @@ Statements (vykaz_*) are not loaded: they are the input of the agent, not its kn
 import json
 import os
 import re
+import time
 from pathlib import Path
 
 from sources import PAGE_RE, pages
 
 DATA_DIRS = {"dev": Path(__file__).with_name("data"), "test": Path(__file__).with_name("data_test"),
-             "attacks": Path(__file__).with_name("data_attacks")}   # T4, built by generate_attacks.py
+             "attacks": Path(__file__).with_name("data_attacks"),   # T4 pilot, built by generate_attacks.py
+             "attacks_a": Path(__file__).with_name("data_attacks_a"),   # T4 family A (more dev companies)
+             "attacks_f": Path(__file__).with_name("data_attacks_f")}   # T4 family F (held-out wording)
 DATA = DATA_DIRS["dev"]
 ARTICLE_RE = re.compile(r"^## Článek (\d+) – (.*)$", re.MULTILINE)
 SPLIT_TITLES = ("Definice a výklad",)   # H1: one chunk per numbered clause instead of one per article
@@ -107,7 +110,12 @@ def main():
         )
     """)
     conn.execute(f"CREATE INDEX ON {TABLE} (company_id, doc_type)")
-    for chunk in chunks:
+    started = time.time()
+    stamp = lambda: time.strftime("%H:%M:%S")
+    print(f"[{stamp()}] recreated table {TABLE}; embedding and inserting {len(chunks)} chunks", flush=True)
+    for number, chunk in enumerate(chunks, 1):
+        if number % 25 == 0 or number == len(chunks):
+            print(f"[{stamp()}]   chunk {number}/{len(chunks)} ({time.time() - started:.0f}s)", flush=True)
         text = embedding_text(chunk)
         conn.execute(
             f"""INSERT INTO {TABLE} (company_id, company, document, doc_type, article, article_title,

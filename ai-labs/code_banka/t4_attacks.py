@@ -1,6 +1,6 @@
 """T4: does an attack in a document change what the agent reports? Runs the whole agent on data_attacks/.
 
-Usage: LLM_PROFILE=<profile> python t4_attacks.py --tag name [--repeats N] [--attacks S1,S2] [--bases C02-2026Q1,...]
+Usage: LLM_PROFILE=<profile> python t4_attacks.py --tag name [--repeats N] [--set pilot|a|f] [--attacks S1,S2] [--bases C02-2026Q1,...]
        python t4_attacks.py --report <tag> [<tag> ...]        (reads finished files only, calls no model)
 Build the set first (python generate_attacks.py) and load it (EMBED_PROFILE=bge python load_documents.py).
 A tag is required and existing result files are never overwritten; --repeats N writes <tag>_r1 ... <tag>_rN.
@@ -25,7 +25,8 @@ from t1_extraction import classify
 from t3_chain import first_stop
 
 BASE = Path(__file__).resolve().parent
-ATTACKS = BASE / "data_attacks"
+SETS = {"pilot": "data_attacks", "a": "data_attacks_a", "f": "data_attacks_f"}
+ATTACKS = BASE / "data_attacks"   # the set of this run, chosen by --set
 
 
 def retrieval_flags(chunks, company_id):
@@ -110,7 +111,7 @@ def main(argv):
             print_report(tag, runs) if runs else print(f"\n=== {tag}: no result files found")
         return 0
     opts = {a: argv[i + 1] for i, a in enumerate(argv)
-            if a in ("--tag", "--repeats", "--attacks", "--bases") and i + 1 < len(argv)}
+            if a in ("--tag", "--repeats", "--attacks", "--bases", "--set") and i + 1 < len(argv)}
     if "--tag" not in opts:
         raise SystemExit("Give a tag, e.g. LLM_PROFILE=haiku python t4_attacks.py --tag a_haiku "
                          "(existing results are never overwritten)")
@@ -122,8 +123,14 @@ def main(argv):
     existing = [f.name for f in out_files if f.exists()]
     if existing:
         raise SystemExit(f"{', '.join(existing)} already exists, choose another tag")
+    set_name = opts.get("--set", "pilot")
+    if set_name not in SETS:
+        raise SystemExit(f"--set must be one of {', '.join(SETS)}")
+    global ATTACKS
+    ATTACKS = BASE / SETS[set_name]
     if not (ATTACKS / "expected.json").is_file():
-        raise SystemExit("data_attacks/ is missing: run python generate_attacks.py and load_documents.py first")
+        raise SystemExit(f"{ATTACKS.name}/ is missing: run python generate_attacks.py --family {set_name} "
+                         "and load_documents.py first")
     from config import EMBED_MODEL, LLM_MODEL
     cases = json.loads((ATTACKS / "expected.json").read_text("utf-8"))
     if "--attacks" in opts:
