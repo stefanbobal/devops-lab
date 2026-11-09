@@ -1,6 +1,6 @@
 # T2: retrieval zmluvných článkov, porovnanie 3 embedding modelov
 
-Stav: 2026-11-03. Meranie 1 (základ, článok = chunk) a meranie 2 (H1: definície po bodoch), sekcia 10.
+Stav: 2026-11-03 (merania 1 a 2); vyhodnotenie na zamknutej test sade 2026-11-09 je v `STAV_LABU_A_DALSIE_KROKY.md`, sekcia 12e. Meranie 1 (základ, článok = chunk) a meranie 2 (H1: definície po bodoch), sekcia 10.
 Všetky firmy a čísla sú vymyslené.
 Súvisí s: README (sekcia 2 a test T2), `load_documents.py`, `search.py`, `t2_retrieval.py`,
 surové výsledky v `results/t2.json`.
@@ -22,11 +22,11 @@ Ak sa v T3 pokazí špecifikácia, vďaka T2 vieme, či príčinou nebol chýbaj
 
 - **Zdroj:** zmluvy, dodatky, waivery a poznámky analytika 12 vymyslených firiem (`data/companies/`).
   Výkazy sa nenačítavajú, sú vstupom agenta, nie jeho znalosťou.
-- **Chunky:** 135 (`load_documents.py`):
-  - 120 článkov zmlúv (12 firiem × 10 článkov),
-  - 2 články dodatku (C10), 1 waiver (C05), 12 poznámok analytika (každá jeden chunk).
-  - Zmluvy a dodatky sa delia **po článkoch** (`## Článek N – ...`), waiver a poznámky nemajú články,
-    takže je to jeden chunk na dokument.
+- **Chunky:** 135 v čase merania 1 (dev sada, delenie po článkoch). Aktuálne má **každá z troch tabuliek 308 chunkov**
+  pre 18 firiem (dev aj zamknutá test sada; `load_documents.py` načíta obe, načítanie nie je vyhodnotenie):
+  284 článkov zmluvy (vrátane definícií delených po číslovaných bodoch), 4 články dodatkov, 2 waivery a 18 poznámok analytika.
+  Zmluvy a dodatky sa delia **po článkoch** (`## Článek N – ...`), článok „Definice a výklad“ po bodoch (meranie 2),
+  waiver a poznámky nemajú články, takže je to jeden chunk na dokument. Po pridaní útočných sád (T4) majú tabuľky 2 610 chunkov.
 - **Embedovaný text chunku:** hlavička + text článku, napríklad
   `Firma: Vltavská strojírenská a.s. / Dokument: smlouva.md (contract), článek 2 – Definice a výklad / <text>`.
 - **Tabuľky:** `covenant_docs_bge`, `covenant_docs_azure`, `covenant_docs_gemini` v kontajneri

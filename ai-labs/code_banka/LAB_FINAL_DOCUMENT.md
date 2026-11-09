@@ -1,7 +1,7 @@
 # code_banka: záverečný dokument (pracovná verzia)
 
 Priebežne dopĺňaný dokument. Každá sekcia sa pridáva po dokončení kroku labu, na záver sa upraví do jedného celku.
-Podrobné merania sú v samostatných súboroch (napríklad `T2_retrieval_embeddings.md`). Všetky firmy a čísla sú vymyslené.
+Podrobné merania sú v samostatných súboroch (`T2_retrieval_embeddings.md`, `STAV_LABU_A_DALSIE_KROKY.md`). Všetky firmy a čísla sú vymyslené.
 
 ## 1. Zámer labu
 
@@ -140,52 +140,61 @@ meria prispôsobenie sa týmto dátam. Skutočné overenie prinesie až `data_te
 s úplne rovnakou verziou promptu (qwen38 a azure bez poslednej vety o pomeroch); pred záverečným číslom ich treba
 spustiť znova s finálnym promptom.
 
-## 4. Agent, testy a nasadenie (plán)
+## 4. Agent a jeho reťazec (hotové)
 
-**Agent a testy sú dve rôzne veci.** Agent je kód, ktorý dostane výkaz firmy a vráti výsledok. Testy (T2, T3a, T3)
-merajú jeho jednotlivé kroky a pomáhajú vybrať model a nastavenie; v prevádzke sa nespúšťajú.
+**Agent a testy sú dve rôzne veci.** Agent (`agent.py`, `agent.run(company, period, mode)`) je kód, ktorý dostane výkaz firmy a
+vráti stav, dôvody a všetky medzikroky. Testy merajú jeho kroky a pomáhajú vybrať model; v prevádzke sa nespúšťajú.
 
-| Krok agenta | Modul | Test |
-| --- | --- | --- |
-| 1. Vytiahnutie položiek z výkazu (LLM) | zatiaľ chýba | T1 |
-| 2. Kontrola položiek | `covenants.py` | testy jednotiek |
-| 3. Vyhľadanie v zmluve (RAG) | `search.py` | T2 (hotové na dev sade) |
-| 4. Zmluvná špecifikácia (LLM → JSON) | `rag_prompt.py` | T3a (`t3_spec.py`, beh čaká) |
-| 5. Overenie špecifikácie | `covenants.validate_spec`, `sources.py` | T3a |
-| 6. Výpočet a stav | `covenants.py` | T3 (celý reťazec proti `expected.json`) |
-
-**Testy T4 až T6** nepatria ku konkrétnemu kroku, skúšajú celého agenta (bezpečnosť, stabilita, prevádzka).
-T1 až T3 sú jadro príbehu, T4 až T6 ho dopĺňajú.
-
-| Test | Postup | Hlavné výstupy | Pripravené |
+| Krok | Kto | Modul | Test |
 | --- | --- | --- | --- |
-| T4 Útoky v dokumentoch | porovnať čistú a napadnutú verziu toho istého prípadu | zmena čísel, predpisu alebo stavu, nepovolená citácia, únik medzi firmami, pokus o akciu | 2 útoky vo výkaze (`override`, `exfiltration`); páry a nepriame útoky (v zmluve, v poznámkach) chýbajú |
-| T5 Opakovateľnosť | rovnakú kombináciu 3× pri nezmenenom kontexte, celý LLM tok | zhoda stavu a predpisu medzi behmi, počet nestabilných prípadov | runner má `--repeats` |
-| T6 Prevádzka | zaznamenať všetky kroky, tokeny, trvanie a náklady vrátane zlyhaní | latencia p50 a p95, chybovosť, tokeny, cena LLM a cena prípadu | nie |
+| 1 `extract`: položky z výkazu | LLM | `rag_prompt.py` | T1 |
+| 2 `check_items`: číslo musí byť na citovanej strane | kód | `agent.py` | T1 |
+| 3 `retrieve`: úryvky zo zmluvy | kód + embedding | `search.py` | T2 |
+| 4 `spec`: špecifikácia ako JSON | LLM | `rag_prompt.py` | T3a |
+| 5 `verify`: validácia a overenie citácií | kód | `covenants.py`, `sources.py`, `contract_rules.py` | T3a, T3 |
+| 6 `evaluate`: pomery, limit, waiver, pásmo 2 % | kód | `covenants.py` | T3 |
 
-T4 až T6 sa dajú spustiť až nad hotovým `agent.py`, preto sú v poradí prác za ním.
+Kto čo robí je dôležité: **LLM nikdy nerozhoduje o stave.** Pri akomkoľvek zlyhaní krokov 1 až 5 je výsledok `human_review` s dôvodom.
 
-**Užitočnosť pre firmu** sa meria na konci: koľko z 36 prípadov agent vyhodnotí správne a bezpečne. Hlavná
-požiadavka: nikdy `no_breach` pri skutočnom porušení; pri neistote `human_review`.
+## 5. Celý reťazec (T3)
 
-**Poradie prác:**
-1. Dobehnúť T3a (gemma, azure, haiku; retrieval bge) a vybrať model.
-2. Doplniť krok 1 a spojiť kroky do `agent.py`: funkcia `run(company_id, period, výkaz)` vráti výsledok aj
-   medzikroky (nájdené chunky, špecifikácia, dôvody `human_review`). Agent musí fungovať ako funkcia ešte pred
-   balením, aby sa dal ladiť bez Dockeru.
-3. Prompty a T3 (celý reťazec, 3 režimy), potom T1.
-   Potom T4 (útoky), T5 (opakovanie 3×) a T6 (prevádzka) nad hotovým agentom.
-4. Zabaliť do Docker image (kód, `thresholds.json`, konfigurácia modelu a profilu).
-5. Rozhranie: buď endpoint v `app_llm_homelab`, alebo jej klon s obrazovkou „nahraj výkaz → uvidíš každý krok a
-   výsledok“. Aplikácia `app_llm_homelab` má `Dockerfile`, `compose.yaml`, `api_server.py` a UI, ale zatiaľ je
-   to nástroj na porovnávanie odpovedí LLM; či sa hodí na tento účel, je potrebné ešte overiť.
-6. Zamknúť chunkovanie, dotazy a prahy a jednorazovo vyhodnotiť `data_test/`.
+Dev sada, 36 prípadov, prompt P3: haiku 36/36, qwen3.8 35/36 a po opakovaní 36/36, Azure 36/36; 0 prehliadnutých porušení a 0 falošných poplachov.
+Jediná odchýlka (qwen3.8, C10-2026Q1, neskôr C03-2026Q1 v režime `full`) je chybná citácia zastavená overovačom → bezpečný `human_review`.
 
-## 5. Zostáva doplniť
+### Tri režimy práce so zmluvou (krok E)
 
-- ~~Prahy v `thresholds.json`, waiver cez typ dokumentu~~ (hotovo, sekcia 2.2).
-- Záverečný beh T3a so všetkými modelmi s finálnym promptom (po zamknutí).
-- `agent.py`, Docker image a rozhranie (sekcia 4).
-- Vyhodnotenie zamknutej testovacej sady.
-- Prompty a T1, T3 až T6, prevádzka (OpenTelemetry, YAML konfigurácia, CI), Foundry.
-- Záverečné zhrnutie a tabuľka výsledkov.
+| Režim | Správne | Prehliadnuté porušenia | Poznámka |
+| --- | --- | --- | --- |
+| `rag` | 36/36 (haiku, qwen3.8) | 0 | základ |
+| `full` | 36/36 (haiku), 35/36 (qwen3.8) | 0 | nie lepší, ≈ 1,75× tokenov v kroku špecifikácie |
+| `generic` (bez zmluvy) | 24/36 | **7** (+ 4 falošné poplachy) | zmluva je nutná |
+| `no_context` | 3/36 | 0 | všetkých 36× odmietnutie, nič sa nevymyslelo |
+
+## 6. Opakovateľnosť, prevádzka a extrakcia (T5, T6, T1)
+
+- **T5:** qwen3.8 359/360 správnych behov (10 opakovaní); haiku 108/108. Nikdy sa neprehodilo `breach` ↔ `no_breach`.
+  Jediná nestabilita bola citácia jedného prípadu.
+- **T6 (36 prípadov):** haiku 93 377 / 31 448 tokenov, ≈ 4,3 s a $0,0007 na prípad; qwen3.8 ≈ 12,6 s (134 tokenov/s), bez poplatku;
+  Azure 63 681 / 55 845 tokenov, 13,3 s. Žiadne neúplné ani nepoužiteľné odpovede.
+- **T1:** 5 400 položiek na dev a 360 na teste, 0 chýb (výkazy z jednej šablóny, bez skenov; presnosť strán sa nemerala).
+
+## 7. Útoky (T4)
+
+12 druhov útokov (výkaz S1 až S7, zmluva C1 a X2, waiver C2, poznámky N1, únik medzi firmami X1) v troch rodinách; **0 úspešných zo 378 prípadov**.
+Hlavné zistenie: **model sa dá oklamať, obranu drží kód.** Lokálny model raz napísal do špecifikácie limit 6,0 z vloženej vety; stav sa nezmenil
+iba preto, že prísny parser článku s limitmi (`contract_rules.py`) zmluvu s cudzou vetou zamietol. Parser sa preto nezmierňuje; cena je,
+že každý útok na finančný článok končí ako `human_review`.
+
+## 8. Zamknutá testovacia sada (F) a finálny prompt (H)
+
+Jednorazovo, bez zmeny promptu, prahu a chunkovania. Test (18 prípadov, 6 firiem): haiku 18/18, qwen3.8 18/18, Azure 16/18 (dva bezpečné `human_review`:
+útok zastavený filtrom obsahu Azure a nejednoznačný waiver „Čistý dluh“ vs. „Dluh“). T2 hit@3 100 %, vzory chýb rovnaké ako na dev, preučenie sa nepreukázalo.
+Obmedzenia: 18 prípadov z tej istej šablóny, jeden beh na model, firmy C13 až C16 sa predtým použili na útoky, takže sada nie je celkom nedotknutá.
+Každý výsledok má `meta` s verziou a hashom promptu (`run_meta.py`).
+
+## 9. Zostáva a obmedzenia
+
+- Presun do Azure AI Foundry (hosted agent, vektorová databáza v Azure): `FOUNDRY_PORT.md`.
+- OpenTelemetry, YAML konfigurácia agenta, GitHub Actions s regresnou sadou, Docker image a rozhranie (voliteľné).
+- Obmedzenia: vygenerované dáta z jednej šablóny, jeden beh na model a režim, prompt a prahy ladené na dev sade, chunkovanie a overovanie šité na formát
+  vygenerovaných zmlúv (skutočné zmluvy by potrebovali parsovanie PDF, detekciu štruktúry a odkazov).

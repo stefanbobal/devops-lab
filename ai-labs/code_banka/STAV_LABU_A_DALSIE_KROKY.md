@@ -34,7 +34,7 @@ G (reprodukovateľnosť), E (tri režimy T3) a F (test sada) sú **hotové** (se
 Upozornenie k F: firmy C13 až C16 z `data_test/` sa použili na útoky rodiny F. Obrana sa po nich nemenila, ale test
 sada už nie je celkom nedotknutá a treba to uviesť pri jej vyhodnotení.
 
-Otvorené (nespadá do žiadneho kroku): rozhodnutie o zmienke o pohovore v histórii gitu (commit `a3e25aa` je na GitHube;
+Otvorené (nespadá do žiadneho kroku): osobná poznámka v histórii gitu (commit `a3e25aa` je na GitHube;
 riešenie by bol `git filter-repo` alebo rebase s force pushom, nevratné); odmietnutia haiku mimo zmluvných útokov
 (sekcia 12c, neúčinná kontrola); voliteľne haiku 7 behov v T5.
 

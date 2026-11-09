@@ -3,6 +3,11 @@
 Domáci lab. **Všetky firmy, zmluvy, výkazy a čísla sú vymyslené.**
 Žiadne skutočné klientske dáta ani firemný kód.
 
+**Stav (2026-11-09):** agent, testy T1 až T6, tri režimy práce so zmluvou, útoky, opakovanie, vyhodnotenie
+zamknutej testovacej sady aj beh na Azure modeli sú hotové. Podrobný stav, čísla a zistenia sú v
+`STAV_LABU_A_DALSIE_KROKY.md`, prehľad v `LAB_FINAL_DOCUMENT.md`, plán presunu do Azure AI Foundry v `FOUNDRY_PORT.md`.
+Texty nižšie opisujú pôvodné zadanie a návrh; kde sa realita líši, je to poznačené.
+
 ## Use case
 
 Banka financuje firmy. Úverová zmluva obsahuje podmienky (covenants), napríklad
@@ -138,39 +143,50 @@ Najprv sa zistí, **čo** a **podľa akej definície** sa má počítať, až po
 9. **Akcia:** úloha pre analytika. V labe simulovaná zápisom do tabuľky; agent nemá iné nástroje
    ani oprávnenia (least privilege).
 
+**Implementácia (`agent.py`):** kroky 1 až 7 sú hotové (v kóde sú to kroky `extract`, `check_items`, `retrieve`, `spec`,
+`verify`, `evaluate`). Krok 8 (vysvetlenie LLM) a krok 9 (akcia) sa **neimplementovali**: agent vracia stav, dôvody a všetky
+medzikroky, čo stačí na testovanie. Parameter `mode` volí zdroj zmluvného textu: `rag`, `full`, `generic`, `no_context`.
+
 ## 4. Testy
 
-| # | Test | Metrika |
-| --- | --- | --- |
-| T1 | vyťahovanie položiek z výkazu | podiel presne správnych polí, pre každý LLM |
-| T2 | retrieval | správny článok v top-k, pre každý embedding profil (`t2_retrieval.py`, hotové na dev sade) |
-| T3 | zmluvná špecifikácia a výsledný stav v 3 režimoch | správnosť špecifikácie (definícia, limit, výnimka), správnosť citácie, výsledný stav, podiel `human_review` |
-| T4 | prompt injection | zmenila sa špecifikácia alebo stav, prípadne nastala nežiadaná akcia? |
-| T5 | opakovanie 3× | konzistentnosť odpovedí (nedeterminizmus) |
-| T6 | prevádzka | tokeny, cena a latencia na jeden beh |
+| # | Test | Metrika | Skript | Stav |
+| --- | --- | --- | --- | --- |
+| T1 | vyťahovanie položiek z výkazu | podiel správnych polí (správne / chýba / vymyslené / zlé číslo) | `t1_extraction.py` | hotové (dev aj test) |
+| T2 | vyhľadávanie | správny článok v top-k, pre každý embedding profil | `t2_retrieval.py` | hotové (dev aj test) |
+| T3a | zmluvná špecifikácia z nájdeného textu | správnosť špecifikácie a citácií | `t3_spec.py` | hotové (dev aj test) |
+| T3 | celý reťazec, stav proti `expected.json` | správny stav, prehliadnuté porušenia, podiel `human_review` | `t3_chain.py` | hotové (dev aj test) |
+| T4 | útoky v dokumentoch | zmenil sa stav, čísla alebo špecifikácia? | `t4_attacks.py` | hotové |
+| T5 | opakovanie | stabilita stavu a špecifikácie | `t3_chain.py --repeats`, `t5_stability.py` | hotové |
+| T6 | prevádzka | tokeny, latencia, cena | `t6_ops.py` | hotové |
 
-Režimy pre T3 (mapa na existujúci runner):
+Režimy práce so zmluvou (T3, `t3_chain.py --mode`):
 
-| Režim | Čo agent dostane | `rag_test.py --modes` |
+| Režim | Čo model dostane | Poznámka |
 | --- | --- | --- |
-| bez RAG | výkaz a všeobecné pravidlo | `no_history` |
-| RAG | výkaz a nájdené články, výnimky, poznámky | `rag` |
-| celá zmluva | výkaz a všetky dokumenty klienta | `curated` |
+| `rag` | úryvky z vektorového vyhľadávania | normálny agent |
+| `full` | všetky chunky zmluvy, dodatku a waiveru firmy, bez vyhľadávania | bez poznámok analytika |
+| `generic` | žiadna zmluva; všeobecné pravidlo dluh/EBITDA ≤ 4,00 | deterministický základ, LLM len extrahuje výkaz |
+| `no_context` | špecifikácia bez úryvkov | ukáže, či model odmietne alebo vymýšľa |
 
 Keďže stav počíta kód, každú chybu stavu sa dá priradiť konkrétnemu kroku:
 zlá položka (T1), nenájdený článok (T2) alebo zlá špecifikácia (T3). `covenants.py` má vlastné
-unit testy so známymi vstupmi a výsledkami.
+unit testy so známymi vstupmi a výsledkami (celkom 169 jednotkových testov).
 
-**Prehliadnuté porušenie** (agent povie `no_breach`, správne je `breach`) vykazovať zvlášť.
+**Prehliadnuté porušenie** (agent povie `no_breach`, správne je `breach`) sa vykazuje zvlášť.
 Pre banku je to najhoršia chyba, horšia než falošný poplach.
 
-Modely: 1–2 z Foundry a 1–2 lokálne, aby matica ostala zvládnuteľná.
+Modely: lokálne (qwen3.8:27b, gemma3:27b), cloudové (claude-haiku-5-5, Azure OpenAI).
+Testovacia sada `data_test/` je zamknutá: skripty ju odmietnu bez `--final`.
 
 ## 5. Prevádzka a platforma
 
-- OpenTelemetry trace pre každý krok agenta; voliteľne export do Application Insights a KQL dotaz.
-- Konfigurácia agenta vo verzovanom YAML: verzia promptu, model, threshold, prah istoty.
-- GitHub Actions: `python -m unittest` a malá regresná evaluácia pri každej zmene.
+Hotové:
+- Každý krok agenta sa zapisuje do výsledku (stav, čas, tokeny a latencia z údajov poskytovateľa).
+- Každý výsledkový súbor má záznam `meta`: verzia a hash promptu, modely, prah, stav vektorovej tabuľky a git commit (`run_meta.py`).
+- Výsledky sa nikdy neprepisujú (povinná značka `--tag`).
+
+Zostáva (nezačaté): OpenTelemetry trace s exportom do Application Insights, konfigurácia agenta vo verzovanom YAML,
+GitHub Actions s regresnou evaluáciou pri každej zmene, nasadenie do Azure AI Foundry (`FOUNDRY_PORT.md`).
 
 ## 6. Prezentácia výsledkov
 
@@ -190,7 +206,7 @@ Použiteľné bez zmeny obsahu (spoločný motor): `config.py`, `providers.py`, 
 
 Prevzaté **iba ako kostra, stále incidentové a treba ich prepísať** (pozri TODO):
 
-- `rag_prompt.py`: stále prompt „SAP operations investigation assistant“;
+- `rag_prompt.py`: pôvodné incidentové funkcie zostali kvôli `rag_test.py`; prompty tohto labu (extrakcia, špecifikácia, verzia P3) sú doplnené;
 - `sweep_eval.py`: stále načítava testy z `eval.py`, ktorý tu neexistuje (nahrádza ho `t2_retrieval.py`);
 - `rag_test.py`: predvolené `rag_scenarios.json` a `thresholds_FROZEN.json` tu neexistujú.
 
@@ -213,24 +229,18 @@ Zámerne **neprevzaté**: incidenty, scenáre, testovacie otázky, thresholdy a 
 
 ## TODO
 
-- [x] `data/`: firmy, zmluvy, výkazy, výnimky, poznámky a `expected.json` (`generate_data.py`)
-- [x] `load_documents.py`: chunking po článkoch (definície po bodoch) s metadátami
-- [x] `search.py`: povinný filter podľa firmy a voliteľný podľa typu dokumentu
-- [x] `t2_retrieval.py`: T2 na dev sade (3 profily, hit@1/hit@3, sweep prahov, prísna metrika pre definície)
-- [x] zamknutá testovacia sada `data_test/` (generátor `--set test`, vyhodnotenie `--set test --final`)
-- [ ] vyhodnotiť testovaciu sadu jednorazovo po zamknutí chunkovania, dotazov a prahov
-- [ ] zapísať prahy do `thresholds.json` (nízka poistka, kalibrované na dev); waiver riešiť cez typ dokumentu
-- [ ] aplikovať prah v `search.py` (`find_similar` zatiaľ vracia top-k bez filtrovania podľa prahu)
-- [x] schéma zmluvnej špecifikácie a zoznam povolených položiek; validátor špecifikácie (`covenants.py`)
-- [x] `covenants.py` + testy: výpočet podľa špecifikácie, porovnanie s limitom, výnimky, pravidlá pre `human_review`
-- [x] `sources.py` + testy: overenie citácií, limitov a výnimok voči dokumentom (`evaluate_with_sources`)
-- [ ] `rag_prompt.py`: prompty pre vyťahovanie položiek, zmluvnú špecifikáciu a vysvetlenie; štruktúrovaný JSON výstup
-- [x] scenáre pre runner (`data/scenarios.json`: `incident` → text výkazu, `curated_context` → všetky dokumenty klienta)
-- [ ] automatické hodnotenie T1–T4 voči `expected.json` (runner zatiaľ hodnotí iba ručne)
-- [ ] OpenTelemetry, YAML konfigurácia agenta, GitHub Actions
-- [ ] Foundry: deploymenty modelov, ceny v `llm_prices.json`
+Hotové: dáta a generátor (dev, zamknutá test sada, útoky), chunkovanie a vektorová databáza, `search.py` s prahmi,
+`covenants.py`, `sources.py`, `contract_rules.py`, prompty, `agent.py` (štyri režimy), testy T1 až T6, vyhodnotenie zamknutej
+sady, záznam reprodukovateľnosti, beh na Azure modeli.
 
-## Spustenie (dáta, výpočet, načítanie do DB a T2; kroky s LLM zatiaľ nie)
+- [ ] hosted agent v Azure AI Foundry, vektorová databáza v Azure (`FOUNDRY_PORT.md`)
+- [ ] OpenTelemetry, YAML konfigurácia agenta, GitHub Actions s regresnou sadou
+- [ ] Docker image a rozhranie (voliteľné)
+- [ ] ceny Azure modelov v `llm_prices.json` (T6 ich zatiaľ nepočíta)
+- [ ] vysvetlenie výsledku (krok 8) a akcia (krok 9), ak budú potrebné
+- [ ] `rag_test.py`, `sweep_eval.py` prispôsobiť alebo odstrániť (zostatky z incidentového labu)
+
+## Spustenie
 
 ```bash
 cd ~/devops-lab/ai-labs/code_banka
@@ -241,13 +251,18 @@ bash lab.sh                   # kontrola labu; očakávaný výsledok: Lab ready
 python generate_data.py       # na VM, nie vo OneDrive na Windows
 python generate_data.py --set test
 for p in bge azure gemini; do EMBED_PROFILE=$p python load_documents.py; done
-python t2_retrieval.py --tag moj_beh      # T2 na dev sade
-python -m unittest discover -v -p "test_*.py"
+
+LLM_PROFILE=qwen38 python agent.py C01 2026Q1                  # jeden prípad
+LLM_PROFILE=haiku python t3_chain.py --tag moj_beh             # T3, všetkých 36 prípadov
+LLM_PROFILE=haiku python t3_chain.py --mode generic --tag g1   # iný režim
+python t2_retrieval.py --tag moj_beh                           # T2
+python t6_ops.py moj_beh                                       # tokeny a cena z hotového behu
+python -m unittest discover -p "test_*.py"                     # 169 jednotkových testov
 ```
 
-Kroky s LLM (extrakcia položiek, zmluvná špecifikácia, vysvetlenie) sa zatiaľ spustiť nedajú:
-`rag_prompt.py` je ešte incidentový. Podrobné výsledky T2: `T2_retrieval_embeddings.md`,
-priebežný záverečný dokument: `LAB_FINAL_DOCUMENT.md`.
+Zamknutá testovacia sada sa spúšťa jednorazovo a len s `--set test --final` (napr. `python t3_chain.py --set test --final --tag f_x`).
+Výsledky sú v `results/` (v `.gitignore`, treba ich zálohovať mimo repa). Podrobný postup a zoznam všetkých behov:
+`STAV_LABU_A_DALSIE_KROKY.md`.
 
 API kľúče a prípadné prepísania nastavení (napr. `PG_DSN`, `AZURE_OPENAI_ENDPOINT`,
 `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_LLM_DEPLOYMENT`) patria do súboru `.env` v tomto priečinku.
