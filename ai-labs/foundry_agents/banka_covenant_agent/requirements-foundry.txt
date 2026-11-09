@@ -1,0 +1,6 @@
+azure-ai-agentserver-responses==2.4.0
+openai==3.40.0
+psycopg[binary]==3.3.6
+pgvector==0.5.1
+numpy==2.5.4
+python-dotenv==1.2.4

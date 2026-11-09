@@ -1,0 +1,8 @@
+.env
+.venv
+results
+__pycache__
+data_test
+data_attacks*
+*.md
+test_*.py
