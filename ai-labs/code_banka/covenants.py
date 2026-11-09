@@ -43,6 +43,12 @@ SPEC_EXAMPLE = {
                  "citation": {"document": "waiver_2026Q2.md", "article": None, "page": 1}}],
 }
 
+# The "no contract" general rule (same as generate_data.generic_spec); no citations because no contract is used.
+GENERIC_SPEC = {"ebitda": {"add": [], "subtract": []},
+                "debt": {"include": ["bank_loans", "bonds"], "deduct_cash": True},
+                "covenants": [{"id": "leverage", "ratio": "debt_to_ebitda", "limit": 4.0}],
+                "waivers": []}
+
 REVIEW_BAND = Decimal("0.02")   # within 2 % of a limit -> human review
 TWO_PLACES = Decimal("0.01")
 

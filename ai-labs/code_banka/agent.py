@@ -100,9 +100,28 @@ def check_items(extracted, statement_text):
     return items, problems
 
 
-def run(company_id, period, statement_text=None, documents=None, chat=None, retrieve_fn=None, data_dir=DATA):
+MODES = ("rag", "full", "generic", "no_context")
+# rag:        the contract excerpts found by vector search (the normal agent)
+# full:       every contract, amendment and waiver chunk of the company, no search (analyst notes stay out)
+# generic:    no contract at all; the built-in general rule, the LLM only extracts the statement (deterministic baseline)
+# no_context: the spec prompt with no excerpts; shows whether the model refuses or invents (the verifier decides)
+
+
+def full_chunks(documents):
+    """All chunks of the company's trusted documents in document order, built like the indexed ones, without search."""
+    from load_documents import chunk_document
+    chunks = []
+    for name, text in documents.items():
+        chunks += [c for c in chunk_document("", "", name, text) if c["doc_type"] != "notes"]
+    return chunks
+
+
+def run(company_id, period, statement_text=None, documents=None, chat=None, retrieve_fn=None, data_dir=DATA,
+        mode="rag"):
     """Run all steps. Returns {"status", "reasons", "result", "steps", ...}; never raises for model errors."""
-    from covenants import SpecError, evaluate, validate_spec
+    if mode not in MODES:
+        raise ValueError(f"mode must be one of {MODES}, got {mode!r}")
+    from covenants import GENERIC_SPEC, SpecError, evaluate, validate_spec
     from rag_prompt import build_extract_prompts, build_spec_prompts
     from sources import quarter_end, verify_sources
     chat_with_usage = None
@@ -127,7 +146,7 @@ def run(company_id, period, statement_text=None, documents=None, chat=None, retr
 
     def finish(status, reasons, result=None, spec=None, items=None):
         log(f"  => {status} {reasons or ''}")
-        return dict(company_id=company_id, period=period, status=status, reasons=reasons, result=result,
+        return dict(company_id=company_id, period=period, mode=mode, status=status, reasons=reasons, result=result,
                     spec=spec, items=items, steps=steps)
 
     log(f"{company_id} {period}")
@@ -151,16 +170,27 @@ def run(company_id, period, statement_text=None, documents=None, chat=None, retr
     if problems:
         return finish("human_review", ["unverified_items: " + "; ".join(problems)], items=items)
 
+    if mode == "generic":   # no contract: steps 3 to 5 do not exist, the status comes from the general rule
+        for name in ("retrieve", "spec", "verify"):
+            step(name, time.time(), "skipped", summary="generic mode")
+        t = time.time()
+        result = evaluate(items, GENERIC_SPEC, period)
+        step("evaluate", t, result["status"], summary="; ".join(result["reasons"])[:160])
+        return finish(result["status"], result["reasons"], result=result, spec=GENERIC_SPEC, items=items)
+
     # 3 retrieve
     t = time.time()
-    try:
-        chunks = retrieve_fn(company_id, period)
-    except Exception as exc:
-        step("retrieve", t, "failed", summary=str(exc)[:120])
-        return finish("human_review", [f"retrieval_failed: {str(exc)[:120]}"], items=items)
+    if mode == "rag":
+        try:
+            chunks = retrieve_fn(company_id, period)
+        except Exception as exc:
+            step("retrieve", t, "failed", summary=str(exc)[:120])
+            return finish("human_review", [f"retrieval_failed: {str(exc)[:120]}"], items=items)
+    else:   # full: everything, no search; no_context: nothing on purpose
+        chunks = full_chunks(documents) if mode == "full" else []
     names = [f"{c['document']} {c['article']}{'/' + c['clause'] if c.get('clause') else ''}" for c in chunks]
     step("retrieve", t, "ok", chunks=names, summary=f"{len(chunks)} chunks")
-    if not chunks:
+    if not chunks and mode != "no_context":
         return finish("human_review", ["no_relevant_contract_text"], items=items)
 
     # 4 spec

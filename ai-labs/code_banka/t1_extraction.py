@@ -2,7 +2,7 @@
 
 Usage: python t1_extraction.py <tag> [<tag> ...]
 <tag> is a single run (results/t3_chain_<tag>.json) or a repeated one (<tag>_r1.json ...). Reads files only,
-calls no model, dev set only (data/expected.json).
+calls no model; dev set (data/expected.json) by default, --set test --final for data_test/.
 
 Each of the 10 items of each case-run is compared with expected_items:
   correct   same value (or both missing, as expected for a statement that omits the item)
@@ -82,9 +82,12 @@ def report(tag, runs, expected_items):
 
 
 def main(argv):
+    from dataset import choose_set, strip_set_flags
+    set_name, data_dir = choose_set(argv)   # the test set needs --final
+    argv = strip_set_flags(argv)
     if not argv:
         raise SystemExit("Give at least one tag, e.g. python t1_extraction.py t5_haiku t5_qwen38")
-    cases = json.loads((BASE / "data" / "expected.json").read_text("utf-8"))
+    cases = json.loads((data_dir / "expected.json").read_text("utf-8"))
     expected_items = {c["case_id"]: c["expected_items"] for c in cases}
     for tag in argv:
         runs = load_files(tag)

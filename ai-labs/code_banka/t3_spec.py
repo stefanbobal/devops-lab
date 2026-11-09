@@ -1,10 +1,10 @@
 """T3a: can an LLM turn retrieved contract excerpts into a correct, verifiable specification?
 
-Usage: python t3_spec.py [llm_profile ...] [--limit N] [--cases C01-2026Q1,...] [--tag name]
+Usage: python t3_spec.py [llm_profile ...] [--limit N] [--cases C01-2026Q1,...] [--tag name] [--set dev|test --final]
 Embedding profile for retrieval: EMBED_PROFILE (default bge), so that only the LLM changes between runs.
 Pipeline per dev case: search (find_relevant / find_waiver) -> LLM (build_spec_prompts) -> JSON ->
 covenants.validate_spec -> sources.verify_sources -> compare with expected_spec.
-Dev set only (data/). The held-out data_test/ is not touched here.
+Dev set by default (data/); --set test --final evaluates the held-out data_test/ (refused without --final).
 """
 import json
 import os
@@ -17,7 +17,7 @@ from pathlib import Path
 from agent import parse_json
 
 BASE = Path(__file__).resolve().parent
-DATA = BASE / "data"
+DATA = BASE / ("data_test" if os.getenv("T3_SET") == "test" else "data")   # the parent process sets T3_SET
 
 
 def log(message):
@@ -146,13 +146,16 @@ def worker():
             row = run_case(case, chunks)
         log(f"  => {row['case_id']:<12} {row['stage']:<12} {row['seconds']}s {row['differences'] or ''} {row['problems'][:1] or ''}")
         rows.append(row)
-    print(json.dumps(rows, ensure_ascii=False))
+    from run_meta import run_metadata
+    print(json.dumps(dict(meta=dict(run_metadata(), dataset=os.getenv("T3_SET", "dev")), rows=rows), ensure_ascii=False))
 
 
 def main(argv):
     if os.getenv("T3_WORKER"):
         return worker()
-    opts = {"--limit": "T3_LIMIT", "--cases": "T3_CASES", "--tag": None}
+    from dataset import choose_set
+    set_name, _ = choose_set(argv)   # refuses the test set without --final
+    opts = {"--limit": "T3_LIMIT", "--cases": "T3_CASES", "--tag": None, "--set": "T3_SET"}
     env_extra, tag, skip = {}, "", set()
     for flag, var in opts.items():
         if flag in argv:
@@ -162,6 +165,7 @@ def main(argv):
                 env_extra[var] = value
             else:
                 tag = value
+    skip.add("--final")
     profiles = [a for a in argv if a not in skip]
     if not profiles:
         raise SystemExit("Give at least one LLM profile, e.g. python t3_spec.py gemma azure haiku")
@@ -174,8 +178,10 @@ def main(argv):
         if proc.returncode:
             log(f"{profile}: FAILED (see the error above)")
             continue
-        rows = json.loads(proc.stdout.splitlines()[-1])
+        payload = json.loads(proc.stdout.splitlines()[-1])
+        rows = payload["rows"]
         results[profile] = rows
+        results.setdefault("_meta", {})[profile] = payload["meta"]   # reproducibility record per LLM profile
         counts = {}
         for r in rows:
             counts[r["stage"]] = counts.get(r["stage"], 0) + 1
@@ -183,6 +189,9 @@ def main(argv):
         median = f" | median {secs[len(secs) // 2]}s per case" if secs else ""
         log(f"{profile}: {len(rows)} cases | " + ", ".join(f"{k} {v}" for k, v in sorted(counts.items())) + median)
     out = BASE / "results" / (f"t3_spec_{tag}.json" if tag else "t3_spec.json")
+    if out.exists():   # results are never overwritten (t3_spec_run1.json was once)
+        out = out.with_name(f"{out.stem}_{time.strftime('%Y%m%d_%H%M%S')}.json")
+        log(f"result file exists, writing {out.name} instead")
     out.parent.mkdir(exist_ok=True)
     out.write_text(json.dumps(results, ensure_ascii=False, indent=1), encoding="utf-8")
     log(f"wrote {out.name}")

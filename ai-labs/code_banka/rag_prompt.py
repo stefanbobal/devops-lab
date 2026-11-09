@@ -32,6 +32,10 @@ State clearly what must still be verified on the current system."""
 # ---------- covenant lab: contract specification (step 4, LLM -> JSON) ----------
 from covenants import DEBT_ITEMS, EBITDA_ADJUSTMENTS, RATIOS
 
+# Label of the current spec/extract prompts (history in STAV_LABU_A_DALSIE_KROKY.md, section 7). Bump it by hand
+# when a prompt changes; run_meta.prompt_hashes() also records a hash, so a forgotten bump shows up in results.
+PROMPT_VERSION = "P3"
+
 SPEC_SYSTEM_PROMPT = """You extract a contract specification for covenant testing from excerpts of a loan agreement.
 Rules:
 - Use ONLY the excerpts below. Never use outside knowledge and never guess a missing value.

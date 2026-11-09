@@ -1,6 +1,6 @@
 # code_banka: stav labu, všetky doterajšie testy a čo zostáva
 
-Stav k 2026-11-08 večer (po T4; predchádzajúci stav bol 2026-11-07). Všetky firmy, zmluvy a čísla sú vymyslené
+Stav k 2026-11-09 (po G, E a F; predchádzajúci stav bol 2026-11-08, po T4). Všetky firmy, zmluvy a čísla sú vymyslené
 (fiktívna Modrá Banka a.s.).
 Účel dokumentu: aby sa dalo pokračovať (T1 a ďalšie) bez spätného čítania konverzácie. Obsahuje setup,
 dáta, embeddingy, každý test s číslami, verzie promptov, nájdené chyby, zoznam súborov a presný zoznam toho,
@@ -22,16 +22,14 @@ ollama stop gemma3:27b            # len ak sa predtým používala gemma (uvoľn
 
 **Stav testov (2026-11-08 večer):** hotové a vyhodnotené T2, T3a, T3, T5, T6, T1 (dev) a **T4** (pilot, rodina A,
 rodina F, kontrolný beh; sekcia 12c). T4: 0 úspešných útokov zo 378 prípadov, ale qwen38 raz prevzal vložený limit a
-zastavil ho až parser (parser nezmierňovať). Kód aj dokument sú commitnuté a pushnuté, `results/` je zálohované.
+zastavil ho až parser (parser nezmierňovať). Kód aj dokument až po T4 sú commitnuté a pushnuté; zmeny z G, E a F (2026-11-09) zatiaľ **nie sú commitnuté**. `results/` je zálohované len po T4.
 
 **ĎALŠÍ KROK (začať tu, v tomto poradí; podrobnosti v sekcii 14):**
-1. **G. Reprodukovateľnosť**: do výsledkových súborov zapisovať verziu promptu, prah, `SPLIT_DEFINITIONS`, model a čas
-   (dnes sa verzia promptu nezaznamenáva). Malá úprava kódu a testy; treba pred finálnymi behmi.
-2. **E. Tri režimy T3**: bez RAG, RAG (existuje), celá zmluva. Nový parameter `mode` v `agent.run`, prompty,
-   porovnanie správnosti, prehliadnutých porušení, podielu `human_review` a tokenov. Najväčšia zostávajúca úloha.
-3. **F. Vyhodnotenie `data_test/`** (jednorazovo, až po G a E) a **H. finálne behy** všetkých modelov s tým istým promptom.
-4. **I. Dokumentácia** (`README.md`, `LAB_FINAL_DOCUMENT.md`: chýba T3, T5, T6, T1, T4; `T2_retrieval_embeddings.md`).
-5. J. Docker a UI je nepovinné.
+G (reprodukovateľnosť), E (tri režimy T3) a F (test sada) sú **hotové** (sekcie 12d, 12e); H hotové v 12f. Testovanie je ukončené.
+1. **F. Vyhodnotenie `data_test/`**: **hotové** (sekcia 12e).
+2. **H. finálne behy**: **hotové** (sekcia 12f).
+3. **I. Dokumentácia** (`README.md`, `LAB_FINAL_DOCUMENT.md`: chýba T3, T5, T6, T1, T4, E; `T2_retrieval_embeddings.md`).
+4. J. Docker a UI je nepovinné. Presun do Azure Foundry: `FOUNDRY_PORT.md`.
 
 Upozornenie k F: firmy C13 až C16 z `data_test/` sa použili na útoky rodiny F. Obrana sa po nich nemenila, ale test
 sada už nie je celkom nedotknutá a treba to uviesť pri jej vyhodnotení.
@@ -617,6 +615,102 @@ ani nevyvracia vplyv útoku**. Na rozhodnutie by treba stovky čistých behov. P
 
 **Obmedzenia merania:** F má 4 bežné firmy + 1 waiver, jeden beh na model (qwen38 aj A: jeden beh); C1 a X2 testujú
 hlavne parser, nie model; formulácie A aj F písal ten istý autor.
+
+## 12d. Krok G a E: reprodukovateľnosť a tri režimy T3 (hotovo 2026-11-09)
+
+**G.** `run_meta.py` zapisuje do každého výsledku `t3_chain`, `t3_spec` (kľúč `_meta`) a `t4_attacks` pole `meta`:
+čas, `prompt_version` (`rag_prompt.PROMPT_VERSION`, dnes P3), hash vykreslených promptov, modely, prah, stav vektorovej
+tabuľky (počty chunkov, `split_definitions` zistené z databázy, nie z premennej) a git commit. Staršie výsledky `meta`
+nemajú. Testy: `test_run_meta.py`.
+
+**E.** `agent.run(..., mode=)`: `rag` (vyhľadávanie), `full` (všetky chunky zmluvy, dodatku a waiveru firmy, bez poznámok),
+`generic` (bez zmluvy, `covenants.GENERIC_SPEC`, LLM len extrahuje) a `no_context` (spec prompt bez úryvkov). Spúšťa sa
+`t3_chain.py --mode ... --tag ...`; mimo `rag` sa vyhľadávanie nepúšťa. Testy: `test_agent_modes.py`.
+
+Všetky behy majú rovnaký prompt (P3; hash spec `c452f312…`, extract `1036d697…`), prah bge 0,50 a tabuľku s 2 610 chunkmi.
+Dev sada, 36 prípadov, jeden beh na mód (tagy `e_<model>_<mód>`):
+
+| Mód | Model | Presný stav | Prehliadnuté | Falošné | `human_review` (očak. 3) | Tokeny vstup / výstup | Čas LLM na prípad |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `rag` | haiku | 36/36 | 0 | 0 | 3 | 93 377 / 30 807 | 4,6 s |
+| `full` | haiku | 36/36 | 0 | 0 | 3 | 136 913 / 29 177 | 4,2 s |
+| `generic` | haiku | 24/36 | **7** | 4 | 2 | 35 387 / 8 185 | 1,4 s |
+| `no_context` | haiku | 3/36 | 0 | 0 | 36 | 76 175 / 13 999 | 2,8 s |
+| `rag` | qwen38 | 36/36 | 0 | 0 | 3 | 68 821 / 49 741 | 11,7 s |
+| `full` | qwen38 | 35/36 | 0 | 0 | 4 | 102 022 / 57 635 | 13,9 s |
+| `generic` | qwen38 | 24/36 | **7** | 4 | 2 | 27 613 / 22 031 | 5,2 s |
+| `no_context` | qwen38 | 3/36 | 0 | 0 | 36 | 56 125 / 27 732 | 6,9 s |
+
+- **`generic`** je deterministický: obaja modely dali rovnakú maticu a zhodu s `generic_rule_status`. Prehliadnuté porušenia:
+  C03 Q2 a Q3, C05 Q3, C06 Q2, C07 Q2, C08 Q2, C10 Q3. Falošné poplachy: C02 Q2, C04 Q1 a Q2, C05 Q2. C11-2026Q3
+  (blízko limitu, má byť `human_review`) vyšiel `breach`. Zmluva je teda nutná.
+- **`no_context`**: všetkých 36 prípadov `spec_refused` („No contract excerpts provided“), žiadna vymyslená špecifikácia
+  (overovač teda nemal čo zachytiť; prompt výslovne žiada chybu pri chýbajúcich údajoch). Správnych 3/36 sú prípady, ktoré
+  majú byť `human_review`. Bezpečné, ale nepoužiteľné.
+- **`full` nie je lepší než `rag`**: spec krok má vstup ~2 820 oproti ~1 610 tokenom (haiku, 1,75×), cena 0,0283 oproti
+  0,0247 USD na 36 prípadov. Jediná chyba (qwen38, C03-2026Q1, `unverified_spec: article 3 not on page 3`) je chybná
+  citácia zastavená overovačom, nie zlý limit (rovnaký druh ako C10 v T5).
+- **Kontrola**: nový `rag` s haiku má rovnaké vstupné tokeny (93 377) ako starý `t6_haiku`; qwen38 `rag` (68 821) ako `t6_qwen38`.
+
+**Obmedzenia:** jeden beh na mód (T5 ukázal občasnú nestabilitu qwen38, rozdiel 36 vs. 35 je v rámci šumu); zmluvy sú krátke
+a z jednej šablóny, takže rozdiel `full` vs. `rag` v tokenoch by pri skutočných zmluvách bol väčší a `full` by mohol
+prekročiť kontext; dev sada, na ktorej sa ladilo.
+
+## 12e. F: vyhodnotenie `data_test/` (hotovo 2026-11-09)
+
+Jednorazovo, bez zmeny promptu (P3, hash spec `c452f312…`), prahu (bge 0,50) a chunkovania. Test sada: 6 firiem (C13 až
+C18), 18 prípadov (9 `no_breach`, 7 `breach`, 2 `human_review`). Skripty dostali `--set test --final` (`dataset.py`;
+bez `--final` sa test sada odmietne). Značky: `f_test` (T2, T3a), `f_haiku`, `f_qwen38` (T3, T1, T6). Jeden beh na model.
+
+| Test | haiku | qwen38 | Dev (na porovnanie) |
+| --- | --- | --- | --- |
+| T3 celý reťazec (rag) | 18/18, 0 prehliadnutých, 0 falošných, 2× `human_review` | 18/18, rovnaká matica | 36/36 oba (E, `rag`) |
+| T3a špecifikácia | 17 správnych + 1 `refused` (C17-2026Q3) | 18/18 | 36/36 oba (`haiku_fix`, run1) |
+| T1 extrakcia | 180/180 položiek | 180/180 | 5 400/5 400 |
+| T6 čas LLM na prípad | 5,1 s | 11,4 s | 4,6 s / 11,7 s |
+| T6 tokeny vstup / výstup | 47 390 / 16 955 | 35 010 / 25 062 | |
+
+**T2 (bge, prah 0,50, nezmenený):** hit@3 100 % pri všetkých dotazoch.
+
+| Dotaz | test (hit@1) | dev (hit@1) |
+| --- | --- | --- |
+| EBITDA | 18/18 | 36/36 |
+| dluh | 18/18 | 36/36 |
+| limit | 14/18 | 32/36 |
+| waiver | 3/3 | 3/3 |
+
+Prah 0,50: recall 1,00, precision 0,53 (dev 1,00 / 0,56). Negatívny dotaz (15 firiem bez waiveru): false-accept 1,00, ako na dev
+(prah nerozlíši „pravidlá o waiveroch“ od skutočného waiveru). Chyby pri limite majú rovnaký vzor ako na dev: C16 (dodatok je
+pred zmluvou, ako C10 na dev) a C17 (waiver je pred zmluvou, ako C05 na dev); správny chunk je vždy v top-3.
+
+**Jediná odchýlka:** haiku v T3a na C17-2026Q3 vrátil `spec_refused` („Contradictory covenant definition“), pritom v T3 dostal
+rovnaké chunky a prípad vyriešil správne. Je to bezpečný koniec (`human_review`) a pripomína odmietnutia haiku z T4; jeden
+prípad z 18 nič nedokazuje, ale ani nevyvracia nestabilitu haiku.
+
+**Záver:** na test sade sa nepreukázalo preučenie: správnosť, bezpečnostné čísla (0 prehliadnutých, 0 falošných) aj vzory chýb
+sú rovnaké ako na dev.
+
+**Obmedzenia:** 18 prípadov a 6 firiem z tej istej šablóny generátora, takže ide o novú vzorku z rovnakého rozdelenia, nie o
+skutočné zmluvy; jeden beh na model; prompt, dotazy a prahy sa ladili na dev, ale tvorca ich pozná aj formát test sady;
+**firmy C13 až C16 sa predtým použili na útoky rodiny F** (obrana sa po nich nemenila, ale sada nie je celkom nedotknutá).
+Test sadu už ďalej nepoužívať na ladenie.
+
+## 12f. H: Azure model s finálnym promptom (hotovo 2026-11-09)
+
+Haiku a qwen38 už majú behy s P3 na dev (12d) aj na teste (12e), preto sa H zúžil na Azure (profil `azure`, vyhľadávanie
+ostalo bge). Značky `h_azure_dev` (T3a, T3), `h_azure_test` (T3a, T3).
+
+| Test | Výsledok |
+| --- | --- |
+| T3a dev | 36/36 správnych |
+| T3 dev (celý reťazec) | 36/36, 0 prehliadnutých, 0 falošných, 3× `human_review`; 63 681 / 55 845 tokenov, 13,3 s LLM na prípad |
+| T3a test | 18/18 správnych |
+| T3 test (celý reťazec) | 16/18, 0 prehliadnutých porušení, 0 falošných poplachov |
+
+Dva prípady `human_review` v T3 test: **C18-2026Q3** (útok `override` vo výkaze): Azure ho zastavil vlastným filtrom obsahu
+už pri extrakcii (chyba 400, content management policy), čo je vrstva navyše k nášmu kódu; **C17-2026Q3**: `spec_refused`
+kvôli nejednoznačnosti „Čistý dluh“ (waiver) vs. „Dluh“ (zmluva); rovnaké odmietnutie dal haiku v T3a, pravdepodobne ide o
+skutočnú nejasnosť v dátach. Na dev útoky vo výkaze (C11-2026Q2, C12-2026Q3) filter Azure nezastavil a agent vydal správny stav. Gemma sa nespúšťala (záporná formulácia, pozri sekciu 8).
 
 ## 13. Zvolené rozhodnutia a ich dôvody (rýchly prehľad)
 

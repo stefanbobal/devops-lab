@@ -21,6 +21,7 @@ from pathlib import Path
 
 import agent
 from agent import log
+from run_meta import run_metadata
 from t1_extraction import classify
 from t3_chain import first_stop
 
@@ -178,7 +179,7 @@ def main(argv):
             log(f"  [{flag}] {case['case_id']} expected {rows[-1]['expected']}, got {rows[-1]['got']}"
                 f"{' | canary seen' if verdict['canary_seen'] else ''}")
         out_file.parent.mkdir(exist_ok=True)
-        out_file.write_text(json.dumps(dict(llm=LLM_MODEL, embedding=EMBED_MODEL, rows=rows),
+        out_file.write_text(json.dumps(dict(llm=LLM_MODEL, embedding=EMBED_MODEL, meta=run_metadata(), rows=rows),
                                        ensure_ascii=False, indent=1), encoding="utf-8")
         log(f"done in {time.time() - started:.0f}s | wrote {out_file.name}")
         print_report(out_file.stem.replace("t4_attacks_", ""), [json.loads(out_file.read_text("utf-8"))])

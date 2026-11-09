@@ -1,9 +1,11 @@
 """T3: the whole agent on every dev case, compared with expected_status.
 
-Usage: python t3_chain.py [--limit N] [--cases C01-2026Q1,...] [--repeats N] --tag name
+Usage: python t3_chain.py [--limit N] [--cases C01-2026Q1,...] [--repeats N] [--mode rag|full|generic|no_context] [--set dev|test --final] --tag name
+--mode (step E): rag = vector search (default), full = all contract chunks of the company, generic = built-in
+general rule without a contract, no_context = spec prompt without excerpts (see agent.MODES).
 --repeats N runs the agent N times on the same cached search results and writes <tag>_r1 ... <tag>_rN.
 LLM: LLM_PROFILE (default gemma), embedding: EMBED_PROFILE (default bge). A tag is required and an existing
-result file is never overwritten. Dev set only (data/); the held-out data_test/ is not touched.
+result file is never overwritten. Dev set by default (data/); --set test --final evaluates the held-out data_test/ (refused without --final).
 Phase 1 searches for all cases (only the embedding model is loaded), phase 2 runs the agent (only the LLM).
 Key numbers: missed breaches (expected breach, got no_breach), false alarms, human_review share, and
 which step stopped each case.
@@ -16,6 +18,8 @@ from pathlib import Path
 
 import agent
 from agent import log
+from dataset import choose_set
+from run_meta import run_metadata
 
 BASE = Path(__file__).resolve().parent
 
@@ -44,10 +48,14 @@ def first_stop(out):
 
 
 def main(argv):
+    set_name, data_dir = choose_set(argv)
     opts = {a: argv[i + 1] for i, a in enumerate(argv)
-            if a in ("--limit", "--cases", "--tag", "--repeats") and i + 1 < len(argv)}
+            if a in ("--limit", "--cases", "--tag", "--repeats", "--mode") and i + 1 < len(argv)}
     if "--tag" not in opts:
         raise SystemExit("Give a tag, e.g. python t3_chain.py --tag qwen_run1 (existing results are never overwritten)")
+    mode = opts.get("--mode", "rag")
+    if mode not in agent.MODES:
+        raise SystemExit(f"--mode must be one of {agent.MODES}")
     repeats = int(opts.get("--repeats", 1))
     if repeats < 1:
         raise SystemExit("--repeats must be at least 1")
@@ -58,16 +66,16 @@ def main(argv):
     if existing:
         raise SystemExit(f"{', '.join(existing)} already exists, choose another tag")
     from config import EMBED_MODEL, LLM_MODEL
-    cases = json.loads((agent.DATA / "expected.json").read_text("utf-8"))
+    cases = json.loads((data_dir / "expected.json").read_text("utf-8"))
     if "--cases" in opts:
         cases = [c for c in cases if c["case_id"] in opts["--cases"].split(",")]
     if "--limit" in opts:
         cases = cases[:int(opts["--limit"])]
-    log(f"T3 chain | LLM {LLM_MODEL} | embedding {EMBED_MODEL} | {len(cases)} cases | tag {opts['--tag']}")
+    log(f"T3 chain | LLM {LLM_MODEL} | embedding {EMBED_MODEL} | {len(cases)} cases | tag {opts['--tag']} | mode {mode} | set {set_name}")
 
-    log("phase 1/2: search (embedding model only)")
+    log("phase 1/2: search (embedding model only)" + ("" if mode == "rag" else f" - skipped in mode {mode}"))
     chunks = {}
-    for i, case in enumerate(cases, 1):
+    for i, case in enumerate(cases if mode == "rag" else [], 1):
         log(f"  search {i}/{len(cases)} {case['case_id']}")
         try:
             chunks[case["case_id"]] = agent.retrieve(case["company_id"], case["period"])
@@ -87,7 +95,8 @@ def main(argv):
         rows, started = [], time.time()
         for case in cases:
             t = time.time()
-            out = agent.run(case["company_id"], case["period"], retrieve_fn=cached(case["case_id"]))
+            out = agent.run(case["company_id"], case["period"], mode=mode, data_dir=data_dir,
+                            retrieve_fn=cached(case["case_id"]) if mode == "rag" else None)
             want = case["expected_result"].get("values")
             values_ok = out["result"] is not None and want is not None and out["result"].get("values") == want
             rows.append(dict(case_id=case["case_id"], case_type=case["case_type"], expected=case["expected_status"],
@@ -99,7 +108,8 @@ def main(argv):
 
         summary = summarize(rows)
         out_file.parent.mkdir(exist_ok=True)
-        out_file.write_text(json.dumps(dict(llm=LLM_MODEL, embedding=EMBED_MODEL, summary=summary, rows=rows),
+        out_file.write_text(json.dumps(dict(llm=LLM_MODEL, embedding=EMBED_MODEL, meta=dict(run_metadata(), mode=mode, dataset=set_name),
+                                            summary=summary, rows=rows),
                                        ensure_ascii=False, indent=1), encoding="utf-8")
         log(f"done in {time.time() - started:.0f}s | exact {summary['exact']}/{summary['cases']} | "
             f"human_review got {summary['review_got']} (expected {summary['review_expected']})")
