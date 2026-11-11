@@ -1,0 +1,23 @@
+# Local configuration with real hosts and credentials
+.env
+inventory.yaml
+
+# Certificate material must never be committed
+*.pse
+*.p10
+*.csr
+*.crt
+*.cer
+*.pem
+*.p7b
+*.key
+*.p12
+*.pfx
+*.jks
+
+# Run output
+results/
+screenshots/
+
+.venv/
+__pycache__/
