@@ -1,0 +1,71 @@
+# Copy to inventory.yaml and fill in. inventory.yaml is git-ignored.
+# All host names here are made up.
+
+defaults:
+  renew_days_before: 30      # open a ticket when this many days are left
+  approval_required: true    # a person must approve the install in Jira
+
+targets:
+  # SAP ABAP: over RFC, through the function group in abap/z_cert_agent.abap
+  - name: abap-sandbox
+    type: abap
+    environment: sandbox
+    approval_required: false
+    rfc:
+      ashost: abap-sandbox.example.internal
+      sysnr: "00"
+      client: "000"
+      user: CERT_AGENT
+      password_env: ABAP_SANDBOX_PASSWORD   # name of the environment variable, not the password
+    certs:
+      - id: SSLS/DFAULT                     # PSE context / application: SSL server Standard
+        endpoint: abap-sandbox.example.internal:44300
+
+  # SAP Java: NetWeaver Administrator key storage, driven by Playwright
+  - name: java-sandbox
+    type: java_nwa
+    environment: sandbox
+    approval_required: false
+    nwa:
+      base_url: https://java-sandbox.example.internal:50001
+      user: cert_agent
+      password_env: NWA_SANDBOX_PASSWORD
+      headless: false                       # watch the browser on the first runs
+      ignore_https_errors: true
+    certs:
+      - id: ICM_SSL_12345/ssl-credentials   # key storage view / entry
+        endpoint: java-sandbox.example.internal:50001
+
+  # BOBJ and the Google Cloud load balancer: through the existing Cloud Run service
+  - name: bobj-dev
+    type: cloudrun
+    environment: dev
+    cloudrun:
+      base_url: https://cert-automation-example.a.run.app
+      system: bobj-dev
+      csr_path: /csr
+      install_path: /install
+      key_reuse: false                      # true if the service keeps the key between renewals
+    certs:
+      - id: tomcat
+        endpoint: bobj-dev.example.internal:8443
+
+  - name: glb-dev
+    type: cloudrun
+    environment: dev
+    cloudrun:
+      base_url: https://cert-automation-example.a.run.app
+      system: glb-dev
+    certs:
+      - id: frontend
+        endpoint: app-dev.example.internal:443
+        names: [app-dev.example.internal]   # names the new certificate must cover
+
+  # A target in a local directory, for trying the workflow without any real system.
+  # The directory must contain main/key.pem and main/cert.pem.
+  # - name: demo
+  #   type: fake
+  #   approval_required: false
+  #   dir: /absolute/path/to/demo
+  #   certs:
+  #     - id: main
