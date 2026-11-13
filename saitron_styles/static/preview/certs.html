@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en" data-theme="brand">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>certs harness</title>
+  <!-- Live harness: renders the REAL certs.js + certs.css with a stubbed fetch that returns the shape of
+       GET /api/certificates, GET /api/certificates/item and POST /api/certificates/run. All names are fake
+       (example.invalid, SIDs AAA/BBB/...); layout after docs/cert-lifecycle/ui-mockup.jpeg. -->
+  <script>
+    /* export only: which generation of the panel code this page runs. The looks "next" and "v3" load
+       next/*.js and next/*.css (new markup); all other looks load the current files. */
+    window.PREVIEW_LOOK = new URLSearchParams(location.search).get("look") || "current";
+    window.PREVIEW_NEXT = /^(next|v3)$/.test(window.PREVIEW_LOOK);
+  </script>
+  <link rel="stylesheet" href="../styles.css" />
+  <link rel="stylesheet" href="../incidents.css" />
+  <link rel="stylesheet" href="../checks.css" />
+  <script>
+    document.write('<link rel="stylesheet" href="../' + (PREVIEW_NEXT ? "next/" : "") + 'urls.css?t=' + Date.now() + '" />');
+    document.write('<link rel="stylesheet" href="../' + (PREVIEW_NEXT ? "next/" : "") + 'certs.css?t=' + Date.now() + '" />');
+  </script>
+  <!-- export only: prototype overlays, active with <html class="modern" data-theme="dark">.
+       All use the same switch, so only one of them is enabled at a time (see the Look buttons). -->
+  <link rel="stylesheet" href="../modern-dark.css" id="look-v1" />
+  <link rel="stylesheet" href="../modern-dark-v2.css" id="look-v2" disabled />
+  <link rel="stylesheet" href="../next/modern-dark-v3.css" id="look-v3" disabled />
+</head>
+<body>
+  <!-- export only: theme + look switcher (the app has 4 themes; panels must work in all of them).
+       URL: ?theme=brand|dark|light|neon  and  ?look=current|modern|v2|next|v3
+       current / modern / v2 run the current certs.js + urls.js; next / v3 run next/*.js (page reloads). -->
+  <div id="look-switch" style="position:fixed;right:12px;bottom:12px;z-index:99;display:flex;gap:4px;align-items:center;background:rgba(0,0,0,.6);padding:6px;border-radius:8px;font:12px sans-serif">
+    <span style="color:#fff;padding:0 4px">Theme</span>
+    <button type="button" data-set-theme="brand">brand</button>
+    <button type="button" data-set-theme="dark">dark</button>
+    <button type="button" data-set-theme="light">light</button>
+    <button type="button" data-set-theme="neon">neon</button>
+    <span style="color:#fff;padding:0 4px 0 10px">Look</span>
+    <button type="button" data-set-look="current">current</button>
+    <button type="button" data-set-look="modern">modern v1</button>
+    <button type="button" data-set-look="v2">modern v2</button>
+    <span style="color:#fff;padding:0 4px 0 10px">Next level</span>
+    <button type="button" data-set-look="next">next</button>
+    <button type="button" data-set-look="v3">modern v3</button>
+  </div>
+  <script>
+    (function () {
+      var root = document.documentElement, bar = document.getElementById("look-switch");
+      var sheet = { modern: document.getElementById("look-v1"), v2: document.getElementById("look-v2"), v3: document.getElementById("look-v3") };
+      var GEN = { current: 0, modern: 0, v2: 0, next: 1, v3: 1 }, look = "current";
+      function mark() {
+        bar.querySelectorAll("button").forEach(function (b) {
+          var on = b.dataset.setTheme ? b.dataset.setTheme === root.dataset.theme : b.dataset.setLook === look;
+          b.style.outline = on ? "2px solid #4aa8ff" : "none";
+        });
+      }
+      function setLook(l) {
+        look = GEN.hasOwnProperty(l) ? l : "current";
+        if (sheet[look]) root.dataset.theme = "dark"; /* the overlays exist for the dark theme only */
+        root.classList.toggle("modern", !!sheet[look]);
+        Object.keys(sheet).forEach(function (k) { sheet[k].disabled = k !== look; });
+        mark();
+      }
+      function reload(l) { /* the other generation of the JS cannot be swapped into a running page */
+        var q = new URLSearchParams(location.search);
+        q.set("look", l);
+        q.set("theme", l === "v3" ? "dark" : root.dataset.theme);
+        location.search = q.toString();
+      }
+      bar.addEventListener("click", function (ev) {
+        var b = ev.target.closest("button");
+        if (!b) return;
+        if (b.dataset.setLook) {
+          if (GEN[b.dataset.setLook] !== GEN[look]) reload(b.dataset.setLook); else setLook(b.dataset.setLook);
+          return;
+        }
+        root.dataset.theme = b.dataset.setTheme;
+        if (b.dataset.setTheme !== "dark" && sheet[look]) setLook(GEN[look] ? "next" : "current"); else mark();
+      });
+      var q = new URLSearchParams(location.search);
+      if (q.get("theme")) root.dataset.theme = q.get("theme");
+      setLook(window.PREVIEW_LOOK);
+    })();
+  </script>
+
+  <main class="dashboard" style="grid-template-columns: 1fr;">
+    <section class="col-main">
+      <div class="card mon-shell">
+        <nav class="mon-nav"><h3>AIOps Monitor</h3><button class="mon-seg active">&#x1F512; Certificates</button></nav>
+        <div class="mon-main">
+          <div data-pane="certs">
+            <div class="mon-main-head">
+              <div><h2>Certificates</h2><span class="subtle">Live certificate inventory per system &middot; served TLS, HANA SQL and every STRUST PSE &middot; read-only</span></div>
+              <span class="rhs"><span class="subtle chk-last" id="crt-last"></span>
+                <button id="crt-run" class="primary" type="button">&#x25B6; Refresh (scan now)</button>
+                <button id="refresh-certs" class="ghost" type="button">&#x21bb; Reload</button></span>
+            </div>
+            <div id="cert-body"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <div id="cert-panel" class="drawer crt-drawer" hidden>
+    <div class="drawer-inner">
+      <div class="drawer-head"><h2 id="cert-panel-title">Certificate</h2><button id="cert-panel-close" class="ghost close" type="button">&times;</button></div>
+      <div id="cert-panel-body"></div>
+    </div>
+  </div>
+  <script>
+    /* export only: the next-level template uses <dialog> for the drawer (templates/panels_snippet.next.html) */
+    if (window.PREVIEW_NEXT) {
+      (function () {
+        var old = document.getElementById("cert-panel"), dlg = document.createElement("dialog");
+        dlg.id = old.id; dlg.className = old.className; dlg.innerHTML = old.innerHTML;
+        dlg.setAttribute("closedby", "any"); dlg.setAttribute("aria-labelledby", "cert-panel-title");
+        old.replaceWith(dlg);
+        var x = document.getElementById("cert-panel-close");
+        x.setAttribute("commandfor", "cert-panel"); x.setAttribute("command", "close"); x.setAttribute("aria-label", "Close");
+      })();
+    }
+  </script>
+  <script>
+    sessionStorage.removeItem("sapops-certs-filter");
+    const now = Date.now();
+    const iso = (d) => new Date(now + d * 86400000).toISOString();
+    const c = (key, o) => Object.assign({ inventory_key: key, source: "tls_scan", entry_id: key.split(":").slice(1).join(":"),
+      sid: null, system: null, tier: "production", category: "sap_abap", endpoint: "", expected_ca: "production",
+      subject: "", sans: [], issuer: "CN=Production Example Corp Issuing CA,O=Example Corp", issuer_ca: "production",
+      not_after: iso(200), days_left: 200, key_profile: "RSA-4096", aid: null, state: "OK", flags: [], compliance: [],
+      error_type: null, reason: null, checked_at: iso(-0.1), pse_context: null, pse_applic: null, pse_instance: null,
+      pse_state: null, cert_role: "own", list_date: null, trusted: null }, o);
+    const legacy = { issuer: "CN=Example Corp CA,O=Example Corp", issuer_ca: "production-legacy", flags: ["LEGACY_CA"] };
+    const st = (sid, tier, ctx, app, o) => c("strust:" + sid.toLowerCase() + ":" + ctx.toLowerCase() + ":" + app.toLowerCase() + ":own",
+      Object.assign({ source: "strust", sid, tier, endpoint: ctx + " " + app, issuer: null, issuer_ca: null, key_profile: null,
+        pse_context: ctx, pse_applic: app, pse_state: "OK", list_date: iso(-1), expected_ca: tier === "production" ? "production" : "test" }, o));
+    const CERTS = [
+      c("tls_scan:aaa-webgui-f5", { sid: "AAA", endpoint: "aaa-f5.example.invalid:443", subject: "CN=aaa-f5.example.invalid,OU=Operations,O=Example", days_left: 12, not_after: iso(12), state: "WARN", ...legacy }),
+      c("tls_scan:aaa-webgui-pas", { sid: "AAA", endpoint: "aaa1.example.invalid:8443", subject: "CN=aaa1.example.invalid,OU=Applications", days_left: 640, not_after: iso(640) }),
+      c("tls_hana:aaa-hana_sql-tenant", { source: "tls_hana", sid: "AAA", entry_id: "aaa-hana_sql-tenant", endpoint: "hdbaaa.example.invalid:30015", subject: "CN=hdbaaa", issuer: "CN=hdbaaa", issuer_ca: "other", flags: ["OTHER_CA"], days_left: 4, not_after: iso(4), state: "CRITICAL" }),
+      st("AAA", "production", "PROG", "<SYST>", { subject: "CN=AAA", days_left: 4065, not_after: iso(4065), trusted: { total: 2, expired: 0, expiring: 0, legacy: 0 } }),
+      st("AAA", "production", "SSLC", "BCM", { subject: "CN=aaa.example.invalid, OU=Operations", days_left: 362, not_after: iso(362), trusted: { total: 2, expired: 1, expiring: 0, legacy: 1 } }),
+      st("AAA", "production", "SSFA", "ZG_JWT", { subject: "CN=106090139752540516400", days_left: 32, not_after: iso(32) }),
+      st("AAA", "production", "SSLC", "PAYPAL", { subject: null, days_left: null, not_after: null, state: "MISSING", pse_state: "MISSING", reason: "PSE not created (informational)" }),
+      st("AAA", "production", "WSSE", "WSSKEY", { subject: null, days_left: null, not_after: null, state: "MISSING", pse_state: "MISSING" }),
+      st("AAA", "production", "SSLS", "DFAULT", { pse_instance: "aaa1_AAA_00", endpoint: "SSLS DFAULT aaa1_AAA_00", inventory_key: "strust:aaa:ssls:dfault:aaa1_aaa_00:own", subject: "CN=aaa1.example.invalid, OU=Applications", days_left: 655, not_after: iso(655), pse_state: "NOT_CHECKED", trusted: { total: 1, expired: 0, expiring: 0, legacy: 0 } }),
+      st("BBB", "development", "PROG", "<SNCS>", { subject: "CN=BBB SNC", days_left: 4065, not_after: iso(4065), pse_state: "DB_MISMATCH", flags: ["DB_MISMATCH"] }),
+      c("strust:ccc:_list", { source: "strust", sid: "CCC", tier: "simulation", cert_role: "list", endpoint: "SSF_ALERT_CERTEXPIRE", state: "UNKNOWN", days_left: null, not_after: null, issuer: null, issuer_ca: null, error_type: "RFC_NO_PERMISSION", reason: "STRUST list not read" }),
+      c("tls_scan:jjj-java", { sid: "JJJ", category: "sap_java", endpoint: "jjj.example.invalid:50001", subject: "CN=jjj.example.invalid", days_left: 90, not_after: iso(90), ...legacy }),
+      c("tls_scan:jjj-java-q", { sid: "JJQ", tier: "simulation", category: "sap_java", expected_ca: "test", endpoint: "jjq.example.invalid:50001", subject: "CN=jjq.example.invalid", issuer: "CN=Production Example Corp Issuing CA", days_left: 400, not_after: iso(400), flags: ["WRONG_CA"] }),
+      c("tls_scan:wd1", { sid: "AAA", category: "web_dispatcher", endpoint: "aaa.example.invalid:8443", subject: "CN=aaa.example.invalid", days_left: 300, not_after: iso(300) }),
+      c("gclb:wd-rise", { source: "gclb", system: "WDX", category: "web_dispatcher", endpoint: "10.0.0.1:44380-44385", subject: null, issuer: null, issuer_ca: null, days_left: null, not_after: null, state: "UNKNOWN", error_type: "NOT_PROBED", reason: "covered by the GCLB discovery" }),
+      c("tls_scan:bop-cmc", { system: "BOX", category: "bobj", endpoint: "box.example.invalid:443", subject: "CN=box.example.invalid", days_left: 19, not_after: iso(19), state: "WARN" }),
+      c("tls_scan:ccx", { system: "CCX", category: "non_sap", endpoint: "ccx.example.invalid:8443", subject: "CN=ccx.example.invalid", days_left: 186, not_after: iso(186) }),
+      c("tls_scan:onx", { system: "ONX", category: "non_sap", endpoint: "onx.example.invalid:443", subject: "CN=onx.example.invalid", days_left: 483, not_after: iso(483), ...legacy }),
+      c("tls_scan:vpx", { system: "VPX", category: "non_sap", tier: "development", expected_ca: "test", endpoint: "vpx.example.invalid:8443", subject: null, issuer: null, issuer_ca: null, days_left: null, not_after: null, state: "UNREACHABLE", error_type: "TIMEOUT" }),
+    ];
+    const outlook = Array.from({ length: 13 }, (_, i) => ({ week: i, red: 0, amber: 0, blue: 0 }));
+    CERTS.forEach((r) => { if (typeof r.days_left === "number" && r.days_left < 91 && !["UNKNOWN", "MISSING", "UNREACHABLE"].includes(r.state)) outlook[Math.floor(r.days_left / 7)][r.days_left <= 14 ? "red" : r.days_left <= 30 ? "amber" : "blue"] += 1; });
+    const DATA = { job: "sapops-monitor-cert-inventory", last_checked: iso(-0.1), certificates: CERTS, counts: {}, outlook,
+      summary: { verdict: "RED", states: { OK: 9, WARN: 2, CRITICAL: 1, MISSING: 2, UNKNOWN: 2, UNREACHABLE: 1 }, flags: { LEGACY_CA: 3, WRONG_CA: 1, OTHER_CA: 1, DB_MISMATCH: 1 },
+        urgent: [{ key: "tls_hana:aaa-hana_sql-tenant", sid: "AAA", endpoint: "hdbaaa.example.invalid:30015", days_left: 4, state: "CRITICAL" }, { key: "tls_scan:aaa-webgui-f5", sid: "AAA", endpoint: "aaa-f5.example.invalid:443", days_left: 12, state: "WARN" }, { key: "tls_scan:bop-cmc", sid: "BOX", endpoint: "box.example.invalid:443", days_left: 19, state: "WARN" }],
+        due: 3, unknown: 3, trusted_expired: 1, trusted_legacy: 1 },
+      pki: { created_at: iso(-0.5), p0: [{ env: "test", outcome: "ERROR", layer: "TLS_TRUST" }, { env: "prod", outcome: "OK", version: "EJBCA 9.5.0" }], p1: [], p1_note: "no credential configured (PKI_REST_CREDENTIALS empty) - P1 not run" } };
+    const TRUSTED = [
+      c("t1", { source: "strust", cert_role: "trusted", subject: "CN=Example Legacy CA 2, OU=PKI Entity", days_left: -37, not_after: iso(-37), state: "EXPIRED", flags: ["LEGACY_CA_TRUSTED"] }),
+      c("t2", { source: "strust", cert_role: "trusted", subject: "CN=Production Example Corp Issuing CA, OU=PKI Unit", days_left: 3454, not_after: iso(3454) }),
+    ];
+    window.fetch = (url, opts) => {
+      let body = DATA, status = 200;
+      if (opts && opts.method === "POST") { body = { status: "started", job: DATA.job }; status = 202; }
+      else if (String(url).includes("/item?key=")) {
+        const key = decodeURIComponent(String(url).split("key=")[1]);
+        const item = CERTS.find((x) => x.inventory_key === key);
+        body = { certificate: item, trusted: item && item.source === "strust" && item.trusted ? TRUSTED : [] };
+      }
+      return Promise.resolve({ ok: true, status, json: () => Promise.resolve(JSON.parse(JSON.stringify(body))) });
+    };
+    (function () {
+      const s = document.createElement("script");
+      s.src = "../" + (window.PREVIEW_NEXT ? "next/" : "") + "certs.js?t=" + Date.now();
+      s.onload = () => window.CertsApp.onShow();
+      document.body.appendChild(s);
+    })();
+  </script>
+</body>
+</html>
