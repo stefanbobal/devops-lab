@@ -1,0 +1,428 @@
+{
+  "certificates": [
+    {
+      "inventory_key": "tls_scan:bop-cmc",
+      "source": "tls_scan",
+      "entry_id": "bop-cmc",
+      "sid": null,
+      "system": "BOP",
+      "tier": "production",
+      "category": "bobj",
+      "endpoint": "h.example.invalid:443",
+      "expected_ca": "production",
+      "subject": "CN=h.example.invalid",
+      "sans": [
+        "h.example.invalid"
+      ],
+      "issuer": "CN=Production Example Corp Issuing CA",
+      "issuer_ca": "production",
+      "not_after": "2027-06-01T20:33:02.313448+00:00",
+      "days_left": 50,
+      "key_profile": "RSA-4096",
+      "aid": "AID210",
+      "state": "OK",
+      "flags": [],
+      "compliance": [],
+      "error_type": null,
+      "reason": null,
+      "checked_at": "2026-11-13T20:33:02.313448+00:00",
+      "pse_context": null,
+      "pse_applic": null,
+      "pse_instance": null,
+      "pse_state": null,
+      "cert_role": "own",
+      "list_date": null,
+      "trusted": null
+    },
+    {
+      "inventory_key": "tls_scan:p50-f5",
+      "source": "tls_scan",
+      "entry_id": "p50-f5",
+      "sid": "P50",
+      "system": null,
+      "tier": "production",
+      "category": "sap_abap",
+      "endpoint": "h.example.invalid:443",
+      "expected_ca": "production",
+      "subject": "CN=h.example.invalid",
+      "sans": [
+        "h.example.invalid"
+      ],
+      "issuer": "CN=Production Example Corp Issuing CA",
+      "issuer_ca": "production",
+      "not_after": "2027-06-01T20:33:02.313448+00:00",
+      "days_left": 4,
+      "key_profile": "RSA-4096",
+      "aid": "AID210",
+      "state": "CRITICAL",
+      "flags": [
+        "LEGACY_CA"
+      ],
+      "compliance": [],
+      "error_type": null,
+      "reason": null,
+      "checked_at": "2026-11-13T20:33:02.313448+00:00",
+      "pse_context": null,
+      "pse_applic": null,
+      "pse_instance": null,
+      "pse_state": null,
+      "cert_role": "own",
+      "list_date": null,
+      "trusted": null
+    },
+    {
+      "inventory_key": "tls_scan:p50-pas",
+      "source": "tls_scan",
+      "entry_id": "p50-pas",
+      "sid": "P50",
+      "system": null,
+      "tier": "production",
+      "category": "sap_abap",
+      "endpoint": "h.example.invalid:443",
+      "expected_ca": "production",
+      "subject": "CN=h.example.invalid",
+      "sans": [
+        "h.example.invalid"
+      ],
+      "issuer": "CN=Production Example Corp Issuing CA",
+      "issuer_ca": "production",
+      "not_after": "2027-06-01T20:33:02.313448+00:00",
+      "days_left": 20,
+      "key_profile": "RSA-4096",
+      "aid": "AID210",
+      "state": "WARN",
+      "flags": [],
+      "compliance": [],
+      "error_type": null,
+      "reason": null,
+      "checked_at": "2026-11-13T20:33:02.313448+00:00",
+      "pse_context": null,
+      "pse_applic": null,
+      "pse_instance": null,
+      "pse_state": null,
+      "cert_role": "own",
+      "list_date": null,
+      "trusted": null
+    },
+    {
+      "inventory_key": "tls_hana:p50-hana_sql-tenant",
+      "source": "tls_hana",
+      "entry_id": "p50-hana_sql-tenant",
+      "sid": "P50",
+      "system": null,
+      "tier": "production",
+      "category": "sap_abap",
+      "endpoint": "h.example.invalid:443",
+      "expected_ca": "production",
+      "subject": "CN=h.example.invalid",
+      "sans": [
+        "h.example.invalid"
+      ],
+      "issuer": "CN=Production Example Corp Issuing CA",
+      "issuer_ca": "production",
+      "not_after": "2027-06-01T20:33:02.313448+00:00",
+      "days_left": 300,
+      "key_profile": "RSA-4096",
+      "aid": "AID210",
+      "state": "OK",
+      "flags": [],
+      "compliance": [],
+      "error_type": null,
+      "reason": null,
+      "checked_at": "2026-11-13T20:33:02.313448+00:00",
+      "pse_context": null,
+      "pse_applic": null,
+      "pse_instance": null,
+      "pse_state": null,
+      "cert_role": "own",
+      "list_date": null,
+      "trusted": null
+    },
+    {
+      "inventory_key": "strust:p50:sslc:bcm:own",
+      "source": "strust",
+      "entry_id": "p50:sslc:bcm:own",
+      "sid": "P50",
+      "system": null,
+      "tier": "production",
+      "category": "sap_abap",
+      "endpoint": "h.example.invalid:443",
+      "expected_ca": "production",
+      "subject": "CN=h.example.invalid",
+      "sans": [
+        "h.example.invalid"
+      ],
+      "issuer": null,
+      "issuer_ca": null,
+      "not_after": "2027-06-01T20:33:02.313448+00:00",
+      "days_left": 362,
+      "key_profile": "RSA-4096",
+      "aid": "AID210",
+      "state": "OK",
+      "flags": [],
+      "compliance": [],
+      "error_type": null,
+      "reason": null,
+      "checked_at": "2026-11-13T20:33:02.313448+00:00",
+      "pse_context": "SSLC",
+      "pse_applic": "BCM",
+      "pse_instance": null,
+      "pse_state": "OK",
+      "cert_role": "own",
+      "list_date": null,
+      "trusted": {
+        "total": 2,
+        "expired": 1,
+        "expiring": 0,
+        "legacy": 1
+      }
+    },
+    {
+      "inventory_key": "strust:p50:sslc:paypal:own",
+      "source": "strust",
+      "entry_id": "p50:sslc:paypal:own",
+      "sid": "P50",
+      "system": null,
+      "tier": "production",
+      "category": "sap_abap",
+      "endpoint": "h.example.invalid:443",
+      "expected_ca": "production",
+      "subject": null,
+      "sans": [
+        "h.example.invalid"
+      ],
+      "issuer": "CN=Production Example Corp Issuing CA",
+      "issuer_ca": "production",
+      "not_after": null,
+      "days_left": null,
+      "key_profile": "RSA-4096",
+      "aid": "AID210",
+      "state": "MISSING",
+      "flags": [],
+      "compliance": [],
+      "error_type": null,
+      "reason": null,
+      "checked_at": "2026-11-13T20:33:02.313448+00:00",
+      "pse_context": "SSLC",
+      "pse_applic": "PAYPAL",
+      "pse_instance": null,
+      "pse_state": "MISSING",
+      "cert_role": "own",
+      "list_date": null,
+      "trusted": null
+    },
+    {
+      "inventory_key": "strust:d50:_list",
+      "source": "strust",
+      "entry_id": "d50:_list",
+      "sid": "D50",
+      "system": null,
+      "tier": "development",
+      "category": "sap_abap",
+      "endpoint": "h.example.invalid:443",
+      "expected_ca": "production",
+      "subject": "CN=h.example.invalid",
+      "sans": [
+        "h.example.invalid"
+      ],
+      "issuer": "CN=Production Example Corp Issuing CA",
+      "issuer_ca": "production",
+      "not_after": "2027-06-01T20:33:02.313448+00:00",
+      "days_left": null,
+      "key_profile": "RSA-4096",
+      "aid": "AID210",
+      "state": "UNKNOWN",
+      "flags": [],
+      "compliance": [],
+      "error_type": "RFC_NO_PERMISSION",
+      "reason": null,
+      "checked_at": "2026-11-13T20:33:02.313448+00:00",
+      "pse_context": null,
+      "pse_applic": null,
+      "pse_instance": null,
+      "pse_state": null,
+      "cert_role": "list",
+      "list_date": null,
+      "trusted": null
+    },
+    {
+      "inventory_key": "tls_scan:vpx",
+      "source": "tls_scan",
+      "entry_id": "vpx",
+      "sid": null,
+      "system": "VPX",
+      "tier": "development",
+      "category": "non_sap",
+      "endpoint": "h.example.invalid:443",
+      "expected_ca": "production",
+      "subject": "CN=h.example.invalid",
+      "sans": [
+        "h.example.invalid"
+      ],
+      "issuer": "CN=Production Example Corp Issuing CA",
+      "issuer_ca": "production",
+      "not_after": "2027-06-01T20:33:02.313448+00:00",
+      "days_left": null,
+      "key_profile": "RSA-4096",
+      "aid": "AID210",
+      "state": "UNREACHABLE",
+      "flags": [],
+      "compliance": [],
+      "error_type": "TIMEOUT",
+      "reason": null,
+      "checked_at": "2026-11-13T20:33:02.313448+00:00",
+      "pse_context": null,
+      "pse_applic": null,
+      "pse_instance": null,
+      "pse_state": null,
+      "cert_role": "own",
+      "list_date": null,
+      "trusted": null
+    }
+  ],
+  "counts": {
+    "sap_abap": 6,
+    "sap_java": 0,
+    "web_dispatcher": 0,
+    "bobj": 1,
+    "gclb": 0,
+    "non_sap": 1
+  },
+  "outlook": [
+    {
+      "week": 0,
+      "red": 1,
+      "amber": 0,
+      "blue": 0
+    },
+    {
+      "week": 1,
+      "red": 0,
+      "amber": 0,
+      "blue": 0
+    },
+    {
+      "week": 2,
+      "red": 0,
+      "amber": 1,
+      "blue": 0
+    },
+    {
+      "week": 3,
+      "red": 0,
+      "amber": 0,
+      "blue": 0
+    },
+    {
+      "week": 4,
+      "red": 0,
+      "amber": 0,
+      "blue": 0
+    },
+    {
+      "week": 5,
+      "red": 0,
+      "amber": 0,
+      "blue": 0
+    },
+    {
+      "week": 6,
+      "red": 0,
+      "amber": 0,
+      "blue": 0
+    },
+    {
+      "week": 7,
+      "red": 0,
+      "amber": 0,
+      "blue": 1
+    },
+    {
+      "week": 8,
+      "red": 0,
+      "amber": 0,
+      "blue": 0
+    },
+    {
+      "week": 9,
+      "red": 0,
+      "amber": 0,
+      "blue": 0
+    },
+    {
+      "week": 10,
+      "red": 0,
+      "amber": 0,
+      "blue": 0
+    },
+    {
+      "week": 11,
+      "red": 0,
+      "amber": 0,
+      "blue": 0
+    },
+    {
+      "week": 12,
+      "red": 0,
+      "amber": 0,
+      "blue": 0
+    }
+  ],
+  "summary": {
+    "verdict": "RED",
+    "states": {
+      "OK": 3,
+      "CRITICAL": 1,
+      "WARN": 1,
+      "MISSING": 1,
+      "UNREACHABLE": 1
+    },
+    "flags": {
+      "LEGACY_CA": 1
+    },
+    "urgent": [
+      {
+        "key": "tls_scan:p50-f5",
+        "sid": "P50",
+        "endpoint": "h.example.invalid:443",
+        "days_left": 4,
+        "state": "CRITICAL"
+      },
+      {
+        "key": "tls_scan:p50-pas",
+        "sid": "P50",
+        "endpoint": "h.example.invalid:443",
+        "days_left": 20,
+        "state": "WARN"
+      },
+      {
+        "key": "tls_scan:bop-cmc",
+        "sid": "BOP",
+        "endpoint": "h.example.invalid:443",
+        "days_left": 50,
+        "state": "OK"
+      }
+    ],
+    "due": 2,
+    "unknown": 1,
+    "trusted_expired": 1,
+    "trusted_legacy": 1
+  },
+  "pki": {
+    "created_at": "2026-11-13T20:33:02.313448+00:00",
+    "p0": [
+      {
+        "env": "test",
+        "outcome": "OK"
+      },
+      {
+        "env": "prod",
+        "outcome": "OK"
+      }
+    ],
+    "p1": [],
+    "p1_note": "no credential seeded yet"
+  },
+  "last_checked": "2026-11-13T20:33:02.313448+00:00",
+  "job": "sapops-monitor-cert-inventory"
+}

@@ -1,0 +1,52 @@
+<!-- Extract from app/sapops/web/templates/index.html (Jinja2). The panels live inside the Monitoring shell
+     (.mon-shell > .mon-nav + .mon-main). Admin-only buttons are wrapped in the Jinja `if`. -->
+
+<!-- 1. Menu buttons (Monitoring nav) -->
+          <button class="mon-seg" data-seg="certs"><span class="ic">&#x1F512;</span> Certificates</button>
+          <button class="mon-seg" data-seg="urls"><span class="ic">&#x1F517;</span> URLs</button>
+
+<!-- 2. Panes (certs.js renders into #cert-body, urls.js into #url-body) -->
+          <div data-pane="certs" hidden>
+            <div class="mon-main-head">
+              <div>
+                <h2>Certificates</h2>
+                <span class="subtle">Live certificate inventory per system &middot; served TLS, HANA SQL and every STRUST PSE &middot; read-only</span>
+              </div>
+              <span class="rhs">
+                <span class="subtle chk-last" id="crt-last"></span>
+                {% if not settings.auth_enabled or (user and user.is_admin) %}
+                <button id="crt-run" class="primary" type="button">&#x25B6; Refresh (scan now)</button>
+                {% endif %}
+                <button id="refresh-certs" class="ghost" type="button" title="Reload">&#x21bb; Reload</button>
+              </span>
+            </div>
+            <div id="cert-body"><p class="empty">Select to load&hellip;</p></div>
+          </div>
+          <div data-pane="urls" hidden>
+            <div class="mon-main-head">
+              <div>
+                <h2>URLs</h2>
+                <span class="subtle">Availability of every landscape URL from the reviewed catalog &middot; checked every 5 minutes, read-only (no login)</span>
+              </div>
+              <span class="rhs">
+                <span class="subtle chk-last" id="url-last"></span>
+                {% if not settings.auth_enabled or (user and user.is_admin) %}
+                <button id="url-run" class="primary" type="button">&#x25B6; Check now</button>
+                {% endif %}
+                <button id="refresh-urls" class="ghost" type="button" title="Refresh">&#x21bb; Refresh</button>
+              </span>
+            </div>
+            <div id="url-body"><p class="empty">Select to load&hellip;</p></div>
+          </div>
+
+<!-- 3. Certificate detail drawer (end of <body>) -->
+  <!-- Slide-over: certificate details (Monitoring > Certificates, certs.js) -->
+  <div id="cert-panel" class="drawer crt-drawer" hidden>
+    <div class="drawer-inner">
+      <div class="drawer-head">
+        <h2 id="cert-panel-title">Certificate</h2>
+        <button id="cert-panel-close" class="ghost close" type="button">&times;</button>
+      </div>
+      <div id="cert-panel-body"></div>
+    </div>
+  </div>

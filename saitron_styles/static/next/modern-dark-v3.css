@@ -1,0 +1,645 @@
+/* =====================================================================================================
+   SAITron "modern dark" overlay, v3 ("next level")
+   Monitoring > Certificates and Monitoring > URLs.
+
+   For the markup of next/certs.js, next/urls.js and the <dialog> drawer; it builds on next/certs.css
+   and next/urls.css. Active only with <html class="modern" data-theme="dark">. It does NOT fit the
+   current certs.js / urls.js: use modern-dark-v2.css for those.
+
+   v2 was limited to what CSS can do alone on fixed markup. Here the JS cooperates, so the workarounds
+   are gone (no !important column widths, no nth-of-type layout, no state guessed with :has()) and the
+   newest platform features can be used. Checked in Chromium 158, Firefox 159 and WebKit 27.2:
+
+     in all three     View Transitions + view-transition-class, <dialog> + ::backdrop, popover="hint",
+                      CSS anchor positioning, typed attr(), @scope, @starting-style + allow-discrete,
+                      scroll-driven animation (view timeline), contrast-color(), linear() easing,
+                      container queries, :has(), nesting, OKLCH, color-mix(), @property, field-sizing
+     not in Firefox   corner-shape, appearance: base-select, interpolate-size, text-wrap: pretty
+     Chromium only    interest invokers (hover popover without script), overlay (top-layer exit)
+
+   Every item in the last two lines is an extra: without it the page looks slightly plainer and works
+   the same. A browser without CSS nesting skips the whole file and shows today's dark theme.
+
+   Design rules (unchanged from v2)
+     1  The loudest pixel is the worst problem. Colour and motion are reserved for state.
+     2  Elevation = lightness steps of one hue, hairline borders, no nested glass.
+     3  Status never relies on colour alone: label + marker shape.
+     4  Grey is never green: unknown / unreachable / stale get a hatched or dashed edge.
+     5  Motion only where it carries meaning. Typing and the timers never animate.
+     6  Palette tokens are global; component rules apply only inside the two panes and the drawer.
+   ===================================================================================================== */
+
+@property --m-angle { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+
+@supports selector(&) {
+
+/* ---------- 1. tokens and page (global) ---------- */
+:root.modern[data-theme="dark"] {
+  color-scheme: dark;
+  accent-color: var(--m-accent);
+  scrollbar-color: var(--m-s3) transparent;
+
+  /* surfaces: one hue, lightness = elevation */
+  --m-bg: oklch(0.155 0.016 262);
+  --m-s1: oklch(0.205 0.019 262);
+  --m-s2: oklch(0.245 0.021 262);
+  --m-s3: oklch(0.3 0.024 262);
+  --m-line: oklch(0.86 0.02 262 / .1);
+  --m-line-2: oklch(0.86 0.02 262 / .2);
+  /* text */
+  --m-fg: oklch(0.955 0.006 258);
+  --m-fg-2: oklch(0.85 0.014 258);
+  --m-muted: oklch(0.73 0.022 258);
+  --m-ink: oklch(0.18 0.03 262);
+  /* accent + status */
+  --m-accent: oklch(0.76 0.13 240);
+  --m-accent-2: oklch(0.74 0.14 292);
+  --m-ok: oklch(0.8 0.15 158);
+  --m-warn: oklch(0.83 0.14 82);
+  --m-err: oklch(0.735 0.185 22);
+  --m-unk: oklch(0.76 0.03 262);
+  --m-shadow: inset 0 1px 0 oklch(1 0 0 / .04), 0 1px 2px oklch(0 0 0 / .35);
+  --m-float: 0 18px 40px -12px oklch(0 0 0 / .7), 0 0 0 1px oklch(0 0 0 / .25);
+  --m-mono: ui-monospace, "Cascadia Code", "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  --m-ease: cubic-bezier(.2, .8, .2, 1);
+  /* a soft spring written as a linear() curve: settles with one small overshoot */
+  --m-spring: linear(0, .22 7%, .56 16%, .81 26%, .95 36%, 1.015 48%, 1.02 60%, 1.006 76%, 1);
+
+  /* feed the app's own variables so existing rules pick the palette up */
+  --bg: var(--m-bg);
+  --page-bg: var(--m-bg);
+  --card: var(--m-s1);
+  --card-2: var(--m-s1);
+  --soft-bg: var(--m-s2);
+  --input-bg: var(--m-bg);
+  --line: var(--m-line);
+  --card-border: var(--m-line);
+  --fg: var(--m-fg);
+  --muted: var(--m-muted);
+  --accent: var(--m-accent);
+  --accent-2: var(--m-accent-2);
+  --ok: var(--m-ok);
+  --warn: var(--m-warn);
+  --err: var(--m-err);
+  --ok-bg: color-mix(in oklch, var(--m-ok) 13%, transparent);
+  --warn-bg: color-mix(in oklch, var(--m-warn) 13%, transparent);
+  --err-bg: color-mix(in oklch, var(--m-err) 15%, transparent);
+  --grad: linear-gradient(135deg, var(--m-accent), var(--m-accent-2));
+  --primary-fg: var(--m-ink);
+  --card-shadow: var(--m-shadow);
+  --radius: 16px;
+
+  & body { -webkit-font-smoothing: antialiased; }
+  /* The base theme already has a fixed full-viewport layer (the brand photo, opacity 0 in dark).
+     Reuse it for a faint aurora: a composited layer, no repaint on scroll. */
+  & body::before {
+    background-image:
+      radial-gradient(62rem 36rem at 86% -12%, color-mix(in oklch, var(--m-accent) 13%, transparent), transparent 70%),
+      radial-gradient(54rem 34rem at -6% 106%, color-mix(in oklch, var(--m-accent-2) 10%, transparent), transparent 70%);
+    opacity: 1; filter: none; transform: none; mix-blend-mode: normal;
+  }
+
+  /* Monitoring shell. clip (not hidden) creates no scroll container, so sticky table headers work. */
+  & .mon-shell { background: color-mix(in oklch, var(--m-bg) 72%, transparent); border-color: var(--m-line); box-shadow: none; overflow: clip; }
+  & .mon-nav { background: transparent; border-right-color: var(--m-line); }
+  & .mon-nav h3 { letter-spacing: .1em; }
+  & .mon-seg { color: var(--m-fg-2); transition: background-color .15s ease, color .15s ease; }
+  & .mon-seg:hover { background: var(--m-s2); color: var(--m-fg); }
+  & .mon-seg.active { background: color-mix(in oklch, var(--m-accent) 13%, transparent); color: var(--m-fg); box-shadow: inset 2px 0 0 var(--m-accent); }
+}
+
+/* ---------- 2. components (only inside the two panes and the certificate drawer) ---------- */
+:root.modern[data-theme="dark"] :is([data-pane="certs"], [data-pane="urls"], #cert-panel) {
+  font-variant-numeric: tabular-nums;
+
+  & :focus-visible { outline: 2px solid var(--m-accent); outline-offset: 2px; }
+  & ::selection { background: color-mix(in oklch, var(--m-accent) 40%, transparent); }
+  & .chk-svg { stroke-width: 1.6; }
+
+  /* ----- pane header ----- */
+  & .mon-main-head {
+    gap: 1rem; margin-bottom: 1.1rem;
+    & h2 { font-size: 1.35rem; font-weight: 650; letter-spacing: -.02em; line-height: 1.15; text-wrap: balance; }
+    & h2 + .subtle { display: block; margin: .3rem 0 0; max-width: 72ch; text-wrap: pretty; }
+    & .rhs { display: inline-flex; align-items: center; gap: .5rem; flex: none; }
+  }
+  /* freshness chip: the JS says how old the data is (data-age), the chip shows it */
+  & .chk-last {
+    display: inline-block; margin: 0; padding: .32rem .7rem; white-space: nowrap;
+    font-size: .74rem; color: var(--m-fg-2);
+    background-color: var(--m-s1); border: 1px solid var(--m-line); border-radius: 999px;
+    &:empty { display: none; }
+    & b { color: var(--m-fg); font-weight: 650; }
+    & .chk-ago { color: var(--m-muted); }
+    &[data-age="late"] { border-color: color-mix(in oklch, var(--m-warn) 50%, transparent); }
+    &[data-age="stale"] {
+      border-color: color-mix(in oklch, var(--m-err) 60%, transparent);
+      background-image: linear-gradient(color-mix(in oklch, var(--m-err) 13%, transparent) 0 0);
+    }
+    &[data-age="late"] .chk-age-word { color: var(--m-warn); }
+    &[data-age="stale"] .chk-age-word { color: var(--m-err); }
+  }
+
+  /* ----- buttons ----- */
+  & button:is(.primary, .ghost) { border-radius: 10px; }
+  & button.primary {
+    position: relative; isolation: isolate;
+    color: var(--m-ink);
+    /* contrast-color() picks black or white for whatever the accent is, so a new accent cannot break the label */
+    color: contrast-color(var(--m-accent));
+    background: var(--m-accent);
+    /* both stops have the same OKLCH lightness, so the label contrast is the same along the gradient */
+    background: linear-gradient(135deg in oklch, var(--m-accent), var(--m-accent-2));
+    box-shadow: inset 0 1px 0 oklch(1 0 0 / .28), 0 1px 2px oklch(0 0 0 / .45);
+    transition: filter .15s ease, translate .1s ease;
+    &:hover { filter: brightness(1.08); }
+    &:active { translate: 0 1px; }
+    &:disabled { cursor: progress; filter: saturate(.55) brightness(.92); }
+    /* busy ring: an animated custom property (@property) drives the conic gradient */
+    &:disabled::after {
+      content: ""; position: absolute; inset: -4px; z-index: -1; padding: 2px; border-radius: 14px;
+      background: conic-gradient(from var(--m-angle), transparent 0 55%, var(--m-fg));
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor; mask-composite: exclude;
+      animation: m-spin 1s linear infinite;
+    }
+  }
+  & button.ghost {
+    color: var(--m-fg-2); border-color: var(--m-line-2);
+    transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+    &:hover { color: var(--m-fg); background: var(--m-s2); border-color: var(--m-muted); }
+  }
+
+  /* ----- status pills: label + shape + tint ----- */
+  & .pill {
+    --p: var(--m-unk);
+    gap: .3rem; padding: .16rem .5rem .16rem .4rem; white-space: nowrap;
+    font-size: .64rem; font-weight: 700; letter-spacing: .02em; line-height: 1.3;
+    color: var(--p);
+    background: color-mix(in oklch, var(--p) 10%, transparent);
+    border: 1px solid color-mix(in oklch, var(--p) 24%, transparent);
+    &::before { content: ""; flex: none; inline-size: .45rem; block-size: .45rem; border-radius: 50%; background: currentColor; }
+    &.ok { --p: var(--m-ok); }
+    &.warn { --p: var(--m-warn); }
+    &.warn::before { border-radius: 0; clip-path: polygon(50% 4%, 100% 96%, 0 96%); }
+    &.err {
+      --p: var(--m-err);
+      background: color-mix(in oklch, var(--p) 15%, transparent);
+      border-color: color-mix(in oklch, var(--p) 42%, transparent);
+    }
+    &.err::before { border-radius: 1.5px; }
+    &.muted { --p: var(--m-unk); border-style: dashed; border-color: color-mix(in oklch, var(--p) 45%, transparent); }
+    &.muted::before { background: none; box-shadow: inset 0 0 0 1.5px currentColor; }
+  }
+
+  /* ----- count badges (the word "red / amber / green" now comes from the JS) ----- */
+  & .badge {
+    padding: .12rem .5rem; border: 1px solid transparent; border-radius: 999px;
+    font-size: .68rem; font-weight: 700;
+    &.muted { background: var(--m-s2); color: var(--m-fg-2); border-color: var(--m-line); }
+    &.ok { background: color-mix(in oklch, var(--m-ok) 10%, transparent); color: var(--m-ok); border-color: color-mix(in oklch, var(--m-ok) 24%, transparent); }
+    &.crt-amber { background: color-mix(in oklch, var(--m-warn) 13%, transparent); color: var(--m-warn); border-color: color-mix(in oklch, var(--m-warn) 34%, transparent); }
+    &.err { background: color-mix(in oklch, var(--m-err) 15%, transparent); color: var(--m-err); border-color: color-mix(in oklch, var(--m-err) 42%, transparent); }
+    &.b-rise { background: oklch(0.75 0.14 340 / .14); color: oklch(0.84 0.1 340); border-color: oklch(0.75 0.14 340 / .32); }
+  }
+
+  /* ----- cards ----- */
+  & .crt-card, & .crt-sec, & .kpi, & .chk-toolbar, & .crt-pki {
+    background: var(--m-s1); border: 1px solid var(--m-line); box-shadow: var(--m-shadow);
+  }
+  & .crt-card { border-radius: 16px; padding: 1rem 1.1rem; }
+  & .crt-card-head {
+    margin-bottom: .8rem;
+    & h3 { display: inline-flex; align-items: center; gap: .45rem; font-size: .95rem; font-weight: 650; letter-spacing: -.01em; }
+    & h3 .chk-svg { color: var(--m-accent); }
+  }
+  & .crt-sub { color: var(--m-muted); font-size: .72rem; }
+
+  /* ----- Certificates: summary ----- */
+  & .crt-top { gap: 1rem; margin-bottom: 1rem; }
+  /* the verdict colours the card: it must be the first thing seen on the page */
+  & .crt-summary {
+    --sev: var(--m-unk);
+    background: radial-gradient(85% 75% at 0% 0%, color-mix(in oklch, var(--sev) 12%, transparent), transparent 72%), var(--m-s1);
+    border-color: color-mix(in oklch, var(--sev) 36%, transparent);
+    &[data-verdict="GREEN"] { --sev: var(--m-ok); }
+    &[data-verdict="AMBER"] { --sev: var(--m-warn); }
+    &[data-verdict="RED"] { --sev: var(--m-err); }
+  }
+  & .crt-verdict {
+    gap: .6rem 1rem; margin: 0 0 .7rem;
+    & > .pill { font-size: .84rem; letter-spacing: .05em; padding: .3rem .8rem .3rem .65rem; }
+  }
+  & .crt-verdict-lbl, & .crt-sum-col h4 { font-size: .68rem; letter-spacing: .09em; color: var(--m-muted); }
+  & .crt-stat {
+    --t: var(--m-unk);
+    padding: .45rem .7rem .5rem; border-color: var(--m-line); border-radius: 12px; background: color-mix(in oklch, var(--m-s2) 60%, transparent);
+    &[data-tone="err"] { --t: var(--m-err); }
+    &[data-tone="warn"] { --t: var(--m-warn); }
+    & b { font-size: 1.35rem; font-weight: 700; letter-spacing: -.02em; color: var(--m-fg); }
+    & span { color: var(--m-muted); }
+    &[data-zero] b { color: var(--m-muted); font-weight: 600; }
+    /* a number is loud only when it reports a problem */
+    &:is([data-tone="err"], [data-tone="warn"]):not([data-zero]) {
+      border-color: color-mix(in oklch, var(--t) 45%, transparent); background: color-mix(in oklch, var(--t) 11%, transparent);
+      & b { color: var(--t); }
+    }
+    &[data-tone="unk"]:not([data-zero]) { border-style: dashed; border-color: color-mix(in oklch, var(--m-unk) 55%, transparent); }
+  }
+  & .crt-statebar {
+    height: .32rem; gap: 3px; margin-bottom: .9rem; overflow: visible; border-radius: 0;
+    & i { border-radius: 999px; background: var(--m-unk); }
+    & i[data-tone="err"] { background: var(--m-err); }
+    & i[data-tone="warn"] { background: var(--m-warn); }
+    & i[data-tone="ok"] { background: color-mix(in oklch, var(--m-ok) 70%, transparent); }
+    & i[data-tone="unk"] { background: repeating-linear-gradient(-45deg, var(--m-unk) 0 2px, transparent 2px 5px); }
+  }
+  & .crt-sum-cols { gap: .6rem 1.8rem; padding-top: .85rem; border-top: 1px solid var(--m-line); }
+  & .crt-sum-col {
+    & h4 { margin: 0 0 .45rem; }
+    & ul, & ol { display: grid; align-content: start; gap: .32rem; margin: 0; padding: 0; list-style: none; font-size: .8rem; line-height: 1.45; color: var(--m-fg-2); }
+    & li { position: relative; text-wrap: pretty; }
+    & li b { color: var(--m-fg); }
+    & ul:not(.crt-urgent) > li { padding-inline-start: 1.05rem; }
+    & ul:not(.crt-urgent) > li::before {
+      content: ""; position: absolute; inset-inline-start: .2rem; inset-block-start: .52em;
+      inline-size: .34rem; block-size: .34rem; border-radius: 50%; background: var(--m-muted);
+    }
+    & ol { counter-reset: step; }
+    & ol > li { counter-increment: step; padding-inline-start: 1.75rem; }
+    & ol > li::before {
+      content: counter(step); position: absolute; inset-inline-start: 0; inset-block-start: .05em;
+      display: grid; place-items: center; inline-size: 1.2rem; block-size: 1.2rem; border-radius: 50%;
+      font-size: .66rem; font-weight: 700; color: var(--m-fg-2); background: var(--m-s3);
+    }
+  }
+  /* most urgent: the days left lead, the row opens the certificate */
+  & .crt-urg {
+    gap: .55rem;
+    & .chk-days { min-width: 2.7rem; font-size: .82rem; }
+    & .chk-mono { color: var(--m-muted); }
+  }
+  & button.crt-urg {
+    margin-inline-start: -.45rem; padding: .14rem .45rem; border-radius: 8px;
+    transition: background-color .15s ease, border-color .15s ease;
+    &:hover { background: var(--m-s2); border-color: var(--m-line-2); }
+  }
+
+  /* ----- Certificates: expiry outlook ----- */
+  & .crt-bars { min-height: 8.5rem; gap: 4px; padding-top: .2rem; }
+  & .crt-col {
+    border-radius: 8px; transition: background-color .15s ease;
+    &:first-child .crt-lbl { color: var(--m-fg); font-weight: 700; }
+  }
+  & button.crt-col {
+    interest-delay: .12s;   /* interest invokers: how long the pointer rests before the list opens */
+    &:hover, &:focus-visible { background: var(--m-s2); }
+  }
+  & .crt-val { height: 1.05rem; font-size: .7rem; font-weight: 650; color: var(--m-fg-2); }
+  & .crt-stack { max-width: 30px; gap: 2px; border-bottom: 2px solid var(--m-line-2); }
+  & .crt-seg { min-height: 4px; border-radius: 4px; }
+  & .crt-seg.red, & .crt-legend i.red { background: var(--m-err); }
+  & .crt-seg.amber, & .crt-legend i.amber { background: var(--m-warn); }
+  & .crt-seg.blue, & .crt-legend i.blue { background: color-mix(in oklch, var(--m-accent) 72%, var(--m-s1)); }
+  & .crt-lbl { height: 1.05rem; margin-top: .4rem; font-size: .66rem; color: var(--m-muted); }
+  & .crt-legend {
+    gap: 1rem; margin-top: .75rem; padding-top: .65rem; border-top: 1px solid var(--m-line); font-size: .72rem;
+    & i { width: .65rem; height: .65rem; border-radius: 3px; }
+  }
+  /* the list behind a bar: a popover in the top layer, tied to its bar by CSS anchor positioning */
+  & .crt-pop {
+    padding: .7rem .85rem; color: var(--m-fg-2); background: var(--m-s2); border: 1px solid var(--m-line-2); border-radius: 12px;
+    box-shadow: var(--m-float); -webkit-backdrop-filter: none; backdrop-filter: none;
+    & p { color: var(--m-muted); }
+    & p b { color: var(--m-fg); }
+    & li b { color: var(--m-fg); }
+    & .chk-mono { color: var(--m-muted); }
+  }
+
+  /* ----- PKI strip ----- */
+  & .crt-pki {
+    gap: .5rem; padding: .55rem .8rem; margin-bottom: 1rem; border-radius: 12px;
+    & > b { display: inline-flex; align-items: center; gap: .4rem; margin-inline-end: .2rem; font-size: .68rem; text-transform: uppercase; letter-spacing: .09em; color: var(--m-muted); }
+    & > b .chk-svg { color: var(--m-muted); }
+  }
+
+  /* ----- filter bars ----- */
+  & .chk-toolbar {
+    gap: .4rem; padding: .5rem .6rem; margin-bottom: 1rem; border-radius: 12px;
+    & > .subtle { min-width: 3.4rem; font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; }
+    & label.chk-bad { color: var(--m-fg-2); }
+    /* two bars in a row (URLs: tier + status) read as one panel */
+    &:has(+ .chk-toolbar) { margin-bottom: 0; padding-bottom: .22rem; border-bottom-color: transparent; border-end-start-radius: 0; border-end-end-radius: 0; box-shadow: none; }
+    & + .chk-toolbar { padding-top: .22rem; border-top-color: transparent; border-start-start-radius: 0; border-start-end-radius: 0; box-shadow: none; }
+  }
+  & .chk-chip {
+    display: inline-flex; align-items: center; gap: .35rem; padding: .28rem .7rem;
+    font-size: .76rem; font-weight: 600; line-height: 1.2; color: var(--m-fg-2);
+    background: transparent; border: 1px solid var(--m-line-2); border-radius: 999px;
+    transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+    &:hover { color: var(--m-fg); background: var(--m-s2); }
+    /* tinted, not a gradient: a filter is a control, not an alarm */
+    &[aria-pressed="true"] { color: var(--m-fg); background: color-mix(in oklch, var(--m-accent) 17%, transparent); border-color: color-mix(in oklch, var(--m-accent) 60%, transparent); }
+    & .url-cnt { margin: 0; padding: 0 .36rem; border-radius: 999px; font-size: .68rem; opacity: 1; color: var(--m-fg-2); background: var(--m-s3); }
+    /* status chips repeat the pill marker, so the filter and the rows speak one language */
+    &.url-status:not([data-status="all"], [data-status="notup"])::before { content: ""; inline-size: .45rem; block-size: .45rem; border-radius: 50%; background: var(--m-ok); }
+    &.url-status[data-status="DOWN"]::before { border-radius: 1.5px; background: var(--m-err); }
+    &.url-status:is([data-status="UNREACHABLE"], [data-status="UNKNOWN"])::before { background: none; box-shadow: inset 0 0 0 1.5px var(--m-unk); }
+  }
+  & :is(input[type=search], select) {
+    padding: .38rem .6rem; font-size: .78rem; color: var(--m-fg);
+    background-color: var(--m-bg); border: 1px solid var(--m-line-2); border-radius: 9px;
+    transition: border-color .15s ease, box-shadow .15s ease;
+    &:hover { border-color: var(--m-muted); }
+    &:focus-visible { outline: none; border-color: var(--m-accent); box-shadow: 0 0 0 3px color-mix(in oklch, var(--m-accent) 28%, transparent); }
+  }
+  & input[type=search] {
+    width: 15rem; padding-inline-start: 1.9rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%2393a3bb' stroke-width='1.6' stroke-linecap='round'%3E%3Ccircle cx='7' cy='7' r='4.5'/%3E%3Cpath d='M10.5 10.5 14 14'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: .6rem 50%; background-size: .85rem;
+    /* grows with what is typed, so the placeholder is not cut off */
+    @supports (field-sizing: content) { field-sizing: content; width: auto; min-width: 13rem; max-width: 24rem; }
+    &::placeholder { color: var(--m-muted); opacity: 1; }
+  }
+  & .chk-notice {
+    padding: .6rem .8rem; border-radius: 12px;
+    &.info { background: color-mix(in oklch, var(--m-accent) 10%, transparent); border-color: color-mix(in oklch, var(--m-accent) 40%, transparent); }
+    &.err { background: color-mix(in oklch, var(--m-err) 12%, transparent); border-color: color-mix(in oklch, var(--m-err) 45%, transparent); }
+  }
+
+  /* ----- tables ----- */
+  & table.mini {
+    --th-bg: var(--m-s1);
+    border-collapse: separate; border-spacing: 0;
+    & th {
+      position: sticky; top: 0; z-index: 2; vertical-align: bottom;
+      padding: .55rem .5rem; background: var(--th-bg); border-bottom: 1px solid var(--m-line-2);
+      font-size: .68rem; font-weight: 650; text-transform: uppercase; letter-spacing: .07em; color: var(--m-muted);
+    }
+    & td { padding: .5rem; border-bottom: 1px solid var(--m-line); transition: background-color .12s ease; }
+    & tbody tr:last-child > td { border-bottom-color: transparent; }
+    & tbody tr:not(.crt-group):hover > td { background-color: var(--m-s2); }
+    /* row state on the left edge, taken from the status pill inside the row */
+    & tr:has(> td:first-child > .pill.warn) > td:first-child { box-shadow: inset 3px 0 0 var(--m-warn); }
+    & tr:has(> td:first-child > .pill.err) > td:first-child { box-shadow: inset 3px 0 0 var(--m-err); }
+    /* grey is never green: unknown / unreachable / stale rows get a hatched edge */
+    & tr:has(> td:first-child > .pill.muted) > td:first-child {
+      background-image: repeating-linear-gradient(-45deg, var(--m-unk) 0 2px, transparent 2px 5px);
+      background-size: 3px 100%; background-repeat: no-repeat;
+    }
+    /* a narrow panel has no room to waste */
+    @container panel (max-width: 1100px) { & :is(th, td) { padding-inline: .4rem; } }
+  }
+  & .chk-sid { font-weight: 700; }
+  & .chk-mono, & .url-link a { font-family: var(--m-mono); font-size: .74rem; font-variant-ligatures: none; }
+  & .chk-dash { color: color-mix(in oklch, var(--m-muted) 65%, transparent); }
+  /* healthy numbers are neutral, so the ones that need action stand out */
+  & .chk-days.ok { color: var(--m-fg-2); font-weight: 650; }
+  & .crt-bad { color: var(--m-err); }
+  & .crt-exp .chk-days { font-size: .84rem; }
+
+  /* ----- Certificates: section cards ----- */
+  & .crt-sec {
+    padding: .1rem 1rem .5rem; margin-bottom: 1rem; border-radius: 16px;
+    /* the card edge follows the worst row status, the same source as its counters */
+    &:has(td:first-child > .pill.warn) { border-color: color-mix(in oklch, var(--m-warn) 38%, transparent); }
+    &:has(td:first-child > .pill.err) { border-color: color-mix(in oklch, var(--m-err) 50%, transparent); }
+    /* an empty group steps back */
+    &:has(> .crt-empty) { background: transparent; border-style: dashed; box-shadow: none; }
+  }
+  & .crt-sec-head {
+    gap: .6rem; margin: 0; padding: .8rem 0 .65rem;
+    & h3 { font-size: .95rem; font-weight: 650; letter-spacing: -.01em; }
+    & .rhs { gap: .35rem; }
+  }
+  & .crt-ic {
+    inline-size: 1.9rem; block-size: 1.9rem; flex: none; font-size: 1rem; color: var(--m-fg-2);
+    background: var(--m-s2); border: 1px solid var(--m-line); border-radius: 9px;
+  }
+  & .crt-empty { margin: 0 0 .6rem; }
+  & table.mini.crt-table tr.crt-group > td {
+    padding: .42rem .65rem; border-bottom-color: transparent; border-radius: 9px;
+    font-size: .76rem; color: var(--m-fg-2); background: var(--m-s2);
+    & b { font-size: .82rem; color: var(--m-fg); }
+  }
+  & button.ghost:is(.crt-det, .crt-miss) { padding: .16rem .5rem; border-radius: 7px; font-size: .72rem; }
+  & button.ghost.crt-det { border-color: var(--m-line); }
+  & tr.crt-row:hover button.crt-det { color: var(--m-fg); border-color: var(--m-accent); }
+
+  /* ----- URLs: KPI tiles (tone and zero come from the JS) ----- */
+  & .kpis { grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: .8rem; margin-bottom: 1rem; }
+  & .kpi {
+    --k: var(--m-accent);
+    gap: .2rem; padding: .85rem 1rem .9rem; border-radius: 14px;
+    &[data-tone="ok"] { --k: var(--m-ok); }
+    &[data-tone="err"] { --k: var(--m-err); }
+    &[data-tone="warn"] { --k: var(--m-warn); }
+    &[data-tone="unk"] { --k: var(--m-unk); }
+    & .k-top { gap: .55rem; font-size: .76rem; font-weight: 600; color: var(--m-fg-2); }
+    & .k-ic {
+      inline-size: 1.75rem; block-size: 1.75rem; border-radius: 8px; font-size: .95rem; color: var(--k);
+      background: color-mix(in oklch, var(--k) 14%, transparent); border: 1px solid color-mix(in oklch, var(--k) 26%, transparent);
+    }
+    & .k-val { font-size: 2rem; font-weight: 700; line-height: 1.15; letter-spacing: -.03em; color: var(--m-fg); }
+    & .k-sub { color: var(--m-muted); text-wrap: pretty; }
+    &[data-zero] .k-val { color: var(--m-muted); font-weight: 600; }
+    /* a tile is loud only when it reports a problem: "Down 1" is red, "Down 0" is calm */
+    &:is([data-tone="err"], [data-tone="warn"]):not([data-zero]) {
+      border-color: color-mix(in oklch, var(--k) 50%, transparent);
+      background: linear-gradient(color-mix(in oklch, var(--k) 11%, transparent), color-mix(in oklch, var(--k) 3%, transparent)), var(--m-s1);
+      & .k-val { color: var(--k); }
+    }
+    &[data-tone="unk"]:not([data-zero]) { border-style: dashed; border-color: color-mix(in oklch, var(--m-unk) 55%, transparent); }
+  }
+
+  /* ----- URLs: one card per tier ----- */
+  & .chk-env {
+    gap: .5rem; margin: 1.4rem 0 .55rem; font-size: .72rem; letter-spacing: .1em; color: var(--m-fg-2);
+    &::after { content: ""; flex: 1; block-size: 1px; background: var(--m-line); }
+  }
+  & table.mini.url-table {
+    --th-bg: var(--m-s2);
+    background: var(--m-s1); border: 1px solid var(--m-line); border-radius: 14px; box-shadow: var(--m-shadow);
+    & th:first-child { border-start-start-radius: 13px; }
+    & th:last-child { border-start-end-radius: 13px; }
+    & tbody tr:last-child > td:first-child { border-end-start-radius: 13px; }
+    & tbody tr:last-child > td:last-child { border-end-end-radius: 13px; }
+    & td.url-link a { color: var(--m-accent); text-underline-offset: 2px; }
+  }
+  & .url-sub { color: var(--m-muted); }
+  & .url-err { color: var(--m-fg-2); }
+  & .url-down { color: var(--m-fg-2); }
+
+  /* ----- "where the data comes from" ----- */
+  & .chk-how {
+    margin-top: 1.2rem; padding: .65rem .9rem; border: 1px solid var(--m-line); border-radius: 12px; color: var(--m-fg-2);
+    & summary { color: var(--m-fg); font-weight: 650; }
+    & li { max-width: 110ch; text-wrap: pretty; }
+    & code { padding: .08rem .35rem; border-radius: 5px; font-family: var(--m-mono); font-size: .74rem; background: var(--m-s2); }
+  }
+  & .mon-placeholder { border-color: var(--m-line-2); border-radius: 14px; }
+}
+
+/* ---------- 3. certificate drawer (a <dialog>; the same rules also fit the old <div>) ---------- */
+:root.modern[data-theme="dark"] #cert-panel {
+  /* the dimmed page is the dialog's ::backdrop in the top layer */
+  &::backdrop { background: oklch(0.1 0.02 262 / .62); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+
+  & .drawer-inner {
+    padding: 0 1.6rem 2rem; background: var(--m-s1); border-inline-start: 1px solid var(--m-line-2);
+    box-shadow: -24px 0 48px -16px oklch(0 0 0 / .65);
+    scrollbar-gutter: stable; overscroll-behavior: contain;
+  }
+  /* The title and the close button stay reachable in a long trusted list. The scroller has no top
+     padding of its own, so "top: 0" means the same thing in every browser. */
+  & .drawer-head {
+    position: sticky; top: 0; z-index: 3;
+    margin: 0 -1.6rem 1rem; padding: 1.15rem 1.6rem .85rem;
+    background: var(--m-s1); border-bottom: 1px solid var(--m-line);
+    & h2 { font-size: 1.15rem; font-weight: 650; letter-spacing: -.01em; }
+    & .close { display: grid; place-items: center; inline-size: 2.1rem; block-size: 2.1rem; padding: 0; font-size: 1.35rem; }
+  }
+  & #cert-panel-body > p:first-child {
+    display: flex; flex-wrap: wrap; gap: .4rem; margin: 0 0 1rem;
+    & .pill { font-size: .76rem; padding: .26rem .7rem .26rem .55rem; }
+  }
+  & #cert-panel-body > p:not(:first-child) { margin: 1.3rem 0 .55rem; }
+  /* key / value list as one bordered sheet */
+  & .crt-dl {
+    grid-template-columns: 9.5rem minmax(0, 1fr); gap: 0; margin: 0;
+    font-size: .82rem; border: 1px solid var(--m-line); border-radius: 12px; overflow: clip;
+    & :is(dt, dd) { padding: .5rem .8rem; border-bottom: 1px solid var(--m-line); }
+    & :is(dt, dd):nth-last-child(-n + 2) { border-bottom: 0; }
+    & dt { font-size: .68rem; font-weight: 650; text-transform: uppercase; letter-spacing: .07em; line-height: 1.75; color: var(--m-muted); background: color-mix(in oklch, var(--m-s2) 55%, transparent); }
+  }
+  & table.mini.crt-trusted {
+    --th-bg: var(--m-s2);
+    font-size: .78rem; border: 1px solid var(--m-line); border-radius: 12px;
+    & th { position: static; }
+    & th:first-child { border-start-start-radius: 11px; }
+    & th:last-child { border-start-end-radius: 11px; }
+    & tbody tr:last-child > td:first-child { border-end-start-radius: 11px; }
+    & tbody tr:last-child > td:last-child { border-end-end-radius: 11px; }
+    & tr.crt-hl > td { background-color: color-mix(in oklch, var(--m-warn) 9%, transparent); }
+  }
+}
+
+/* ---------- 4. motion (only for people who have not asked for less) ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  /* live outage: one ping on the marker of a URL that is DOWN now. transform + opacity only. */
+  :root.modern[data-theme="dark"] [data-pane="urls"] .url-table td:first-child > .pill.err {
+    position: relative;
+    &::after {
+      content: ""; position: absolute; inset-inline-start: .4rem; inset-block-start: calc(50% - .225rem);
+      inline-size: .45rem; block-size: .45rem; border-radius: 50%; background: currentColor; pointer-events: none;
+      animation: m-ping 2s cubic-bezier(0, 0, .2, 1) infinite;
+    }
+  }
+
+  /* View Transitions (started by the JS for chips, selects and toggles): cards that survive a filter
+     move to their new place on a spring, the rest of the pane cross-fades quickly. */
+  :root.modern[data-theme="dark"]::view-transition-group(.mon-card) { animation-duration: .36s; animation-timing-function: var(--m-spring); }
+  :root.modern[data-theme="dark"]::view-transition-old(root),
+  :root.modern[data-theme="dark"]::view-transition-new(root) { animation-duration: .16s; }
+
+  /* Drawer: the dialog slides in from display:none and out again. @starting-style gives the first
+     frame; display and overlay are transitioned as discrete values so the sheet and its backdrop stay
+     visible until the exit has finished (overlay: Chromium; elsewhere the backdrop leaves at once). */
+  :root.modern[data-theme="dark"] dialog#cert-panel {
+    opacity: 0; translate: 3rem 0;
+    transition: translate .3s var(--m-ease), opacity .2s ease, overlay .3s allow-discrete, display .3s allow-discrete;
+    &[open] {
+      opacity: 1; translate: 0 0;
+      @starting-style { opacity: 0; translate: 3rem 0; }
+    }
+    &::backdrop { opacity: 0; transition: opacity .25s ease, overlay .25s allow-discrete, display .25s allow-discrete; }
+    &[open]::backdrop {
+      opacity: 1;
+      @starting-style { opacity: 0; }
+    }
+  }
+
+  /* Popover: fades up from its bar and back. */
+  :root.modern[data-theme="dark"] [data-pane="certs"] .crt-pop {
+    opacity: 0; translate: 0 4px;
+    transition: opacity .14s ease, translate .14s ease, overlay .14s allow-discrete, display .14s allow-discrete;
+    &:popover-open {
+      opacity: 1; translate: 0 0;
+      @starting-style { opacity: 0; translate: 0 4px; }
+    }
+  }
+
+  /* Sticky table head: a shadow appears under it only while it is stuck. A view timeline on the table
+     drives it: "exit" starts at the moment the top of the table reaches the top of the window. Driven
+     by the scroll position, not by a clock. */
+  @supports (animation-timeline: view()) {
+    :root.modern[data-theme="dark"] :is([data-pane="certs"], [data-pane="urls"]) table.mini {
+      view-timeline: --m-table block;
+      & th::after {
+        content: ""; position: absolute; inset: 100% 0 auto 0; block-size: .55rem; pointer-events: none;
+        background: linear-gradient(oklch(0 0 0 / .42), transparent); opacity: 0;
+        animation: m-stuck linear both; animation-timeline: --m-table; animation-range: exit 0px exit 28px;
+      }
+    }
+  }
+
+  /* <details>: animated height (not in Firefox, which opens at once) */
+  @supports (interpolate-size: allow-keywords) {
+    :root.modern[data-theme="dark"] :is([data-pane="certs"], [data-pane="urls"]) .chk-how {
+      interpolate-size: allow-keywords;
+      &::details-content { block-size: 0; overflow: clip; transition: block-size .28s ease, content-visibility .28s allow-discrete; }
+      &[open]::details-content { block-size: auto; }
+    }
+  }
+}
+
+/* ---------- 5. extras a browser may or may not have (each one only adds polish) ---------- */
+/* superellipse corners: the curve starts earlier and has no visible "corner point" */
+@supports (corner-shape: squircle) {
+  :root.modern[data-theme="dark"] :is([data-pane="certs"], [data-pane="urls"]) :is(.crt-card, .crt-sec) { corner-shape: squircle; border-radius: 24px; }
+  :root.modern[data-theme="dark"] :is([data-pane="certs"], [data-pane="urls"]) :is(.kpi, .crt-stat) { corner-shape: squircle; border-radius: 20px; }
+}
+/* customisable <select>: the same element and the same keyboard behaviour, but the list is styled */
+@supports (appearance: base-select) {
+  :root.modern[data-theme="dark"] :is([data-pane="certs"], [data-pane="urls"]) select {
+    appearance: base-select; align-items: center; gap: .5rem; cursor: pointer;
+    &::picker(select) {
+      appearance: base-select;
+      margin-block: .35rem; padding: .3rem; color: var(--m-fg-2); background: var(--m-s2);
+      border: 1px solid var(--m-line-2); border-radius: 12px; box-shadow: var(--m-float);
+    }
+    &::picker-icon { color: var(--m-muted); transition: rotate .2s ease; }
+    &:open::picker-icon { rotate: 180deg; }
+    & option {
+      gap: .5rem; padding: .4rem .7rem; border-radius: 8px; font-size: .78rem;
+      &:is(:hover, :focus-visible) { color: var(--m-fg); background: var(--m-s3); outline: none; }
+      &:checked { color: var(--m-fg); font-weight: 650; }
+      &::checkmark { color: var(--m-accent); }
+    }
+  }
+}
+
+/* ---------- 6. user preferences ---------- */
+@media (prefers-contrast: more) {
+  :root.modern[data-theme="dark"] {
+    --m-line: oklch(0.86 0.02 262 / .34); --m-line-2: oklch(0.86 0.02 262 / .55);
+    --m-fg-2: oklch(0.93 0.008 258); --m-muted: oklch(0.86 0.014 258);
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  :root.modern[data-theme="dark"] #cert-panel::backdrop { -webkit-backdrop-filter: none; backdrop-filter: none; background: oklch(0.1 0.02 262 / .86); }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root.modern[data-theme="dark"] *,
+  :root.modern[data-theme="dark"] *::before,
+  :root.modern[data-theme="dark"] *::after { animation: none !important; transition: none !important; }
+}
+
+} /* @supports selector(&) */
+
+@keyframes m-spin { to { --m-angle: 360deg; } }
+@keyframes m-ping {
+  0% { scale: 1; opacity: .65; }
+  80%, 100% { scale: 2.8; opacity: 0; }
+}
+@keyframes m-stuck { to { opacity: 1; } }

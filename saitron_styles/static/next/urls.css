@@ -1,0 +1,75 @@
+/* Monitoring > URLs pane (urls.js) - reuses the chk-* classes of checks.css; url-* only for what differs. */
+.url-cnt { opacity: .7; font-variant-numeric: tabular-nums; margin-left: .15rem; }
+.url-kind { padding: .33rem .5rem; border: 1px solid var(--line); border-radius: 8px; background: var(--card);
+  color: var(--fg); font-size: .78rem; }
+table.mini.url-table td.url-link a { color: var(--accent); text-decoration: none; }
+table.mini.url-table td.url-link a:hover { text-decoration: underline; }
+.url-down { font-size: .72rem; }
+table.mini.url-table td.url-wrap { white-space: normal; line-height: 1.5; }
+table.mini.url-table td.url-wrap .pill { margin-top: .1rem; }
+
+/* =====================================================================================================
+   Next level (design export 2026-11): styles for the markup of next/urls.js and, in the first block,
+   the pieces next/certs.js shares (certs already loads this file for url-cnt and url-kind).
+   Variables only, so all four themes work. Newer features degrade without harm: see each note.
+   ===================================================================================================== */
+
+/* ----- shared by both panes ----- */
+.chk-vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.chk-svg { width: 1.15em; height: 1.15em; flex: none; fill: none; stroke: currentColor; stroke-width: 1.75;
+  stroke-linecap: round; stroke-linejoin: round; vertical-align: -.2em; }
+/* <search> is new enough that an old browser treats it as an unknown inline element */
+search.chk-toolbar { display: flex; }
+
+/* pane header: the chip and the buttons stay on one line; the title block is what wraps */
+:is([data-pane="certs"], [data-pane="urls"]) .mon-main-head > div { min-width: 0; }
+:is([data-pane="certs"], [data-pane="urls"]) .mon-main-head .rhs { display: inline-flex; align-items: center; gap: .4rem; flex: none; }
+
+/* The panes are query containers: layout can follow the panel width instead of the window. */
+[data-pane="certs"], [data-pane="urls"] { container: panel / inline-size; }
+
+/* View Transitions: the JS marks what keeps its identity across renders (data-vt), CSS opts it in.
+   Typed attr() reads the name; a browser without it simply cross-fades the whole pane. */
+[data-vt] { view-transition-name: attr(data-vt type(<custom-ident>), none); view-transition-class: mon-card; }
+/* a card that changes height is clipped while it morphs, not stretched */
+::view-transition-old(.mon-card), ::view-transition-new(.mon-card) { height: 100%; object-fit: none; object-position: left top; overflow: clip; }
+
+/* "last scan / last check" chip: the age state is a dot, and "overdue" / "stale" are also written out */
+.chk-last[data-age]::before { content: ""; display: inline-block; width: .5rem; height: .5rem; margin-right: .4rem;
+  border-radius: 50%; background: var(--muted); }
+.chk-last[data-age="fresh"]::before { background: var(--ok); }
+.chk-last[data-age="late"]::before { background: var(--warn); }
+.chk-last[data-age="stale"]::before { background: var(--err); }
+.chk-ago { color: var(--muted); }
+.chk-age-word { font-size: .68rem; letter-spacing: .05em; text-transform: uppercase; }
+.chk-last[data-age="late"] .chk-age-word { color: var(--warn); }
+.chk-last[data-age="stale"] .chk-age-word { color: var(--err); }
+
+/* ----- URLs: KPI tiles ----- */
+.k-ic.u { background: var(--soft-bg); color: var(--muted); }
+/* only a tile that reports a problem is loud; "Down 0" stays calm */
+.kpi[data-tone="err"]:not([data-zero]) { border-color: var(--err); }
+.kpi[data-tone="err"]:not([data-zero]) .k-val { color: var(--err); }
+.kpi[data-tone="warn"]:not([data-zero]) { border-color: var(--warn); }
+.kpi[data-tone="warn"]:not([data-zero]) .k-val { color: var(--warn); }
+/* unknown is never calm: a dashed edge, not a coloured one */
+.kpi[data-tone="unk"]:not([data-zero]) { border-style: dashed; border-color: var(--muted); }
+.kpi[data-zero] .k-val { color: var(--muted); }
+
+/* ----- URLs: table (8 columns) -----
+   Everything with a known size has a fixed width; the URL column takes what is left. */
+table.mini.url-table col.c-st { width: 7.9rem; }
+table.mini.url-table col.c-sys { width: 6rem; }
+table.mini.url-table col.c-svc { width: 8.8rem; }
+table.mini.url-table col.c-resp { width: 6.6rem; }
+table.mini.url-table col.c-cert { width: 6.6rem; }
+table.mini.url-table col.c-down { width: 9.4rem; }
+table.mini.url-table col.c-chk { width: 6.4rem; }
+table.mini.url-table td:first-child { overflow: visible; text-overflow: clip; }
+.url-two { display: flex; flex-direction: column; gap: .1rem; min-width: 0; }
+.url-two > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.url-sub { color: var(--muted); font-size: .72rem; }
+.url-code { font-weight: 700; font-variant-numeric: tabular-nums; }
+.url-err { font-weight: 600; }
+.url-two.url-down { font-size: .76rem; }
+time[data-rel] { font-variant-numeric: tabular-nums; white-space: nowrap; }
