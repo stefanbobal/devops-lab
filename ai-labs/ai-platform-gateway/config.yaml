@@ -1,0 +1,30 @@
+# LiteLLM Proxy configuration. Secrets are referenced as os.environ/NAME, never written here.
+# Docs: https://docs.litellm.ai/docs/proxy/configs
+
+model_list:
+  # Clients ask for an alias, never for a backend model name.
+  - model_name: local-fast
+    litellm_params:
+      model: ollama_chat/llama3.1:8b
+      api_base: os.environ/OLLAMA_API_BASE
+      num_ctx: 8192          # same context as the RAG benchmark (rag_test.py --ollama-num-ctx)
+      keep_alive: "10m"
+
+  - model_name: local-quality
+    litellm_params:
+      model: ollama_chat/qwen3.6:27b
+      api_base: os.environ/OLLAMA_API_BASE
+      num_ctx: 8192
+      keep_alive: "10m"
+
+litellm_settings:
+  set_verbose: false
+  json_logs: true
+  request_timeout: 300            # 27B model cold start (load into VRAM) can take a while
+  turn_off_message_logging: true  # no prompt/response content to logging callbacks
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  database_url: os.environ/DATABASE_URL
+  store_prompts_in_spend_logs: false   # spend logs keep metadata only, not message bodies
+  database_connection_pool_limit: 5    # small lab; shared PostgreSQL server
