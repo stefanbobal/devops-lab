@@ -13,9 +13,33 @@ model_list:
   - model_name: local-quality
     litellm_params:
       model: ollama_chat/qwen3.6:27b
+      # Own variable so the fallback demo can point only this alias at a dead backend
+      # (see docker-compose.yml and README "Phase 2").
+      api_base: os.environ/LOCAL_QUALITY_API_BASE
+      num_ctx: 8192
+      keep_alive: "10m"
+
+  - model_name: local-gemma
+    litellm_params:
+      model: ollama_chat/gemma3:27b
       api_base: os.environ/OLLAMA_API_BASE
       num_ctx: 8192
       keep_alive: "10m"
+
+  # Cloud backend: intentionally disabled. The lab stays local and free.
+  # This shows where a cloud model would plug in; clients would only see a new alias.
+  # - model_name: cloud-quality
+  #   litellm_params:
+  #     model: azure/<deployment-name>
+  #     api_base: os.environ/AZURE_OPENAI_ENDPOINT
+  #     api_key: os.environ/AZURE_OPENAI_API_KEY
+
+router_settings:
+  # If local-quality fails (backend down, timeout, 5xx), retry the request on local-fast.
+  fallbacks: [{"local-quality": ["local-fast"]}]
+  num_retries: 0        # no retries on the same broken backend; go straight to the fallback
+  allowed_fails: 3      # after 3 failures in a minute the deployment is put on cooldown
+  cooldown_time: 30
 
 litellm_settings:
   set_verbose: false

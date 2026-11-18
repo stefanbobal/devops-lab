@@ -13,6 +13,10 @@ services:
     env_file: .env
     environment:
       STORE_MODEL_IN_DB: "False"      # models come only from config.yaml (reviewable in git)
+      # Normally the same Ollama. Fallback demo only:
+      #   LOCAL_QUALITY_API_BASE=http://127.0.0.1:9 docker compose up -d   (dead port in the container)
+      #   docker compose up -d                                              (restore)
+      LOCAL_QUALITY_API_BASE: "${LOCAL_QUALITY_API_BASE:-http://192.168.178.25:11434}"
     volumes:
       - ./config.yaml:/app/config.yaml:ro
     ports:

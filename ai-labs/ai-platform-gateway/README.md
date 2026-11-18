@@ -75,6 +75,71 @@ Findings:
   `num_ctx` from `config.yaml` reaches Ollama.
 - Gateway container memory: about 730 MiB.
 
+## Phase 2: model routing
+
+| Alias | Backend | Fallback |
+|---|---|---|
+| `local-fast` | `ollama_chat/llama3.1:8b` | – |
+| `local-quality` | `ollama_chat/qwen3.6:27b` | → `local-fast` |
+| `local-gemma` | `ollama_chat/gemma3:27b` | – |
+| `cloud-quality` | commented out in `config.yaml` (lab stays local and free) | – |
+
+```bash
+../code/.venv/bin/python routing_demo.py aliases    # same code, three aliases, load times
+../code/.venv/bin/python routing_demo.py errors     # unknown alias
+
+# fallback: point only local-quality at a dead port inside the container, then restore
+LOCAL_QUALITY_API_BASE=http://127.0.0.1:9 docker compose up -d
+../code/.venv/bin/python routing_demo.py fallback
+docker compose up -d
+```
+
+`mock_testing_fallbacks` cannot be used for this: since v1.85.0 the proxy strips it from
+requests. The demo therefore breaks a real backend.
+
+### Results (2026-11-18)
+
+**Same client code, same schema.** One function `ask(client, alias)`; only the alias string
+changes. Every response has the same top-level fields
+(`choices, created, id, model, object, usage`) and `model` is the alias, not the backend.
+Only the thinking model adds `message.reasoning_content`.
+
+**Model switching.** Ollama keeps one model in VRAM at a time, so every alias switch evicts
+the previous model:
+
+| # | Alias | Latency | VRAM after |
+|---|---|---|---|
+| 1 | local-fast | 3.31 s (load) | llama3.1:8b 6.0 GB |
+| 2 | local-fast | 0.23 s | llama3.1:8b 6.0 GB |
+| 3 | local-quality | 14.71 s (load) | qwen3.6:27b 17.2 GB |
+| 4 | local-quality | 9.39 s | qwen3.6:27b 17.2 GB |
+| 5 | local-gemma | 21.50 s (load) | gemma3:27b 17.5 GB |
+| 6 | local-gemma | 0.54 s | gemma3:27b 17.5 GB |
+| 7 | local-fast | 4.32 s (load) | llama3.1:8b 6.0 GB |
+| 8 | local-fast | 0.37 s | llama3.1:8b 6.0 GB |
+
+The warm `local-quality` call still takes 9 s: it produced 824 completion tokens, most of
+them reasoning. With the thinking model, latency comes from generated tokens, not from loading.
+
+**Unknown alias** → HTTP 400, `openai.BadRequestError`, type `invalid_request_error`:
+`Invalid model name passed in model=gpt-unknown. Call /v1/models to view available models for your key.`
+
+**Fallback** (local-quality backend down):
+
+| Request | Result |
+|---|---|
+| normal | answer in 1.57 s; headers `x-litellm-model-group: local-fast`, `x-litellm-attempted-fallbacks: 1` |
+| `disable_fallbacks: true` | HTTP 500, `openai.InternalServerError`, `litellm.APIConnectionError: Ollama_chatException - Cannot connect to host REDACTED:9` |
+
+Findings:
+- A fallback silently changes the quality: the client asked for the 27B model and got the 8B
+  answer with HTTP 200. Only the response headers show it. A client that cares (or an
+  evaluation) must read `x-litellm-attempted-fallbacks`.
+- After a fallback, `response.model` is the backend name `ollama_chat/llama3.1:8b`, not
+  an alias. In the normal case the backend name is hidden.
+- In the error, LiteLLM masks the backend host (`REDACTED`) but the provider type is visible.
+- `num_retries: 0`: with a dead backend, retrying the same deployment only adds latency.
+
 ## Security defaults
 
 - Port 4000 is published on `127.0.0.1` only.
