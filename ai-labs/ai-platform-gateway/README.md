@@ -140,6 +140,20 @@ Findings:
 - In the error, LiteLLM masks the backend host (`REDACTED`) but the provider type is visible.
 - `num_retries: 0`: with a dead backend, retrying the same deployment only adds latency.
 
+## API docs in dark mode (cosmetic)
+
+`/docs` is the stock Swagger UI of LiteLLM. `docs-theme/saitron-dark.css` restyles it in a calm
+"modern dark" look: one hue for all surfaces, colour only for the HTTP method (left edge + label),
+Inter for text, monospace for paths and JSON. No change to the API.
+
+```bash
+./docs-theme/build.sh       # stock CSS from the pinned image + theme -> docs-theme/swagger-ui.css (gitignored)
+docker compose up -d        # the file is mounted read-only over the stock swagger-ui.css
+```
+
+Run `build.sh` before the first `docker compose up` (otherwise Docker creates an empty directory
+at the mount path) and again after a LiteLLM upgrade. Browser: Ctrl+F5 to skip the cached CSS.
+
 ## Security defaults
 
 - Port 4000 is published on `127.0.0.1` only.

@@ -19,6 +19,9 @@ services:
       LOCAL_QUALITY_API_BASE: "${LOCAL_QUALITY_API_BASE:-http://192.168.178.25:11434}"
     volumes:
       - ./config.yaml:/app/config.yaml:ro
+      # Cosmetic: dark theme for /docs. Build it first with ./docs-theme/build.sh
+      # (path is tied to the pinned image; check it again after an upgrade).
+      - ./docs-theme/swagger-ui.css:/app/.venv/lib/python3.13/site-packages/litellm/proxy/swagger/swagger-ui.css:ro
     ports:
       # localhost only; clients run on this VM. Change to 0.0.0.0 only on purpose.
       - "${GATEWAY_BIND:-127.0.0.1}:4000:4000"
