@@ -64,14 +64,41 @@ cat <<'TEXT'
 
   Navod a vysledky: code_banka/README.md, T2_retrieval_embeddings.md
 ======================================================================
+  AI PLATFORM GATEWAY (LiteLLM, port 4000, vlastna DB litellm)
+======================================================================
+  1. Gateway a kontrola (Windows PC + Ollama musia bezat):
+     cd ~/devops-lab/ai-labs/ai-platform-gateway
+     docker compose up -d        (prvy raz predtym: ./docs-theme/build.sh)
+     ../code/.venv/bin/python smoke_test.py --model local-fast
+     Ocakavany vysledok: HTTP 200 a odpoved modelu.
+
+  2. Z Windows: VS Code -> PORTS -> 4000 -> http://localhost:4000/
+     Admin UI: /ui/    Katalog modelov: /ui/model_hub_table/
+     Master kluc: grep LITELLM_MASTER_KEY .env   (je to admin kluc, neukazovat)
+
+  3. Dema: ../code/.venv/bin/python routing_demo.py aliases|errors|fallback
+     Navod a vysledky: ai-platform-gateway/README.md
+
+  POKRACOVANIE: chat-app (rozpracovane, necommitnute)
+     Handoff: ~/ai_platform_gateway_HANDOFF_2026-11-18.md
+     Claude:  "Pokracuj podla handoffu, zacni bodom 4 (chat-app)."
+  NIKDY: docker compose down -v  (zmaze data)
+======================================================================
 
 TEXT
+
+# Ollama na Windows (gateway bez nej nema modely). Kratky timeout, aby login necakal.
+if curl -s --max-time 2 -o /dev/null http://192.168.178.25:11434/api/version; then
+  printf '  OLLAMA (Windows):\n    [ OK ] http://192.168.178.25:11434\n'
+else
+  printf '  OLLAMA (Windows):\n    [ !! ] nedostupna -> zapni Windows PC a Ollamu (OLLAMA_HOST=0.0.0.0)\n'
+fi
 
 # Docker stav: co bezi a co treba spustit.
 if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
   _lab_missing=()
   printf '  DOCKER STAV:\n'
-  for _c in pgvector pgvector-banka app_llm_homelab-app-1 app_llm_homelab-judge-1; do
+  for _c in pgvector pgvector-banka app_llm_homelab-app-1 app_llm_homelab-judge-1 litellm-gateway; do
     _st="$(docker inspect -f '{{.State.Status}}{{if .State.Health}}/{{.State.Health.Status}}{{end}}' "$_c" 2>/dev/null)"
     if [[ "$_st" == running* && "$_st" != *unhealthy* && "$_st" != *starting* ]]; then
       printf '    [ OK ] %-26s %s\n' "$_c" "$_st"
@@ -85,6 +112,7 @@ if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
     [[ " ${_lab_missing[*]} " == *" pgvector "* ]] && printf '    docker start pgvector\n'
     [[ " ${_lab_missing[*]} " == *" pgvector-banka "* ]] && printf '    docker start pgvector-banka   (alebo: cd ~/devops-lab/ai-labs/code_banka && docker compose up -d)\n'
     [[ " ${_lab_missing[*]} " == *app_llm_homelab-* ]] && printf '    cd ~/devops-lab/ai-labs/app_llm_homelab && bash docker_lab.sh up -d\n'
+    [[ " ${_lab_missing[*]} " == *" litellm-gateway "* ]] && printf '    cd ~/devops-lab/ai-labs/ai-platform-gateway && docker compose up -d\n'
     printf '    Po zmene kodu: bash docker_lab.sh build app judge && bash docker_lab.sh up -d\n'
   fi
   printf '\n'
