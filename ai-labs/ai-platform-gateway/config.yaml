@@ -1,0 +1,75 @@
+# LiteLLM Proxy configuration. Secrets are referenced as os.environ/NAME, never written here.
+# Docs: https://docs.litellm.ai/docs/proxy/configs
+
+model_list:
+  # Clients ask for an alias, never for a backend model name.
+  - model_name: local-fast
+    litellm_params:
+      model: ollama_chat/llama3.1:8b
+      api_base: os.environ/OLLAMA_API_BASE
+      num_ctx: 8192          # same context as the RAG benchmark (rag_test.py --ollama-num-ctx)
+      keep_alive: "10m"
+    model_info:
+      mode: chat
+      max_input_tokens: 8192
+      max_output_tokens: 4096
+      input_cost_per_token: 0      # local GPU: no per-token fee
+      output_cost_per_token: 0
+
+  - model_name: local-quality
+    litellm_params:
+      model: ollama_chat/qwen3.6:27b
+      # Own variable so the fallback demo can point only this alias at a dead backend
+      # (see docker-compose.yml and README "Phase 2").
+      api_base: os.environ/LOCAL_QUALITY_API_BASE
+      num_ctx: 8192
+      keep_alive: "10m"
+    model_info:
+      mode: chat
+      max_input_tokens: 8192
+      max_output_tokens: 4096
+      input_cost_per_token: 0      # local GPU: no per-token fee
+      output_cost_per_token: 0
+
+  - model_name: local-gemma
+    litellm_params:
+      model: ollama_chat/gemma3:27b
+      api_base: os.environ/OLLAMA_API_BASE
+      num_ctx: 8192
+      keep_alive: "10m"
+    model_info:
+      mode: chat
+      max_input_tokens: 8192
+      max_output_tokens: 4096
+      input_cost_per_token: 0      # local GPU: no per-token fee
+      output_cost_per_token: 0
+
+  # Cloud backend: intentionally disabled. The lab stays local and free.
+  # This shows where a cloud model would plug in; clients would only see a new alias.
+  # - model_name: cloud-quality
+  #   litellm_params:
+  #     model: azure/<deployment-name>
+  #     api_base: os.environ/AZURE_OPENAI_ENDPOINT
+  #     api_key: os.environ/AZURE_OPENAI_API_KEY
+
+router_settings:
+  # If local-quality fails (backend down, timeout, 5xx), retry the request on local-fast.
+  fallbacks: [{"local-quality": ["local-fast"]}]
+  num_retries: 0        # no retries on the same broken backend; go straight to the fallback
+  allowed_fails: 3      # after 3 failures in a minute the deployment is put on cooldown
+  cooldown_time: 30
+
+litellm_settings:
+  # Shown without login on the public Model Hub page (/ui/model_hub_table): a service catalog
+  # of aliases only, no backend addresses. Calling a model still needs a key.
+  public_model_groups: ["local-fast", "local-quality", "local-gemma"]
+  set_verbose: false
+  json_logs: true
+  request_timeout: 300            # 27B model cold start (load into VRAM) can take a while
+  turn_off_message_logging: true  # no prompt/response content to logging callbacks
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  database_url: os.environ/DATABASE_URL
+  store_prompts_in_spend_logs: false   # spend logs keep metadata only, not message bodies
+  database_connection_pool_limit: 5    # small lab; shared PostgreSQL server

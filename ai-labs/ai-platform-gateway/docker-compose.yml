@@ -1,0 +1,44 @@
+# LiteLLM Proxy as an OpenAI-compatible AI gateway in front of local Ollama models.
+# Uses the existing pgvector PostgreSQL server, but its own database "litellm"
+# and its own role "litellm" (LiteLLM runs Prisma migrations on startup).
+#
+#   docker compose up -d        # start
+#   docker compose logs -f      # follow logs
+#   docker compose down         # stop (never use -v here or anywhere in this lab)
+services:
+  litellm:
+    image: ghcr.io/berriai/litellm:v1.108.11   # pinned, never :latest
+    container_name: litellm-gateway
+    command: ["--config", "/app/config.yaml", "--port", "4000", "--num_workers", "1"]
+    env_file: .env
+    environment:
+      STORE_MODEL_IN_DB: "False"      # models come only from config.yaml (reviewable in git)
+      # Normally the same Ollama. Fallback demo only:
+      #   LOCAL_QUALITY_API_BASE=http://127.0.0.1:9 docker compose up -d   (dead port in the container)
+      #   docker compose up -d                                              (restore)
+      LOCAL_QUALITY_API_BASE: "${LOCAL_QUALITY_API_BASE:-http://192.168.178.25:11434}"
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      # Cosmetic: dark theme for /docs. Build it first with ./docs-theme/build.sh
+      # (path is tied to the pinned image; check it again after an upgrade).
+      - ./docs-theme/swagger-ui.css:/app/.venv/lib/python3.13/site-packages/litellm/proxy/swagger/swagger-ui.css:ro
+    ports:
+      # localhost only; clients run on this VM. Change to 0.0.0.0 only on purpose.
+      - "${GATEWAY_BIND:-127.0.0.1}:4000:4000"
+    networks: [lab]
+    mem_limit: 2g
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:4000/health/liveliness', timeout=5).read()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}
+
+networks:
+  lab:
+    external: true
+    name: llm-homelab   # same network as pgvector and the Experiment Studio

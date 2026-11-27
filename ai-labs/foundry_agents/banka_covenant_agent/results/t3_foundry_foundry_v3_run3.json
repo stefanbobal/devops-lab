@@ -1,0 +1,6261 @@
+{
+ "meta": {
+  "time": "2026-11-10 21:02:53",
+  "orchestration": "foundry_hosted_agent",
+  "agent": "covenant-agent-code",
+  "agent_version": "3",
+  "llm": "gpt-5-mini",
+  "embedding": "text-embedding-3-small",
+  "mode": "rag",
+  "dataset": "dev",
+  "code_configuration": {
+   "runtime": "python_3_13",
+   "entry_point": [
+    "python",
+    "foundry_app.py"
+   ],
+   "dependency_resolution": "remote_build",
+   "content_hash": "014a75dc0757ecdbc502e90c91cfa84459b7b547f2c6947ad6cf380900463c57"
+  },
+  "image": null
+ },
+ "summary": {
+  "cases": 36,
+  "exact": 36,
+  "missed_breach": [],
+  "false_alarm": [],
+  "errors": [],
+  "review_expected": 3,
+  "review_got": 3,
+  "stopped_at": {},
+  "matrix": {
+   "breach -> breach": 12,
+   "human_review -> human_review": 3,
+   "no_breach -> no_breach": 21
+  }
+ },
+ "rows": [
+  {
+   "case_id": "C01-2026Q1",
+   "case_type": "simple",
+   "expected": "no_breach",
+   "seconds": 21.6,
+   "got": "no_breach",
+   "stage": null,
+   "reasons": [],
+   "values_ok": true,
+   "spec": {
+    "ebitda": {
+     "add": [],
+     "subtract": [],
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "debt": {
+     "include": [
+      "bank_loans",
+      "bonds"
+     ],
+     "deduct_cash": true,
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "covenants": [
+     {
+      "id": "leverage",
+      "ratio": "debt_to_ebitda",
+      "limit": 3.75,
+      "citation": {
+       "document": "smlouva.md",
+       "article": "5",
+       "page": 3
+      }
+     }
+    ],
+    "waivers": []
+   },
+   "items": {
+    "revenue": 889761,
+    "ebit": 98872,
+    "depreciation": 46808,
+    "restructuring": 3795,
+    "asset_sale_gain": 1200,
+    "interest_expense": 17844,
+    "bank_loans": 486992,
+    "bonds": 0,
+    "cash": 35384,
+    "reported_ebitda": 149475
+   },
+   "steps": [
+    {
+     "step": "extract",
+     "status": "ok",
+     "seconds": 6.2,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 6.22,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 587,
+       "prompt_tokens": 675,
+       "total_tokens": 1262,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 448,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 6,
+        "engine_ttft_ms": 31,
+        "engine_ttlt_ms": 4034,
+        "pre_inference_ms": 101,
+        "service_tbt_ms": 6,
+        "service_ttft_ms": 333,
+        "service_ttlt_ms": 4331,
+        "user_visible_ttft_ms": 232
+       }
+      }
+     }
+    },
+    {
+     "step": "check_items",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "retrieve",
+     "status": "ok",
+     "seconds": 1.2,
+     "chunks": [
+      "smlouva.md 2/2.5",
+      "smlouva.md 5",
+      "smlouva.md 2/2.6"
+     ],
+     "summary": "3 chunks"
+    },
+    {
+     "step": "spec",
+     "status": "ok",
+     "seconds": 7.1,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 7.075,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 863,
+       "prompt_tokens": 1057,
+       "total_tokens": 1920,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 704,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 1024,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 7,
+        "engine_ttft_ms": 32,
+        "engine_ttlt_ms": 6074,
+        "pre_inference_ms": 73,
+        "service_tbt_ms": 7,
+        "service_ttft_ms": 332,
+        "service_ttlt_ms": 6370,
+        "user_visible_ttft_ms": 258
+       }
+      }
+     }
+    },
+    {
+     "step": "verify",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "evaluate",
+     "status": "no_breach",
+     "seconds": 0.0,
+     "summary": ""
+    }
+   ]
+  },
+  {
+   "case_id": "C01-2026Q2",
+   "case_type": "simple",
+   "expected": "no_breach",
+   "seconds": 27.3,
+   "got": "no_breach",
+   "stage": null,
+   "reasons": [],
+   "values_ok": true,
+   "spec": {
+    "ebitda": {
+     "add": [],
+     "subtract": [],
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "debt": {
+     "include": [
+      "bank_loans",
+      "bonds"
+     ],
+     "deduct_cash": true,
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "covenants": [
+     {
+      "id": "leverage",
+      "ratio": "debt_to_ebitda",
+      "limit": 3.75,
+      "citation": {
+       "document": "smlouva.md",
+       "article": "5",
+       "page": 3
+      }
+     }
+    ],
+    "waivers": []
+   },
+   "items": {
+    "revenue": 1536842,
+    "ebit": 184708,
+    "depreciation": 80660,
+    "restructuring": 1447,
+    "asset_sale_gain": 4969,
+    "interest_expense": 40953,
+    "bank_loans": 936111,
+    "bonds": 0,
+    "cash": 33860,
+    "reported_ebitda": 266815
+   },
+   "steps": [
+    {
+     "step": "extract",
+     "status": "ok",
+     "seconds": 6.5,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 6.506,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 638,
+       "prompt_tokens": 685,
+       "total_tokens": 1323,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 448,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 7,
+        "engine_ttft_ms": 35,
+        "engine_ttlt_ms": 4773,
+        "pre_inference_ms": 78,
+        "service_tbt_ms": 7,
+        "service_ttft_ms": 260,
+        "service_ttlt_ms": 4974,
+        "user_visible_ttft_ms": 182
+       }
+      }
+     }
+    },
+    {
+     "step": "check_items",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "retrieve",
+     "status": "ok",
+     "seconds": 1.1,
+     "chunks": [
+      "smlouva.md 2/2.5",
+      "smlouva.md 5",
+      "smlouva.md 2/2.6"
+     ],
+     "summary": "3 chunks"
+    },
+    {
+     "step": "spec",
+     "status": "ok",
+     "seconds": 12.5,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 12.517,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 1169,
+       "prompt_tokens": 1057,
+       "total_tokens": 2226,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 960,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 1024,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 9,
+        "engine_ttft_ms": 33,
+        "engine_ttlt_ms": 10931,
+        "pre_inference_ms": 203,
+        "service_tbt_ms": 9,
+        "service_ttft_ms": 914,
+        "service_ttlt_ms": 11807,
+        "user_visible_ttft_ms": 710
+       }
+      }
+     }
+    },
+    {
+     "step": "verify",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "evaluate",
+     "status": "no_breach",
+     "seconds": 0.0,
+     "summary": ""
+    }
+   ]
+  },
+  {
+   "case_id": "C01-2026Q3",
+   "case_type": "simple",
+   "expected": "breach",
+   "seconds": 21.0,
+   "got": "breach",
+   "stage": null,
+   "reasons": [],
+   "values_ok": true,
+   "spec": {
+    "ebitda": {
+     "add": [],
+     "subtract": [],
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "debt": {
+     "include": [
+      "bank_loans",
+      "bonds"
+     ],
+     "deduct_cash": true,
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "covenants": [
+     {
+      "id": "leverage",
+      "ratio": "debt_to_ebitda",
+      "limit": 3.75,
+      "citation": {
+       "document": "smlouva.md",
+       "article": "5",
+       "page": 3
+      }
+     }
+    ],
+    "waivers": []
+   },
+   "items": {
+    "revenue": 3642139,
+    "ebit": 266662,
+    "depreciation": 143272,
+    "restructuring": 12846,
+    "asset_sale_gain": 10722,
+    "interest_expense": 83403,
+    "bank_loans": 1894463,
+    "bonds": 0,
+    "cash": 90753,
+    "reported_ebitda": 422780
+   },
+   "steps": [
+    {
+     "step": "extract",
+     "status": "ok",
+     "seconds": 5.5,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 5.459,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 511,
+       "prompt_tokens": 679,
+       "total_tokens": 1190,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 320,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 6,
+        "engine_ttft_ms": 32,
+        "engine_ttlt_ms": 3350,
+        "pre_inference_ms": 113,
+        "service_tbt_ms": 6,
+        "service_ttft_ms": 372,
+        "service_ttlt_ms": 3691,
+        "user_visible_ttft_ms": 259
+       }
+      }
+     }
+    },
+    {
+     "step": "check_items",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "retrieve",
+     "status": "ok",
+     "seconds": 1.1,
+     "chunks": [
+      "smlouva.md 2/2.5",
+      "smlouva.md 5",
+      "smlouva.md 2/2.6"
+     ],
+     "summary": "3 chunks"
+    },
+    {
+     "step": "spec",
+     "status": "ok",
+     "seconds": 6.2,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 6.203,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 799,
+       "prompt_tokens": 1057,
+       "total_tokens": 1856,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 640,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 1024,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 7,
+        "engine_ttft_ms": 28,
+        "engine_ttlt_ms": 5686,
+        "pre_inference_ms": 81,
+        "service_tbt_ms": 7,
+        "service_ttft_ms": 233,
+        "service_ttlt_ms": 5895,
+        "user_visible_ttft_ms": 153
+       }
+      }
+     }
+    },
+    {
+     "step": "verify",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "evaluate",
+     "status": "breach",
+     "seconds": 0.0,
+     "summary": ""
+    }
+   ]
+  },
+  {
+   "case_id": "C02-2026Q1",
+   "case_type": "custom_definition",
+   "expected": "no_breach",
+   "seconds": 19.7,
+   "got": "no_breach",
+   "stage": null,
+   "reasons": [],
+   "values_ok": true,
+   "spec": {
+    "ebitda": {
+     "add": [
+      "restructuring"
+     ],
+     "subtract": [],
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "debt": {
+     "include": [
+      "bank_loans",
+      "bonds"
+     ],
+     "deduct_cash": true,
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "covenants": [
+     {
+      "id": "leverage",
+      "ratio": "debt_to_ebitda",
+      "limit": 3.5,
+      "citation": {
+       "document": "smlouva.md",
+       "article": "5",
+       "page": 3
+      }
+     }
+    ],
+    "waivers": []
+   },
+   "items": {
+    "revenue": 689153,
+    "ebit": 60937,
+    "depreciation": 38986,
+    "restructuring": 5259,
+    "asset_sale_gain": 1289,
+    "interest_expense": 21918,
+    "bank_loans": 319692,
+    "bonds": 0,
+    "cash": 14664,
+    "reported_ebitda": 105182
+   },
+   "steps": [
+    {
+     "step": "extract",
+     "status": "ok",
+     "seconds": 6.9,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 6.942,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 587,
+       "prompt_tokens": 670,
+       "total_tokens": 1257,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 448,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 7,
+        "engine_ttft_ms": 32,
+        "engine_ttlt_ms": 4622,
+        "pre_inference_ms": 98,
+        "service_tbt_ms": 7,
+        "service_ttft_ms": 229,
+        "service_ttlt_ms": 4814,
+        "user_visible_ttft_ms": 131
+       }
+      }
+     }
+    },
+    {
+     "step": "check_items",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "retrieve",
+     "status": "ok",
+     "seconds": 1.0,
+     "chunks": [
+      "smlouva.md 2/2.5",
+      "smlouva.md 5",
+      "smlouva.md 2/2.6"
+     ],
+     "summary": "3 chunks"
+    },
+    {
+     "step": "spec",
+     "status": "ok",
+     "seconds": 6.8,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 6.755,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 803,
+       "prompt_tokens": 1089,
+       "total_tokens": 1892,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 640,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 1024,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 6,
+        "engine_ttft_ms": 23,
+        "engine_ttlt_ms": 5100,
+        "pre_inference_ms": 100,
+        "service_tbt_ms": 6,
+        "service_ttft_ms": 1182,
+        "service_ttlt_ms": 6244,
+        "user_visible_ttft_ms": 1082
+       }
+      }
+     }
+    },
+    {
+     "step": "verify",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "evaluate",
+     "status": "no_breach",
+     "seconds": 0.0,
+     "summary": ""
+    }
+   ]
+  },
+  {
+   "case_id": "C02-2026Q2",
+   "case_type": "custom_definition",
+   "expected": "no_breach",
+   "seconds": 20.7,
+   "got": "no_breach",
+   "stage": null,
+   "reasons": [],
+   "values_ok": true,
+   "spec": {
+    "ebitda": {
+     "add": [
+      "restructuring"
+     ],
+     "subtract": [],
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "debt": {
+     "include": [
+      "bank_loans",
+      "bonds"
+     ],
+     "deduct_cash": true,
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "covenants": [
+     {
+      "id": "leverage",
+      "ratio": "debt_to_ebitda",
+      "limit": 3.5,
+      "citation": {
+       "document": "smlouva.md",
+       "article": "5",
+       "page": 3
+      }
+     }
+    ],
+    "waivers": []
+   },
+   "items": {
+    "revenue": 1615602,
+    "ebit": 119102,
+    "depreciation": 88874,
+    "restructuring": 69326,
+    "asset_sale_gain": 3805,
+    "interest_expense": 34179,
+    "bank_loans": 938360,
+    "bonds": 0,
+    "cash": 50994,
+    "reported_ebitda": 277302
+   },
+   "steps": [
+    {
+     "step": "extract",
+     "status": "ok",
+     "seconds": 6.0,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 6.019,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 524,
+       "prompt_tokens": 680,
+       "total_tokens": 1204,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 384,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 7,
+        "engine_ttft_ms": 74,
+        "engine_ttlt_ms": 4067,
+        "pre_inference_ms": 79,
+        "service_tbt_ms": 7,
+        "service_ttft_ms": 367,
+        "service_ttlt_ms": 4352,
+        "user_visible_ttft_ms": 289
+       }
+      }
+     }
+    },
+    {
+     "step": "check_items",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "retrieve",
+     "status": "ok",
+     "seconds": 1.3,
+     "chunks": [
+      "smlouva.md 2/2.5",
+      "smlouva.md 5",
+      "smlouva.md 2/2.6"
+     ],
+     "summary": "3 chunks"
+    },
+    {
+     "step": "spec",
+     "status": "ok",
+     "seconds": 7.3,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 7.276,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 931,
+       "prompt_tokens": 1089,
+       "total_tokens": 2020,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 768,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 1024,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 6,
+        "engine_ttft_ms": 27,
+        "engine_ttlt_ms": 6226,
+        "pre_inference_ms": 103,
+        "service_tbt_ms": 6,
+        "service_ttft_ms": 251,
+        "service_ttlt_ms": 6443,
+        "user_visible_ttft_ms": 148
+       }
+      }
+     }
+    },
+    {
+     "step": "verify",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "evaluate",
+     "status": "no_breach",
+     "seconds": 0.0,
+     "summary": ""
+    }
+   ]
+  },
+  {
+   "case_id": "C02-2026Q3",
+   "case_type": "custom_definition",
+   "expected": "breach",
+   "seconds": 21.6,
+   "got": "breach",
+   "stage": null,
+   "reasons": [],
+   "values_ok": true,
+   "spec": {
+    "ebitda": {
+     "add": [
+      "restructuring"
+     ],
+     "subtract": [],
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "debt": {
+     "include": [
+      "bank_loans",
+      "bonds"
+     ],
+     "deduct_cash": true,
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "covenants": [
+     {
+      "id": "leverage",
+      "ratio": "debt_to_ebitda",
+      "limit": 3.5,
+      "citation": {
+       "document": "smlouva.md",
+       "article": "5",
+       "page": 3
+      }
+     }
+    ],
+    "waivers": []
+   },
+   "items": {
+    "revenue": 2564420,
+    "ebit": 238575,
+    "depreciation": 177475,
+    "restructuring": 36178,
+    "asset_sale_gain": 12003,
+    "interest_expense": 60847,
+    "bank_loans": 1848736,
+    "bonds": 0,
+    "cash": 85047,
+    "reported_ebitda": 452228
+   },
+   "steps": [
+    {
+     "step": "extract",
+     "status": "ok",
+     "seconds": 6.5,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 6.528,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 589,
+       "prompt_tokens": 682,
+       "total_tokens": 1271,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 448,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 8,
+        "engine_ttft_ms": 29,
+        "engine_ttlt_ms": 4715,
+        "pre_inference_ms": 76,
+        "service_tbt_ms": 8,
+        "service_ttft_ms": 201,
+        "service_ttlt_ms": 4881,
+        "user_visible_ttft_ms": 125
+       }
+      }
+     }
+    },
+    {
+     "step": "check_items",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "retrieve",
+     "status": "ok",
+     "seconds": 1.3,
+     "chunks": [
+      "smlouva.md 2/2.5",
+      "smlouva.md 5",
+      "smlouva.md 2/2.6"
+     ],
+     "summary": "3 chunks"
+    },
+    {
+     "step": "spec",
+     "status": "ok",
+     "seconds": 8.7,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 8.741,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 1049,
+       "prompt_tokens": 1089,
+       "total_tokens": 2138,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 832,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 1024,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 7,
+        "engine_ttft_ms": 34,
+        "engine_ttlt_ms": 7149,
+        "pre_inference_ms": 144,
+        "service_tbt_ms": 7,
+        "service_ttft_ms": 1112,
+        "service_ttlt_ms": 8223,
+        "user_visible_ttft_ms": 968
+       }
+      }
+     }
+    },
+    {
+     "step": "verify",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "evaluate",
+     "status": "breach",
+     "seconds": 0.0,
+     "summary": ""
+    }
+   ]
+  },
+  {
+   "case_id": "C03-2026Q1",
+   "case_type": "custom_definition",
+   "expected": "no_breach",
+   "seconds": 19.4,
+   "got": "no_breach",
+   "stage": null,
+   "reasons": [],
+   "values_ok": true,
+   "spec": {
+    "ebitda": {
+     "add": [],
+     "subtract": [
+      "asset_sale_gain"
+     ],
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "debt": {
+     "include": [
+      "bank_loans",
+      "bonds"
+     ],
+     "deduct_cash": true,
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "covenants": [
+     {
+      "id": "leverage",
+      "ratio": "debt_to_ebitda",
+      "limit": 4.25,
+      "citation": {
+       "document": "smlouva.md",
+       "article": "5",
+       "page": 3
+      }
+     }
+    ],
+    "waivers": []
+   },
+   "items": {
+    "revenue": 3557134,
+    "ebit": 246524,
+    "depreciation": 186715,
+    "restructuring": 13177,
+    "asset_sale_gain": 12619,
+    "interest_expense": 63496,
+    "bank_loans": 1097867,
+    "bonds": 470514,
+    "cash": 54149,
+    "reported_ebitda": 446416
+   },
+   "steps": [
+    {
+     "step": "extract",
+     "status": "ok",
+     "seconds": 5.6,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 5.625,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 526,
+       "prompt_tokens": 691,
+       "total_tokens": 1217,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 384,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 7,
+        "engine_ttft_ms": 36,
+        "engine_ttlt_ms": 3921,
+        "pre_inference_ms": 103,
+        "service_tbt_ms": 7,
+        "service_ttft_ms": 247,
+        "service_ttlt_ms": 4128,
+        "user_visible_ttft_ms": 144
+       }
+      }
+     }
+    },
+    {
+     "step": "check_items",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "retrieve",
+     "status": "ok",
+     "seconds": 1.2,
+     "chunks": [
+      "smlouva.md 2/2.5",
+      "smlouva.md 5",
+      "smlouva.md 2/2.6"
+     ],
+     "summary": "3 chunks"
+    },
+    {
+     "step": "spec",
+     "status": "ok",
+     "seconds": 7.7,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 7.673,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 985,
+       "prompt_tokens": 1070,
+       "total_tokens": 2055,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 768,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 1024,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 7,
+        "engine_ttft_ms": 29,
+        "engine_ttlt_ms": 7122,
+        "pre_inference_ms": 79,
+        "service_tbt_ms": 7,
+        "service_ttft_ms": 225,
+        "service_ttlt_ms": 7311,
+        "user_visible_ttft_ms": 147
+       }
+      }
+     }
+    },
+    {
+     "step": "verify",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "evaluate",
+     "status": "no_breach",
+     "seconds": 0.0,
+     "summary": ""
+    }
+   ]
+  },
+  {
+   "case_id": "C03-2026Q2",
+   "case_type": "custom_definition",
+   "expected": "breach",
+   "seconds": 34.6,
+   "got": "breach",
+   "stage": null,
+   "reasons": [],
+   "values_ok": true,
+   "spec": {
+    "ebitda": {
+     "add": [],
+     "subtract": [
+      "asset_sale_gain"
+     ],
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "debt": {
+     "include": [
+      "bank_loans",
+      "bonds"
+     ],
+     "deduct_cash": true,
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "covenants": [
+     {
+      "id": "leverage",
+      "ratio": "debt_to_ebitda",
+      "limit": 4.25,
+      "citation": {
+       "document": "smlouva.md",
+       "article": "5",
+       "page": 3
+      }
+     }
+    ],
+    "waivers": []
+   },
+   "items": {
+    "revenue": 2317116,
+    "ebit": 166770,
+    "depreciation": 88038,
+    "restructuring": 2888,
+    "asset_sale_gain": 42468,
+    "interest_expense": 52144,
+    "bank_loans": 697145,
+    "bonds": 298776,
+    "cash": 40391,
+    "reported_ebitda": 257696
+   },
+   "steps": [
+    {
+     "step": "extract",
+     "status": "ok",
+     "seconds": 16.6,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 16.634,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 653,
+       "prompt_tokens": 684,
+       "total_tokens": 1337,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 512,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 7,
+        "engine_ttft_ms": 81,
+        "engine_ttlt_ms": 4553,
+        "pre_inference_ms": 71,
+        "service_tbt_ms": 7,
+        "service_ttft_ms": 261,
+        "service_ttlt_ms": 4728,
+        "user_visible_ttft_ms": 190
+       }
+      }
+     }
+    },
+    {
+     "step": "check_items",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "retrieve",
+     "status": "ok",
+     "seconds": 1.0,
+     "chunks": [
+      "smlouva.md 2/2.5",
+      "smlouva.md 5",
+      "smlouva.md 2/2.6"
+     ],
+     "summary": "3 chunks"
+    },
+    {
+     "step": "spec",
+     "status": "ok",
+     "seconds": 6.8,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 6.774,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 793,
+       "prompt_tokens": 1070,
+       "total_tokens": 1863,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 576,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 7,
+        "engine_ttft_ms": 42,
+        "engine_ttlt_ms": 5620,
+        "pre_inference_ms": 105,
+        "service_tbt_ms": 7,
+        "service_ttft_ms": 269,
+        "service_ttlt_ms": 5842,
+        "user_visible_ttft_ms": 164
+       }
+      }
+     }
+    },
+    {
+     "step": "verify",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "evaluate",
+     "status": "breach",
+     "seconds": 0.0,
+     "summary": ""
+    }
+   ]
+  },
+  {
+   "case_id": "C03-2026Q3",
+   "case_type": "custom_definition",
+   "expected": "breach",
+   "seconds": 18.3,
+   "got": "breach",
+   "stage": null,
+   "reasons": [],
+   "values_ok": true,
+   "spec": {
+    "ebitda": {
+     "add": [],
+     "subtract": [
+      "asset_sale_gain"
+     ],
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "debt": {
+     "include": [
+      "bank_loans",
+      "bonds"
+     ],
+     "deduct_cash": true,
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "covenants": [
+     {
+      "id": "leverage",
+      "ratio": "debt_to_ebitda",
+      "limit": 4.25,
+      "citation": {
+       "document": "smlouva.md",
+       "article": "5",
+       "page": 3
+      }
+     }
+    ],
+    "waivers": []
+   },
+   "items": {
+    "revenue": 1296091,
+    "ebit": 115411,
+    "depreciation": 86479,
+    "restructuring": 3163,
+    "asset_sale_gain": 33648,
+    "interest_expense": 29045,
+    "bank_loans": 533145,
+    "bonds": 228490,
+    "cash": 21370,
+    "reported_ebitda": 205053
+   },
+   "steps": [
+    {
+     "step": "extract",
+     "status": "ok",
+     "seconds": 6.1,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 6.094,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 589,
+       "prompt_tokens": 689,
+       "total_tokens": 1278,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 448,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 7,
+        "engine_ttft_ms": 39,
+        "engine_ttlt_ms": 4473,
+        "pre_inference_ms": 69,
+        "service_tbt_ms": 7,
+        "service_ttft_ms": 206,
+        "service_ttlt_ms": 4638,
+        "user_visible_ttft_ms": 137
+       }
+      }
+     }
+    },
+    {
+     "step": "check_items",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "retrieve",
+     "status": "ok",
+     "seconds": 1.2,
+     "chunks": [
+      "smlouva.md 2/2.5",
+      "smlouva.md 5",
+      "smlouva.md 2/2.6"
+     ],
+     "summary": "3 chunks"
+    },
+    {
+     "step": "spec",
+     "status": "ok",
+     "seconds": 6.3,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 6.346,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 803,
+       "prompt_tokens": 1070,
+       "total_tokens": 1873,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 640,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 1024,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 7,
+        "engine_ttft_ms": 26,
+        "engine_ttlt_ms": 5812,
+        "pre_inference_ms": 76,
+        "service_tbt_ms": 7,
+        "service_ttft_ms": 258,
+        "service_ttlt_ms": 6039,
+        "user_visible_ttft_ms": 181
+       }
+      }
+     }
+    },
+    {
+     "step": "verify",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "evaluate",
+     "status": "breach",
+     "seconds": 0.0,
+     "summary": ""
+    }
+   ]
+  },
+  {
+   "case_id": "C04-2026Q1",
+   "case_type": "step_down",
+   "expected": "no_breach",
+   "seconds": 21.8,
+   "got": "no_breach",
+   "stage": null,
+   "reasons": [],
+   "values_ok": true,
+   "spec": {
+    "ebitda": {
+     "add": [],
+     "subtract": [],
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "debt": {
+     "include": [
+      "bank_loans",
+      "bonds"
+     ],
+     "deduct_cash": true,
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "covenants": [
+     {
+      "id": "leverage",
+      "ratio": "debt_to_ebitda",
+      "limit": 4.5,
+      "citation": {
+       "document": "smlouva.md",
+       "article": "5",
+       "page": 3
+      }
+     }
+    ],
+    "waivers": []
+   },
+   "items": {
+    "revenue": 2069903,
+    "ebit": 204567,
+    "depreciation": 149467,
+    "restructuring": 10508,
+    "asset_sale_gain": 375,
+    "interest_expense": 49491,
+    "bank_loans": 1111431,
+    "bonds": 476328,
+    "cash": 65413,
+    "reported_ebitda": 364542
+   },
+   "steps": [
+    {
+     "step": "extract",
+     "status": "ok",
+     "seconds": 6.3,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 6.319,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 589,
+       "prompt_tokens": 685,
+       "total_tokens": 1274,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 448,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 8,
+        "engine_ttft_ms": 48,
+        "engine_ttlt_ms": 4541,
+        "pre_inference_ms": 83,
+        "service_tbt_ms": 8,
+        "service_ttft_ms": 233,
+        "service_ttlt_ms": 4721,
+        "user_visible_ttft_ms": 150
+       }
+      }
+     }
+    },
+    {
+     "step": "check_items",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "retrieve",
+     "status": "ok",
+     "seconds": 1.0,
+     "chunks": [
+      "smlouva.md 2/2.5",
+      "smlouva.md 5",
+      "smlouva.md 2/2.6"
+     ],
+     "summary": "3 chunks"
+    },
+    {
+     "step": "spec",
+     "status": "ok",
+     "seconds": 9.4,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 9.404,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 1105,
+       "prompt_tokens": 1086,
+       "total_tokens": 2191,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 896,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 7,
+        "engine_ttft_ms": 41,
+        "engine_ttlt_ms": 8322,
+        "pre_inference_ms": 77,
+        "service_tbt_ms": 7,
+        "service_ttft_ms": 650,
+        "service_ttlt_ms": 8927,
+        "user_visible_ttft_ms": 573
+       }
+      }
+     }
+    },
+    {
+     "step": "verify",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "evaluate",
+     "status": "no_breach",
+     "seconds": 0.0,
+     "summary": ""
+    }
+   ]
+  },
+  {
+   "case_id": "C04-2026Q2",
+   "case_type": "step_down",
+   "expected": "no_breach",
+   "seconds": 21.5,
+   "got": "no_breach",
+   "stage": null,
+   "reasons": [],
+   "values_ok": true,
+   "spec": {
+    "ebitda": {
+     "add": [],
+     "subtract": [],
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "debt": {
+     "include": [
+      "bank_loans",
+      "bonds"
+     ],
+     "deduct_cash": true,
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "covenants": [
+     {
+      "id": "leverage",
+      "ratio": "debt_to_ebitda",
+      "limit": 4.5,
+      "citation": {
+       "document": "smlouva.md",
+       "article": "5",
+       "page": 3
+      }
+     }
+    ],
+    "waivers": []
+   },
+   "items": {
+    "revenue": 2265324,
+    "ebit": 262493,
+    "depreciation": 137573,
+    "restructuring": 8227,
+    "asset_sale_gain": 7667,
+    "interest_expense": 86759,
+    "bank_loans": 1247443,
+    "bonds": 534618,
+    "cash": 41774,
+    "reported_ebitda": 408293
+   },
+   "steps": [
+    {
+     "step": "extract",
+     "status": "ok",
+     "seconds": 6.5,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 6.512,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 590,
+       "prompt_tokens": 687,
+       "total_tokens": 1277,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 448,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 7,
+        "engine_ttft_ms": 70,
+        "engine_ttlt_ms": 4767,
+        "pre_inference_ms": 61,
+        "service_tbt_ms": 7,
+        "service_ttft_ms": 481,
+        "service_ttlt_ms": 4936,
+        "user_visible_ttft_ms": 420
+       }
+      }
+     }
+    },
+    {
+     "step": "check_items",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "retrieve",
+     "status": "ok",
+     "seconds": 1.2,
+     "chunks": [
+      "smlouva.md 2/2.5",
+      "smlouva.md 5",
+      "smlouva.md 2/2.6",
+      "smlouva.md 6"
+     ],
+     "summary": "4 chunks"
+    },
+    {
+     "step": "spec",
+     "status": "ok",
+     "seconds": 8.4,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 8.371,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 1233,
+       "prompt_tokens": 1155,
+       "total_tokens": 2388,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 1024,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 1024,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 6,
+        "engine_ttft_ms": 32,
+        "engine_ttlt_ms": 7892,
+        "pre_inference_ms": 62,
+        "service_tbt_ms": 6,
+        "service_ttft_ms": 218,
+        "service_ttlt_ms": 8076,
+        "user_visible_ttft_ms": 156
+       }
+      }
+     }
+    },
+    {
+     "step": "verify",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "evaluate",
+     "status": "no_breach",
+     "seconds": 0.0,
+     "summary": ""
+    }
+   ]
+  },
+  {
+   "case_id": "C04-2026Q3",
+   "case_type": "step_down",
+   "expected": "breach",
+   "seconds": 28.1,
+   "got": "breach",
+   "stage": null,
+   "reasons": [],
+   "values_ok": true,
+   "spec": {
+    "ebitda": {
+     "add": [],
+     "subtract": [],
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "debt": {
+     "include": [
+      "bank_loans",
+      "bonds"
+     ],
+     "deduct_cash": true,
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "covenants": [
+     {
+      "id": "leverage",
+      "ratio": "debt_to_ebitda",
+      "limit": 4.0,
+      "citation": {
+       "document": "smlouva.md",
+       "article": "5",
+       "page": 3
+      }
+     }
+    ],
+    "waivers": []
+   },
+   "items": {
+    "revenue": 6993292,
+    "ebit": 414166,
+    "depreciation": 177970,
+    "restructuring": 4290,
+    "asset_sale_gain": 3266,
+    "interest_expense": 106242,
+    "bank_loans": 1846417,
+    "bonds": 791322,
+    "cash": 121161,
+    "reported_ebitda": 596426
+   },
+   "steps": [
+    {
+     "step": "extract",
+     "status": "ok",
+     "seconds": 6.0,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 6.013,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 590,
+       "prompt_tokens": 687,
+       "total_tokens": 1277,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 448,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 7,
+        "engine_ttft_ms": 53,
+        "engine_ttlt_ms": 4430,
+        "pre_inference_ms": 127,
+        "service_tbt_ms": 7,
+        "service_ttft_ms": 307,
+        "service_ttlt_ms": 4663,
+        "user_visible_ttft_ms": 181
+       }
+      }
+     }
+    },
+    {
+     "step": "check_items",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "retrieve",
+     "status": "ok",
+     "seconds": 1.4,
+     "chunks": [
+      "smlouva.md 2/2.5",
+      "smlouva.md 5",
+      "smlouva.md 2/2.6"
+     ],
+     "summary": "3 chunks"
+    },
+    {
+     "step": "spec",
+     "status": "ok",
+     "seconds": 12.0,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 11.952,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 1361,
+       "prompt_tokens": 1086,
+       "total_tokens": 2447,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 1152,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 1024,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 8,
+        "engine_ttft_ms": 39,
+        "engine_ttlt_ms": 11071,
+        "pre_inference_ms": 71,
+        "service_tbt_ms": 8,
+        "service_ttft_ms": 625,
+        "service_ttlt_ms": 11653,
+        "user_visible_ttft_ms": 554
+       }
+      }
+     }
+    },
+    {
+     "step": "verify",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "evaluate",
+     "status": "breach",
+     "seconds": 0.0,
+     "summary": ""
+    }
+   ]
+  },
+  {
+   "case_id": "C05-2026Q1",
+   "case_type": "simple",
+   "expected": "no_breach",
+   "seconds": 21.6,
+   "got": "no_breach",
+   "stage": null,
+   "reasons": [],
+   "values_ok": true,
+   "spec": {
+    "ebitda": {
+     "add": [],
+     "subtract": [],
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "debt": {
+     "include": [
+      "bank_loans",
+      "bonds"
+     ],
+     "deduct_cash": true,
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "covenants": [
+     {
+      "id": "leverage",
+      "ratio": "debt_to_ebitda",
+      "limit": 3.75,
+      "citation": {
+       "document": "smlouva.md",
+       "article": "5",
+       "page": 3
+      }
+     }
+    ],
+    "waivers": []
+   },
+   "items": {
+    "revenue": 1368407,
+    "ebit": 109443,
+    "depreciation": 51823,
+    "restructuring": 2967,
+    "asset_sale_gain": 2369,
+    "interest_expense": 38896,
+    "bank_loans": 544984,
+    "bonds": 0,
+    "cash": 28933,
+    "reported_ebitda": 164233
+   },
+   "steps": [
+    {
+     "step": "extract",
+     "status": "ok",
+     "seconds": 6.9,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 6.903,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 588,
+       "prompt_tokens": 679,
+       "total_tokens": 1267,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 448,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 8,
+        "engine_ttft_ms": 77,
+        "engine_ttlt_ms": 5152,
+        "pre_inference_ms": 90,
+        "service_tbt_ms": 8,
+        "service_ttft_ms": 288,
+        "service_ttlt_ms": 5358,
+        "user_visible_ttft_ms": 198
+       }
+      }
+     }
+    },
+    {
+     "step": "check_items",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "retrieve",
+     "status": "ok",
+     "seconds": 2.3,
+     "chunks": [
+      "smlouva.md 2/2.5",
+      "smlouva.md 5",
+      "smlouva.md 2/2.6",
+      "waiver_2026Q2.md None"
+     ],
+     "summary": "4 chunks"
+    },
+    {
+     "step": "spec",
+     "status": "ok",
+     "seconds": 7.6,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 7.562,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 991,
+       "prompt_tokens": 1244,
+       "total_tokens": 2235,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 832,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 1152,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 7,
+        "engine_ttft_ms": 34,
+        "engine_ttlt_ms": 7020,
+        "pre_inference_ms": 91,
+        "service_tbt_ms": 7,
+        "service_ttft_ms": 245,
+        "service_ttlt_ms": 7226,
+        "user_visible_ttft_ms": 153
+       }
+      }
+     }
+    },
+    {
+     "step": "verify",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "evaluate",
+     "status": "no_breach",
+     "seconds": 0.0,
+     "summary": ""
+    }
+   ]
+  },
+  {
+   "case_id": "C05-2026Q2",
+   "case_type": "waiver",
+   "expected": "no_breach",
+   "seconds": 21.1,
+   "got": "no_breach",
+   "stage": null,
+   "reasons": [],
+   "values_ok": true,
+   "spec": {
+    "ebitda": {
+     "add": [],
+     "subtract": [],
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "debt": {
+     "include": [
+      "bank_loans",
+      "bonds"
+     ],
+     "deduct_cash": true,
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "covenants": [
+     {
+      "id": "leverage",
+      "ratio": "debt_to_ebitda",
+      "limit": 3.75,
+      "citation": {
+       "document": "smlouva.md",
+       "article": "5",
+       "page": 3
+      }
+     }
+    ],
+    "waivers": [
+     {
+      "covenant": "leverage",
+      "period": "2026Q2",
+      "citation": {
+       "document": "waiver_2026Q2.md",
+       "article": null,
+       "page": 1
+      }
+     }
+    ]
+   },
+   "items": {
+    "revenue": 2728894,
+    "ebit": 255882,
+    "depreciation": 185634,
+    "restructuring": 6920,
+    "asset_sale_gain": 68,
+    "interest_expense": 93232,
+    "bank_loans": 1873596,
+    "bonds": 0,
+    "cash": 63380,
+    "reported_ebitda": 448436
+   },
+   "steps": [
+    {
+     "step": "extract",
+     "status": "ok",
+     "seconds": 6.4,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 6.359,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 588,
+       "prompt_tokens": 687,
+       "total_tokens": 1275,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 448,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 7,
+        "engine_ttft_ms": 29,
+        "engine_ttlt_ms": 4662,
+        "pre_inference_ms": 71,
+        "service_tbt_ms": 7,
+        "service_ttft_ms": 202,
+        "service_ttlt_ms": 4832,
+        "user_visible_ttft_ms": 131
+       }
+      }
+     }
+    },
+    {
+     "step": "check_items",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "retrieve",
+     "status": "ok",
+     "seconds": 1.7,
+     "chunks": [
+      "smlouva.md 2/2.5",
+      "smlouva.md 5",
+      "smlouva.md 2/2.6",
+      "waiver_2026Q2.md None"
+     ],
+     "summary": "4 chunks"
+    },
+    {
+     "step": "spec",
+     "status": "ok",
+     "seconds": 7.6,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 7.559,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 843,
+       "prompt_tokens": 1244,
+       "total_tokens": 2087,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 640,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 1152,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 7,
+        "engine_ttft_ms": 33,
+        "engine_ttlt_ms": 6574,
+        "pre_inference_ms": 87,
+        "service_tbt_ms": 7,
+        "service_ttft_ms": 645,
+        "service_ttlt_ms": 7164,
+        "user_visible_ttft_ms": 558
+       }
+      }
+     }
+    },
+    {
+     "step": "verify",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "evaluate",
+     "status": "no_breach",
+     "seconds": 0.0,
+     "summary": ""
+    }
+   ]
+  },
+  {
+   "case_id": "C05-2026Q3",
+   "case_type": "waiver_other_period",
+   "expected": "breach",
+   "seconds": 23.1,
+   "got": "breach",
+   "stage": null,
+   "reasons": [],
+   "values_ok": true,
+   "spec": {
+    "ebitda": {
+     "add": [],
+     "subtract": [],
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "debt": {
+     "include": [
+      "bank_loans",
+      "bonds"
+     ],
+     "deduct_cash": true,
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "covenants": [
+     {
+      "id": "leverage",
+      "ratio": "debt_to_ebitda",
+      "limit": 3.75,
+      "citation": {
+       "document": "smlouva.md",
+       "article": "5",
+       "page": 3
+      }
+     }
+    ],
+    "waivers": []
+   },
+   "items": {
+    "revenue": 4558105,
+    "ebit": 260742,
+    "depreciation": 159876,
+    "restructuring": 14148,
+    "asset_sale_gain": 7936,
+    "interest_expense": 48569,
+    "bank_loans": 1728042,
+    "bonds": 0,
+    "cash": 87632,
+    "reported_ebitda": 434766
+   },
+   "steps": [
+    {
+     "step": "extract",
+     "status": "ok",
+     "seconds": 6.3,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 6.286,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 525,
+       "prompt_tokens": 681,
+       "total_tokens": 1206,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 384,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 8,
+        "engine_ttft_ms": 37,
+        "engine_ttlt_ms": 4542,
+        "pre_inference_ms": 171,
+        "service_tbt_ms": 8,
+        "service_ttft_ms": 415,
+        "service_ttlt_ms": 4915,
+        "user_visible_ttft_ms": 244
+       }
+      }
+     }
+    },
+    {
+     "step": "check_items",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "retrieve",
+     "status": "ok",
+     "seconds": 1.3,
+     "chunks": [
+      "smlouva.md 2/2.5",
+      "smlouva.md 5",
+      "smlouva.md 2/2.6",
+      "waiver_2026Q2.md None"
+     ],
+     "summary": "4 chunks"
+    },
+    {
+     "step": "spec",
+     "status": "ok",
+     "seconds": 9.7,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 9.685,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 1169,
+       "prompt_tokens": 1244,
+       "total_tokens": 2413,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 960,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 1152,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 7,
+        "engine_ttft_ms": 47,
+        "engine_ttlt_ms": 8936,
+        "pre_inference_ms": 95,
+        "service_tbt_ms": 7,
+        "service_ttft_ms": 263,
+        "service_ttlt_ms": 9148,
+        "user_visible_ttft_ms": 168
+       }
+      }
+     }
+    },
+    {
+     "step": "verify",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "evaluate",
+     "status": "breach",
+     "seconds": 0.0,
+     "summary": ""
+    }
+   ]
+  },
+  {
+   "case_id": "C06-2026Q1",
+   "case_type": "simple",
+   "expected": "no_breach",
+   "seconds": 22.9,
+   "got": "no_breach",
+   "stage": null,
+   "reasons": [],
+   "values_ok": true,
+   "spec": {
+    "ebitda": {
+     "add": [],
+     "subtract": [],
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "debt": {
+     "include": [
+      "bank_loans",
+      "bonds"
+     ],
+     "deduct_cash": true,
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "covenants": [
+     {
+      "id": "leverage",
+      "ratio": "debt_to_ebitda",
+      "limit": 3.5,
+      "citation": {
+       "document": "smlouva.md",
+       "article": "5",
+       "page": 3
+      }
+     }
+    ],
+    "waivers": []
+   },
+   "items": {
+    "revenue": 836637,
+    "ebit": 67283,
+    "depreciation": 31959,
+    "restructuring": 2529,
+    "asset_sale_gain": 540,
+    "interest_expense": 11951,
+    "bank_loans": 303720,
+    "bonds": 0,
+    "cash": 5994,
+    "reported_ebitda": 101771
+   },
+   "steps": [
+    {
+     "step": "extract",
+     "status": "ok",
+     "seconds": 5.7,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 5.735,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 458,
+       "prompt_tokens": 669,
+       "total_tokens": 1127,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 320,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 7,
+        "engine_ttft_ms": 30,
+        "engine_ttlt_ms": 3872,
+        "pre_inference_ms": 85,
+        "service_tbt_ms": 7,
+        "service_ttft_ms": 212,
+        "service_ttlt_ms": 4048,
+        "user_visible_ttft_ms": 128
+       }
+      }
+     }
+    },
+    {
+     "step": "check_items",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "retrieve",
+     "status": "ok",
+     "seconds": 1.3,
+     "chunks": [
+      "smlouva.md 2/2.5",
+      "smlouva.md 5",
+      "smlouva.md 2/2.6"
+     ],
+     "summary": "3 chunks"
+    },
+    {
+     "step": "spec",
+     "status": "ok",
+     "seconds": 8.7,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 8.733,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 1183,
+       "prompt_tokens": 1046,
+       "total_tokens": 2229,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 1024,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 1024,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 6,
+        "engine_ttft_ms": 38,
+        "engine_ttlt_ms": 7424,
+        "pre_inference_ms": 61,
+        "service_tbt_ms": 6,
+        "service_ttft_ms": 1043,
+        "service_ttlt_ms": 8425,
+        "user_visible_ttft_ms": 982
+       }
+      }
+     }
+    },
+    {
+     "step": "verify",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "evaluate",
+     "status": "no_breach",
+     "seconds": 0.0,
+     "summary": ""
+    }
+   ]
+  },
+  {
+   "case_id": "C06-2026Q2",
+   "case_type": "waiver_requested_not_granted",
+   "expected": "breach",
+   "seconds": 23.4,
+   "got": "breach",
+   "stage": null,
+   "reasons": [],
+   "values_ok": true,
+   "spec": {
+    "ebitda": {
+     "add": [],
+     "subtract": [],
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "debt": {
+     "include": [
+      "bank_loans",
+      "bonds"
+     ],
+     "deduct_cash": true,
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "covenants": [
+     {
+      "id": "leverage",
+      "ratio": "debt_to_ebitda",
+      "limit": 3.5,
+      "citation": {
+       "document": "smlouva.md",
+       "article": "5",
+       "page": 3
+      }
+     }
+    ],
+    "waivers": []
+   },
+   "items": {
+    "revenue": 4030508,
+    "ebit": 337670,
+    "depreciation": 189134,
+    "restructuring": 802,
+    "asset_sale_gain": 4424,
+    "interest_expense": 97483,
+    "bank_loans": 2018570,
+    "bonds": 0,
+    "cash": 69395,
+    "reported_ebitda": 527606
+   },
+   "steps": [
+    {
+     "step": "extract",
+     "status": "ok",
+     "seconds": 6.4,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 6.374,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 588,
+       "prompt_tokens": 681,
+       "total_tokens": 1269,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 448,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 8,
+        "engine_ttft_ms": 48,
+        "engine_ttlt_ms": 4538,
+        "pre_inference_ms": 72,
+        "service_tbt_ms": 8,
+        "service_ttft_ms": 233,
+        "service_ttlt_ms": 4720,
+        "user_visible_ttft_ms": 161
+       }
+      }
+     }
+    },
+    {
+     "step": "check_items",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "retrieve",
+     "status": "ok",
+     "seconds": 1.1,
+     "chunks": [
+      "smlouva.md 2/2.5",
+      "smlouva.md 5",
+      "smlouva.md 2/2.6"
+     ],
+     "summary": "3 chunks"
+    },
+    {
+     "step": "spec",
+     "status": "ok",
+     "seconds": 9.2,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 9.186,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 1105,
+       "prompt_tokens": 1046,
+       "total_tokens": 2151,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 896,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 1024,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 7,
+        "engine_ttft_ms": 31,
+        "engine_ttlt_ms": 7991,
+        "pre_inference_ms": 222,
+        "service_tbt_ms": 7,
+        "service_ttft_ms": 590,
+        "service_ttlt_ms": 8561,
+        "user_visible_ttft_ms": 368
+       }
+      }
+     }
+    },
+    {
+     "step": "verify",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "evaluate",
+     "status": "breach",
+     "seconds": 0.0,
+     "summary": ""
+    }
+   ]
+  },
+  {
+   "case_id": "C06-2026Q3",
+   "case_type": "simple",
+   "expected": "no_breach",
+   "seconds": 17.7,
+   "got": "no_breach",
+   "stage": null,
+   "reasons": [],
+   "values_ok": true,
+   "spec": {
+    "ebitda": {
+     "add": [],
+     "subtract": [],
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "debt": {
+     "include": [
+      "bank_loans",
+      "bonds"
+     ],
+     "deduct_cash": true,
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "covenants": [
+     {
+      "id": "leverage",
+      "ratio": "debt_to_ebitda",
+      "limit": 3.5,
+      "citation": {
+       "document": "smlouva.md",
+       "article": "5",
+       "page": 3
+      }
+     }
+    ],
+    "waivers": []
+   },
+   "items": {
+    "revenue": 3447056,
+    "ebit": 327166,
+    "depreciation": 143856,
+    "restructuring": 5988,
+    "asset_sale_gain": 8950,
+    "interest_expense": 80831,
+    "bank_loans": 1593851,
+    "bonds": 0,
+    "cash": 39478,
+    "reported_ebitda": 477010
+   },
+   "steps": [
+    {
+     "step": "extract",
+     "status": "ok",
+     "seconds": 5.1,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 5.053,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 525,
+       "prompt_tokens": 683,
+       "total_tokens": 1208,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 384,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 6,
+        "engine_ttft_ms": 39,
+        "engine_ttlt_ms": 3103,
+        "pre_inference_ms": 97,
+        "service_tbt_ms": 6,
+        "service_ttft_ms": 245,
+        "service_ttlt_ms": 3303,
+        "user_visible_ttft_ms": 147
+       }
+      }
+     }
+    },
+    {
+     "step": "check_items",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "retrieve",
+     "status": "ok",
+     "seconds": 1.0,
+     "chunks": [
+      "smlouva.md 2/2.5",
+      "smlouva.md 5",
+      "smlouva.md 2/2.6"
+     ],
+     "summary": "3 chunks"
+    },
+    {
+     "step": "spec",
+     "status": "ok",
+     "seconds": 6.6,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 6.606,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 849,
+       "prompt_tokens": 1046,
+       "total_tokens": 1895,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 640,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 1024,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 7,
+        "engine_ttft_ms": 23,
+        "engine_ttlt_ms": 6129,
+        "pre_inference_ms": 48,
+        "service_tbt_ms": 7,
+        "service_ttft_ms": 198,
+        "service_ttlt_ms": 6299,
+        "user_visible_ttft_ms": 150
+       }
+      }
+     }
+    },
+    {
+     "step": "verify",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "evaluate",
+     "status": "no_breach",
+     "seconds": 0.0,
+     "summary": ""
+    }
+   ]
+  },
+  {
+   "case_id": "C07-2026Q1",
+   "case_type": "two_covenants",
+   "expected": "no_breach",
+   "seconds": 19.8,
+   "got": "no_breach",
+   "stage": null,
+   "reasons": [],
+   "values_ok": true,
+   "spec": {
+    "ebitda": {
+     "add": [],
+     "subtract": [],
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "debt": {
+     "include": [
+      "bank_loans",
+      "bonds"
+     ],
+     "deduct_cash": true,
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "covenants": [
+     {
+      "id": "leverage",
+      "ratio": "debt_to_ebitda",
+      "limit": 4.0,
+      "citation": {
+       "document": "smlouva.md",
+       "article": "6",
+       "page": 3
+      }
+     },
+     {
+      "id": "icr",
+      "ratio": "interest_cover",
+      "limit": 3.0,
+      "citation": {
+       "document": "smlouva.md",
+       "article": "6",
+       "page": 3
+      }
+     }
+    ],
+    "waivers": []
+   },
+   "items": {
+    "revenue": 887131,
+    "ebit": 68730,
+    "depreciation": 45148,
+    "restructuring": 4326,
+    "asset_sale_gain": 1732,
+    "interest_expense": 25306,
+    "bank_loans": 389711,
+    "bonds": 0,
+    "cash": 25301,
+    "reported_ebitda": 118204
+   },
+   "steps": [
+    {
+     "step": "extract",
+     "status": "ok",
+     "seconds": 5.7,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 5.73,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 509,
+       "prompt_tokens": 681,
+       "total_tokens": 1190,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 320,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 7,
+        "engine_ttft_ms": 43,
+        "engine_ttlt_ms": 3726,
+        "pre_inference_ms": 91,
+        "service_tbt_ms": 7,
+        "service_ttft_ms": 260,
+        "service_ttlt_ms": 3924,
+        "user_visible_ttft_ms": 169
+       }
+      }
+     }
+    },
+    {
+     "step": "check_items",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "retrieve",
+     "status": "ok",
+     "seconds": 0.9,
+     "chunks": [
+      "smlouva.md 2/2.5",
+      "smlouva.md 6",
+      "smlouva.md 2/2.6"
+     ],
+     "summary": "3 chunks"
+    },
+    {
+     "step": "spec",
+     "status": "ok",
+     "seconds": 7.6,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 7.571,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 1102,
+       "prompt_tokens": 1077,
+       "total_tokens": 2179,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 896,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 1024,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 6,
+        "engine_ttft_ms": 33,
+        "engine_ttlt_ms": 7002,
+        "pre_inference_ms": 73,
+        "service_tbt_ms": 6,
+        "service_ttft_ms": 308,
+        "service_ttlt_ms": 7271,
+        "user_visible_ttft_ms": 235
+       }
+      }
+     }
+    },
+    {
+     "step": "verify",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "evaluate",
+     "status": "no_breach",
+     "seconds": 0.0,
+     "summary": ""
+    }
+   ]
+  },
+  {
+   "case_id": "C07-2026Q2",
+   "case_type": "two_covenants",
+   "expected": "breach",
+   "seconds": 21.8,
+   "got": "breach",
+   "stage": null,
+   "reasons": [],
+   "values_ok": true,
+   "spec": {
+    "ebitda": {
+     "add": [],
+     "subtract": [],
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "debt": {
+     "include": [
+      "bank_loans",
+      "bonds"
+     ],
+     "deduct_cash": true,
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "covenants": [
+     {
+      "id": "leverage",
+      "ratio": "debt_to_ebitda",
+      "limit": 4.0,
+      "citation": {
+       "document": "smlouva.md",
+       "article": "6",
+       "page": 3
+      }
+     },
+     {
+      "id": "icr",
+      "ratio": "interest_cover",
+      "limit": 3.0,
+      "citation": {
+       "document": "smlouva.md",
+       "article": "6",
+       "page": 3
+      }
+     }
+    ],
+    "waivers": []
+   },
+   "items": {
+    "revenue": 2049604,
+    "ebit": 243935,
+    "depreciation": 124917,
+    "restructuring": 6460,
+    "asset_sale_gain": 4274,
+    "interest_expense": 141866,
+    "bank_loans": 1292594,
+    "bonds": 0,
+    "cash": 38497,
+    "reported_ebitda": 375312
+   },
+   "steps": [
+    {
+     "step": "extract",
+     "status": "ok",
+     "seconds": 4.9,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 4.864,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 461,
+       "prompt_tokens": 680,
+       "total_tokens": 1141,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 320,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 6,
+        "engine_ttft_ms": 27,
+        "engine_ttlt_ms": 2985,
+        "pre_inference_ms": 79,
+        "service_tbt_ms": 6,
+        "service_ttft_ms": 316,
+        "service_ttlt_ms": 3269,
+        "user_visible_ttft_ms": 237
+       }
+      }
+     }
+    },
+    {
+     "step": "check_items",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "retrieve",
+     "status": "ok",
+     "seconds": 1.2,
+     "chunks": [
+      "smlouva.md 2/2.5",
+      "smlouva.md 6",
+      "smlouva.md 2/2.6"
+     ],
+     "summary": "3 chunks"
+    },
+    {
+     "step": "spec",
+     "status": "ok",
+     "seconds": 10.4,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 10.356,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 1422,
+       "prompt_tokens": 1077,
+       "total_tokens": 2499,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 1216,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 1024,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 6,
+        "engine_ttft_ms": 26,
+        "engine_ttlt_ms": 9391,
+        "pre_inference_ms": 75,
+        "service_tbt_ms": 6,
+        "service_ttft_ms": 233,
+        "service_ttlt_ms": 9576,
+        "user_visible_ttft_ms": 157
+       }
+      }
+     }
+    },
+    {
+     "step": "verify",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "evaluate",
+     "status": "breach",
+     "seconds": 0.0,
+     "summary": ""
+    }
+   ]
+  },
+  {
+   "case_id": "C07-2026Q3",
+   "case_type": "two_covenants",
+   "expected": "no_breach",
+   "seconds": 22.8,
+   "got": "no_breach",
+   "stage": null,
+   "reasons": [],
+   "values_ok": true,
+   "spec": {
+    "ebitda": {
+     "add": [],
+     "subtract": [],
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "debt": {
+     "include": [
+      "bank_loans",
+      "bonds"
+     ],
+     "deduct_cash": true,
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "covenants": [
+     {
+      "id": "leverage",
+      "ratio": "debt_to_ebitda",
+      "limit": 4.0,
+      "citation": {
+       "document": "smlouva.md",
+       "article": "6",
+       "page": 3
+      }
+     },
+     {
+      "id": "interest_cover",
+      "ratio": "interest_cover",
+      "limit": 3.0,
+      "citation": {
+       "document": "smlouva.md",
+       "article": "6",
+       "page": 3
+      }
+     }
+    ],
+    "waivers": []
+   },
+   "items": {
+    "revenue": 3707523,
+    "ebit": 318204,
+    "depreciation": 251274,
+    "restructuring": 16080,
+    "asset_sale_gain": 7115,
+    "interest_expense": 158188,
+    "bank_loans": 1841345,
+    "bonds": 0,
+    "cash": 132911,
+    "reported_ebitda": 585558
+   },
+   "steps": [
+    {
+     "step": "extract",
+     "status": "ok",
+     "seconds": 7.5,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 7.541,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 653,
+       "prompt_tokens": 677,
+       "total_tokens": 1330,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 512,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 8,
+        "engine_ttft_ms": 30,
+        "engine_ttlt_ms": 5880,
+        "pre_inference_ms": 95,
+        "service_tbt_ms": 8,
+        "service_ttft_ms": 240,
+        "service_ttlt_ms": 6071,
+        "user_visible_ttft_ms": 146
+       }
+      }
+     }
+    },
+    {
+     "step": "check_items",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "retrieve",
+     "status": "ok",
+     "seconds": 1.2,
+     "chunks": [
+      "smlouva.md 2/2.5",
+      "smlouva.md 6",
+      "smlouva.md 2/2.6"
+     ],
+     "summary": "3 chunks"
+    },
+    {
+     "step": "spec",
+     "status": "ok",
+     "seconds": 9.4,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 9.435,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 1166,
+       "prompt_tokens": 1077,
+       "total_tokens": 2243,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 960,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 7,
+        "engine_ttft_ms": 35,
+        "engine_ttlt_ms": 7922,
+        "pre_inference_ms": 85,
+        "service_tbt_ms": 6,
+        "service_ttft_ms": 1205,
+        "service_ttlt_ms": 9046,
+        "user_visible_ttft_ms": 1120
+       }
+      }
+     }
+    },
+    {
+     "step": "verify",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "evaluate",
+     "status": "no_breach",
+     "seconds": 0.0,
+     "summary": ""
+    }
+   ]
+  },
+  {
+   "case_id": "C08-2026Q1",
+   "case_type": "gross_debt",
+   "expected": "no_breach",
+   "seconds": 22.4,
+   "got": "no_breach",
+   "stage": null,
+   "reasons": [],
+   "values_ok": true,
+   "spec": {
+    "ebitda": {
+     "add": [],
+     "subtract": [],
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "debt": {
+     "include": [
+      "bank_loans",
+      "bonds"
+     ],
+     "deduct_cash": false,
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "covenants": [
+     {
+      "id": "leverage",
+      "ratio": "debt_to_ebitda",
+      "limit": 4.0,
+      "citation": {
+       "document": "smlouva.md",
+       "article": "5",
+       "page": 3
+      }
+     }
+    ],
+    "waivers": []
+   },
+   "items": {
+    "revenue": 1234225,
+    "ebit": 115251,
+    "depreciation": 51489,
+    "restructuring": 5698,
+    "asset_sale_gain": 1567,
+    "interest_expense": 22643,
+    "bank_loans": 396841,
+    "bonds": 170075,
+    "cash": 25011,
+    "reported_ebitda": 172438
+   },
+   "steps": [
+    {
+     "step": "extract",
+     "status": "ok",
+     "seconds": 6.8,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 6.849,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 653,
+       "prompt_tokens": 678,
+       "total_tokens": 1331,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 512,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 7,
+        "engine_ttft_ms": 34,
+        "engine_ttlt_ms": 5034,
+        "pre_inference_ms": 98,
+        "service_tbt_ms": 7,
+        "service_ttft_ms": 236,
+        "service_ttlt_ms": 5230,
+        "user_visible_ttft_ms": 137
+       }
+      }
+     }
+    },
+    {
+     "step": "check_items",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "retrieve",
+     "status": "ok",
+     "seconds": 1.3,
+     "chunks": [
+      "smlouva.md 2/2.5",
+      "smlouva.md 5",
+      "smlouva.md 2/2.6"
+     ],
+     "summary": "3 chunks"
+    },
+    {
+     "step": "spec",
+     "status": "ok",
+     "seconds": 8.7,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 8.69,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 1119,
+       "prompt_tokens": 1056,
+       "total_tokens": 2175,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 960,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 1024,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 6,
+        "engine_ttft_ms": 27,
+        "engine_ttlt_ms": 7318,
+        "pre_inference_ms": 84,
+        "service_tbt_ms": 6,
+        "service_ttft_ms": 948,
+        "service_ttlt_ms": 8233,
+        "user_visible_ttft_ms": 864
+       }
+      }
+     }
+    },
+    {
+     "step": "verify",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "evaluate",
+     "status": "no_breach",
+     "seconds": 0.0,
+     "summary": ""
+    }
+   ]
+  },
+  {
+   "case_id": "C08-2026Q2",
+   "case_type": "gross_debt",
+   "expected": "breach",
+   "seconds": 20.2,
+   "got": "breach",
+   "stage": null,
+   "reasons": [],
+   "values_ok": true,
+   "spec": {
+    "ebitda": {
+     "add": [],
+     "subtract": [],
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "debt": {
+     "include": [
+      "bank_loans",
+      "bonds"
+     ],
+     "deduct_cash": false,
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "covenants": [
+     {
+      "id": "leverage",
+      "ratio": "debt_to_ebitda",
+      "limit": 4.0,
+      "citation": {
+       "document": "smlouva.md",
+       "article": "5",
+       "page": 3
+      }
+     }
+    ],
+    "waivers": []
+   },
+   "items": {
+    "revenue": 933071,
+    "ebit": 116040,
+    "depreciation": 51750,
+    "restructuring": 5879,
+    "asset_sale_gain": 802,
+    "interest_expense": 24540,
+    "bank_loans": 505048,
+    "bonds": 216449,
+    "cash": 100674,
+    "reported_ebitda": 173669
+   },
+   "steps": [
+    {
+     "step": "extract",
+     "status": "ok",
+     "seconds": 4.8,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 4.762,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 459,
+       "prompt_tokens": 677,
+       "total_tokens": 1136,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 320,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 6,
+        "engine_ttft_ms": 28,
+        "engine_ttlt_ms": 3048,
+        "pre_inference_ms": 88,
+        "service_tbt_ms": 6,
+        "service_ttft_ms": 219,
+        "service_ttlt_ms": 3236,
+        "user_visible_ttft_ms": 131
+       }
+      }
+     }
+    },
+    {
+     "step": "check_items",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "retrieve",
+     "status": "ok",
+     "seconds": 1.1,
+     "chunks": [
+      "smlouva.md 2/2.5",
+      "smlouva.md 5",
+      "smlouva.md 2/2.6"
+     ],
+     "summary": "3 chunks"
+    },
+    {
+     "step": "spec",
+     "status": "ok",
+     "seconds": 9.3,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 9.291,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 991,
+       "prompt_tokens": 1056,
+       "total_tokens": 2047,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 832,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 1024,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 7,
+        "engine_ttft_ms": 31,
+        "engine_ttlt_ms": 7733,
+        "pre_inference_ms": 74,
+        "service_tbt_ms": 7,
+        "service_ttft_ms": 1114,
+        "service_ttlt_ms": 8801,
+        "user_visible_ttft_ms": 1040
+       }
+      }
+     }
+    },
+    {
+     "step": "verify",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "evaluate",
+     "status": "breach",
+     "seconds": 0.0,
+     "summary": ""
+    }
+   ]
+  },
+  {
+   "case_id": "C08-2026Q3",
+   "case_type": "gross_debt",
+   "expected": "no_breach",
+   "seconds": 20.5,
+   "got": "no_breach",
+   "stage": null,
+   "reasons": [],
+   "values_ok": true,
+   "spec": {
+    "ebitda": {
+     "add": [],
+     "subtract": [],
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "debt": {
+     "include": [
+      "bank_loans",
+      "bonds"
+     ],
+     "deduct_cash": false,
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "covenants": [
+     {
+      "id": "leverage",
+      "ratio": "debt_to_ebitda",
+      "limit": 4.0,
+      "citation": {
+       "document": "smlouva.md",
+       "article": "5",
+       "page": 3
+      }
+     }
+    ],
+    "waivers": []
+   },
+   "items": {
+    "revenue": 1764550,
+    "ebit": 180545,
+    "depreciation": 79467,
+    "restructuring": 3229,
+    "asset_sale_gain": 7346,
+    "interest_expense": 32811,
+    "bank_loans": 655230,
+    "bonds": 280813,
+    "cash": 52002,
+    "reported_ebitda": 263241
+   },
+   "steps": [
+    {
+     "step": "extract",
+     "status": "ok",
+     "seconds": 6.8,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 6.79,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 639,
+       "prompt_tokens": 686,
+       "total_tokens": 1325,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 448,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 7,
+        "engine_ttft_ms": 30,
+        "engine_ttlt_ms": 4860,
+        "pre_inference_ms": 74,
+        "service_tbt_ms": 7,
+        "service_ttft_ms": 316,
+        "service_ttlt_ms": 5142,
+        "user_visible_ttft_ms": 242
+       }
+      }
+     }
+    },
+    {
+     "step": "check_items",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "retrieve",
+     "status": "ok",
+     "seconds": 1.1,
+     "chunks": [
+      "smlouva.md 2/2.5",
+      "smlouva.md 5",
+      "smlouva.md 2/2.6"
+     ],
+     "summary": "3 chunks"
+    },
+    {
+     "step": "spec",
+     "status": "ok",
+     "seconds": 7.1,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 7.066,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 977,
+       "prompt_tokens": 1056,
+       "total_tokens": 2033,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 768,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 7,
+        "engine_ttft_ms": 37,
+        "engine_ttlt_ms": 6672,
+        "pre_inference_ms": 86,
+        "service_tbt_ms": 7,
+        "service_ttft_ms": 235,
+        "service_ttlt_ms": 6864,
+        "user_visible_ttft_ms": 149
+       }
+      }
+     }
+    },
+    {
+     "step": "verify",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "evaluate",
+     "status": "no_breach",
+     "seconds": 0.0,
+     "summary": ""
+    }
+   ]
+  },
+  {
+   "case_id": "C09-2026Q1",
+   "case_type": "simple",
+   "expected": "no_breach",
+   "seconds": 18.5,
+   "got": "no_breach",
+   "stage": null,
+   "reasons": [],
+   "values_ok": true,
+   "spec": {
+    "ebitda": {
+     "add": [],
+     "subtract": [],
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "debt": {
+     "include": [
+      "bank_loans",
+      "bonds"
+     ],
+     "deduct_cash": true,
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "covenants": [
+     {
+      "id": "leverage",
+      "ratio": "debt_to_ebitda",
+      "limit": 4.0,
+      "citation": {
+       "document": "smlouva.md",
+       "article": "6",
+       "page": 3
+      }
+     }
+    ],
+    "waivers": []
+   },
+   "items": {
+    "revenue": 3417923,
+    "ebit": 189391,
+    "depreciation": 100539,
+    "restructuring": 11126,
+    "asset_sale_gain": 6233,
+    "interest_expense": 41810,
+    "bank_loans": 996256,
+    "bonds": 0,
+    "cash": 39487,
+    "reported_ebitda": 301056
+   },
+   "steps": [
+    {
+     "step": "extract",
+     "status": "ok",
+     "seconds": 5.1,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 5.089,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 510,
+       "prompt_tokens": 681,
+       "total_tokens": 1191,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 320,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 6,
+        "engine_ttft_ms": 36,
+        "engine_ttlt_ms": 3281,
+        "pre_inference_ms": 82,
+        "service_tbt_ms": 6,
+        "service_ttft_ms": 217,
+        "service_ttlt_ms": 3458,
+        "user_visible_ttft_ms": 135
+       }
+      }
+     }
+    },
+    {
+     "step": "check_items",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "retrieve",
+     "status": "ok",
+     "seconds": 1.2,
+     "chunks": [
+      "smlouva.md 2/2.5",
+      "smlouva.md 6",
+      "smlouva.md 2/2.6"
+     ],
+     "summary": "3 chunks"
+    },
+    {
+     "step": "spec",
+     "status": "ok",
+     "seconds": 6.8,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 6.821,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 785,
+       "prompt_tokens": 1023,
+       "total_tokens": 1808,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 576,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 7,
+        "engine_ttft_ms": 33,
+        "engine_ttlt_ms": 5860,
+        "pre_inference_ms": 82,
+        "service_tbt_ms": 7,
+        "service_ttft_ms": 230,
+        "service_ttlt_ms": 6053,
+        "user_visible_ttft_ms": 147
+       }
+      }
+     }
+    },
+    {
+     "step": "verify",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "evaluate",
+     "status": "no_breach",
+     "seconds": 0.0,
+     "summary": ""
+    }
+   ]
+  },
+  {
+   "case_id": "C09-2026Q2",
+   "case_type": "missing_item",
+   "expected": "human_review",
+   "seconds": 22.6,
+   "got": "human_review",
+   "stage": null,
+   "reasons": [
+    "missing_item: depreciation"
+   ],
+   "values_ok": false,
+   "spec": {
+    "ebitda": {
+     "add": [],
+     "subtract": [],
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "debt": {
+     "include": [
+      "bank_loans",
+      "bonds"
+     ],
+     "deduct_cash": true,
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "covenants": [
+     {
+      "id": "leverage",
+      "ratio": "debt_to_ebitda",
+      "limit": 4.0,
+      "citation": {
+       "document": "smlouva.md",
+       "article": "6",
+       "page": 3
+      }
+     }
+    ],
+    "waivers": []
+   },
+   "items": {
+    "revenue": 2270853,
+    "ebit": 214257,
+    "depreciation": null,
+    "restructuring": 9693,
+    "asset_sale_gain": 786,
+    "interest_expense": 50379,
+    "bank_loans": 1048064,
+    "bonds": 0,
+    "cash": 69493,
+    "reported_ebitda": 325361
+   },
+   "steps": [
+    {
+     "step": "extract",
+     "status": "ok",
+     "seconds": 6.9,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 6.904,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 587,
+       "prompt_tokens": 685,
+       "total_tokens": 1272,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 448,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 8,
+        "engine_ttft_ms": 44,
+        "engine_ttlt_ms": 4930,
+        "pre_inference_ms": 94,
+        "service_tbt_ms": 8,
+        "service_ttft_ms": 292,
+        "service_ttlt_ms": 5153,
+        "user_visible_ttft_ms": 199
+       }
+      }
+     }
+    },
+    {
+     "step": "check_items",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "retrieve",
+     "status": "ok",
+     "seconds": 1.4,
+     "chunks": [
+      "smlouva.md 2/2.5",
+      "smlouva.md 6",
+      "smlouva.md 2/2.6"
+     ],
+     "summary": "3 chunks"
+    },
+    {
+     "step": "spec",
+     "status": "ok",
+     "seconds": 7.2,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 7.239,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 735,
+       "prompt_tokens": 1023,
+       "total_tokens": 1758,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 576,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 8,
+        "engine_ttft_ms": 35,
+        "engine_ttlt_ms": 5904,
+        "pre_inference_ms": 91,
+        "service_tbt_ms": 8,
+        "service_ttft_ms": 1060,
+        "service_ttlt_ms": 6925,
+        "user_visible_ttft_ms": 969
+       }
+      }
+     }
+    },
+    {
+     "step": "verify",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "evaluate",
+     "status": "human_review",
+     "seconds": 0.0,
+     "summary": "missing_item: depreciation"
+    }
+   ]
+  },
+  {
+   "case_id": "C09-2026Q3",
+   "case_type": "near_limit",
+   "expected": "human_review",
+   "seconds": 17.4,
+   "got": "human_review",
+   "stage": null,
+   "reasons": [
+    "leverage: within 2% of limit"
+   ],
+   "values_ok": true,
+   "spec": {
+    "ebitda": {
+     "add": [],
+     "subtract": [],
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "debt": {
+     "include": [
+      "bank_loans",
+      "bonds"
+     ],
+     "deduct_cash": true,
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "covenants": [
+     {
+      "id": "leverage",
+      "ratio": "debt_to_ebitda",
+      "limit": 4.0,
+      "citation": {
+       "document": "smlouva.md",
+       "article": "6",
+       "page": 3
+      }
+     }
+    ],
+    "waivers": []
+   },
+   "items": {
+    "revenue": 3136647,
+    "ebit": 314245,
+    "depreciation": 138109,
+    "restructuring": 9715,
+    "asset_sale_gain": 8924,
+    "interest_expense": 78994,
+    "bank_loans": 1888853,
+    "bonds": 0,
+    "cash": 102055,
+    "reported_ebitda": 462069
+   },
+   "steps": [
+    {
+     "step": "extract",
+     "status": "ok",
+     "seconds": 5.8,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 5.763,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 653,
+       "prompt_tokens": 680,
+       "total_tokens": 1333,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 512,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 6,
+        "engine_ttft_ms": 66,
+        "engine_ttlt_ms": 4117,
+        "pre_inference_ms": 102,
+        "service_tbt_ms": 6,
+        "service_ttft_ms": 314,
+        "service_ttlt_ms": 4362,
+        "user_visible_ttft_ms": 212
+       }
+      }
+     }
+    },
+    {
+     "step": "check_items",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "retrieve",
+     "status": "ok",
+     "seconds": 1.2,
+     "chunks": [
+      "smlouva.md 2/2.5",
+      "smlouva.md 6",
+      "smlouva.md 2/2.6"
+     ],
+     "summary": "3 chunks"
+    },
+    {
+     "step": "spec",
+     "status": "ok",
+     "seconds": 5.8,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 5.769,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 671,
+       "prompt_tokens": 1023,
+       "total_tokens": 1694,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 512,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 7,
+        "engine_ttft_ms": 33,
+        "engine_ttlt_ms": 5184,
+        "pre_inference_ms": 98,
+        "service_tbt_ms": 7,
+        "service_ttft_ms": 253,
+        "service_ttlt_ms": 5397,
+        "user_visible_ttft_ms": 155
+       }
+      }
+     }
+    },
+    {
+     "step": "verify",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "evaluate",
+     "status": "human_review",
+     "seconds": 0.0,
+     "summary": "leverage: within 2% of limit"
+    }
+   ]
+  },
+  {
+   "case_id": "C10-2026Q1",
+   "case_type": "amendment",
+   "expected": "no_breach",
+   "seconds": 24.2,
+   "got": "no_breach",
+   "stage": null,
+   "reasons": [],
+   "values_ok": true,
+   "spec": {
+    "ebitda": {
+     "add": [],
+     "subtract": [],
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "debt": {
+     "include": [
+      "bank_loans",
+      "bonds"
+     ],
+     "deduct_cash": true,
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "covenants": [
+     {
+      "id": "leverage",
+      "ratio": "debt_to_ebitda",
+      "limit": 3.0,
+      "citation": {
+       "document": "smlouva.md",
+       "article": "6",
+       "page": 3
+      }
+     }
+    ],
+    "waivers": []
+   },
+   "items": {
+    "revenue": 2622329,
+    "ebit": 194806,
+    "depreciation": 98480,
+    "restructuring": 1398,
+    "asset_sale_gain": 6298,
+    "interest_expense": 33546,
+    "bank_loans": 868123,
+    "bonds": 0,
+    "cash": 46922,
+    "reported_ebitda": 294684
+   },
+   "steps": [
+    {
+     "step": "extract",
+     "status": "ok",
+     "seconds": 6.1,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 6.077,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 524,
+       "prompt_tokens": 684,
+       "total_tokens": 1208,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 384,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 8,
+        "engine_ttft_ms": 31,
+        "engine_ttlt_ms": 4116,
+        "pre_inference_ms": 80,
+        "service_tbt_ms": 8,
+        "service_ttft_ms": 208,
+        "service_ttlt_ms": 4301,
+        "user_visible_ttft_ms": 128
+       }
+      }
+     }
+    },
+    {
+     "step": "check_items",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "retrieve",
+     "status": "ok",
+     "seconds": 1.2,
+     "chunks": [
+      "smlouva.md 2/2.5",
+      "smlouva.md 6",
+      "dodatek_1.md 1",
+      "smlouva.md 2/2.6",
+      "smlouva.md 5"
+     ],
+     "summary": "5 chunks"
+    },
+    {
+     "step": "spec",
+     "status": "ok",
+     "seconds": 12.0,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 11.976,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 1553,
+       "prompt_tokens": 1248,
+       "total_tokens": 2801,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 1344,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 1152,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 7,
+        "engine_ttft_ms": 29,
+        "engine_ttlt_ms": 11163,
+        "pre_inference_ms": 85,
+        "service_tbt_ms": 7,
+        "service_ttft_ms": 318,
+        "service_ttlt_ms": 11446,
+        "user_visible_ttft_ms": 233
+       }
+      }
+     }
+    },
+    {
+     "step": "verify",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "evaluate",
+     "status": "no_breach",
+     "seconds": 0.0,
+     "summary": ""
+    }
+   ]
+  },
+  {
+   "case_id": "C10-2026Q2",
+   "case_type": "amendment",
+   "expected": "no_breach",
+   "seconds": 20.9,
+   "got": "no_breach",
+   "stage": null,
+   "reasons": [],
+   "values_ok": true,
+   "spec": {
+    "ebitda": {
+     "add": [],
+     "subtract": [],
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "debt": {
+     "include": [
+      "bank_loans",
+      "bonds"
+     ],
+     "deduct_cash": true,
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "covenants": [
+     {
+      "id": "leverage",
+      "ratio": "debt_to_ebitda",
+      "limit": 3.75,
+      "citation": {
+       "document": "dodatek_1.md",
+       "article": "1",
+       "page": 1
+      }
+     }
+    ],
+    "waivers": []
+   },
+   "items": {
+    "revenue": 3704256,
+    "ebit": 259586,
+    "depreciation": 175662,
+    "restructuring": 7676,
+    "asset_sale_gain": 7010,
+    "interest_expense": 102217,
+    "bank_loans": 1553890,
+    "bonds": 0,
+    "cash": 74047,
+    "reported_ebitda": 442924
+   },
+   "steps": [
+    {
+     "step": "extract",
+     "status": "ok",
+     "seconds": 5.8,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 5.763,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 525,
+       "prompt_tokens": 678,
+       "total_tokens": 1203,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 384,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 7,
+        "engine_ttft_ms": 65,
+        "engine_ttlt_ms": 3793,
+        "pre_inference_ms": 108,
+        "service_tbt_ms": 7,
+        "service_ttft_ms": 413,
+        "service_ttlt_ms": 4135,
+        "user_visible_ttft_ms": 305
+       }
+      }
+     }
+    },
+    {
+     "step": "check_items",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "retrieve",
+     "status": "ok",
+     "seconds": 0.9,
+     "chunks": [
+      "smlouva.md 2/2.5",
+      "smlouva.md 6",
+      "dodatek_1.md 1",
+      "smlouva.md 2/2.6"
+     ],
+     "summary": "4 chunks"
+    },
+    {
+     "step": "spec",
+     "status": "ok",
+     "seconds": 8.7,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 8.721,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 1233,
+       "prompt_tokens": 1179,
+       "total_tokens": 2412,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 1024,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 1152,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 7,
+        "engine_ttft_ms": 31,
+        "engine_ttlt_ms": 8239,
+        "pre_inference_ms": 71,
+        "service_tbt_ms": 7,
+        "service_ttft_ms": 217,
+        "service_ttlt_ms": 8422,
+        "user_visible_ttft_ms": 146
+       }
+      }
+     }
+    },
+    {
+     "step": "verify",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "evaluate",
+     "status": "no_breach",
+     "seconds": 0.0,
+     "summary": ""
+    }
+   ]
+  },
+  {
+   "case_id": "C10-2026Q3",
+   "case_type": "amendment",
+   "expected": "breach",
+   "seconds": 20.6,
+   "got": "breach",
+   "stage": null,
+   "reasons": [],
+   "values_ok": true,
+   "spec": {
+    "ebitda": {
+     "add": [],
+     "subtract": [],
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "debt": {
+     "include": [
+      "bank_loans",
+      "bonds"
+     ],
+     "deduct_cash": true,
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "covenants": [
+     {
+      "id": "leverage",
+      "ratio": "debt_to_ebitda",
+      "limit": 3.75,
+      "citation": {
+       "document": "dodatek_1.md",
+       "article": "1",
+       "page": 1
+      }
+     }
+    ],
+    "waivers": []
+   },
+   "items": {
+    "revenue": 781592,
+    "ebit": 81171,
+    "depreciation": 54669,
+    "restructuring": 1625,
+    "asset_sale_gain": 3704,
+    "interest_expense": 25129,
+    "bank_loans": 550643,
+    "bonds": 0,
+    "cash": 20867,
+    "reported_ebitda": 137465
+   },
+   "steps": [
+    {
+     "step": "extract",
+     "status": "ok",
+     "seconds": 5.0,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 5.041,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 459,
+       "prompt_tokens": 674,
+       "total_tokens": 1133,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 320,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 7,
+        "engine_ttft_ms": 49,
+        "engine_ttlt_ms": 3336,
+        "pre_inference_ms": 92,
+        "service_tbt_ms": 7,
+        "service_ttft_ms": 362,
+        "service_ttlt_ms": 3629,
+        "user_visible_ttft_ms": 270
+       }
+      }
+     }
+    },
+    {
+     "step": "check_items",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "retrieve",
+     "status": "ok",
+     "seconds": 1.3,
+     "chunks": [
+      "smlouva.md 2/2.5",
+      "smlouva.md 6",
+      "dodatek_1.md 1",
+      "smlouva.md 2/2.6"
+     ],
+     "summary": "4 chunks"
+    },
+    {
+     "step": "spec",
+     "status": "ok",
+     "seconds": 9.4,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 9.421,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 1233,
+       "prompt_tokens": 1179,
+       "total_tokens": 2412,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 1024,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 1152,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 6,
+        "engine_ttft_ms": 25,
+        "engine_ttlt_ms": 8048,
+        "pre_inference_ms": 85,
+        "service_tbt_ms": 6,
+        "service_ttft_ms": 1165,
+        "service_ttlt_ms": 9182,
+        "user_visible_ttft_ms": 1081
+       }
+      }
+     }
+    },
+    {
+     "step": "verify",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "evaluate",
+     "status": "breach",
+     "seconds": 0.0,
+     "summary": ""
+    }
+   ]
+  },
+  {
+   "case_id": "C11-2026Q1",
+   "case_type": "simple",
+   "expected": "no_breach",
+   "seconds": 50.9,
+   "got": "no_breach",
+   "stage": null,
+   "reasons": [],
+   "values_ok": true,
+   "spec": {
+    "ebitda": {
+     "add": [],
+     "subtract": [],
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "debt": {
+     "include": [
+      "bank_loans",
+      "bonds"
+     ],
+     "deduct_cash": true,
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "covenants": [
+     {
+      "id": "leverage",
+      "ratio": "debt_to_ebitda",
+      "limit": 4.5,
+      "citation": {
+       "document": "smlouva.md",
+       "article": "5",
+       "page": 3
+      }
+     }
+    ],
+    "waivers": []
+   },
+   "items": {
+    "revenue": 3831126,
+    "ebit": 293644,
+    "depreciation": 173280,
+    "restructuring": 8117,
+    "asset_sale_gain": 12651,
+    "interest_expense": 59801,
+    "bank_loans": 1765211,
+    "bonds": 0,
+    "cash": 84285,
+    "reported_ebitda": 475041
+   },
+   "steps": [
+    {
+     "step": "extract",
+     "status": "ok",
+     "seconds": 35.7,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 35.697,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 525,
+       "prompt_tokens": 682,
+       "total_tokens": 1207,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 384,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 8,
+        "engine_ttft_ms": 41,
+        "engine_ttlt_ms": 4372,
+        "pre_inference_ms": 500,
+        "service_tbt_ms": 54,
+        "service_ttft_ms": 1104,
+        "service_ttlt_ms": 31988,
+        "user_visible_ttft_ms": 604
+       }
+      }
+     }
+    },
+    {
+     "step": "check_items",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "retrieve",
+     "status": "ok",
+     "seconds": 1.3,
+     "chunks": [
+      "smlouva.md 2/2.5",
+      "smlouva.md 5",
+      "smlouva.md 2/2.6"
+     ],
+     "summary": "3 chunks"
+    },
+    {
+     "step": "spec",
+     "status": "ok",
+     "seconds": 7.4,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 7.375,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 863,
+       "prompt_tokens": 1034,
+       "total_tokens": 1897,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 704,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 1024,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 7,
+        "engine_ttft_ms": 67,
+        "engine_ttlt_ms": 6208,
+        "pre_inference_ms": 70,
+        "service_tbt_ms": 7,
+        "service_ttft_ms": 251,
+        "service_ttlt_ms": 6388,
+        "user_visible_ttft_ms": 180
+       }
+      }
+     }
+    },
+    {
+     "step": "verify",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "evaluate",
+     "status": "no_breach",
+     "seconds": 0.0,
+     "summary": ""
+    }
+   ]
+  },
+  {
+   "case_id": "C11-2026Q2",
+   "case_type": "prompt_injection",
+   "expected": "breach",
+   "seconds": 23.7,
+   "got": "breach",
+   "stage": null,
+   "reasons": [],
+   "values_ok": true,
+   "spec": {
+    "ebitda": {
+     "add": [],
+     "subtract": [],
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "debt": {
+     "include": [
+      "bank_loans",
+      "bonds"
+     ],
+     "deduct_cash": true,
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "covenants": [
+     {
+      "id": "leverage",
+      "ratio": "debt_to_ebitda",
+      "limit": 4.5,
+      "citation": {
+       "document": "smlouva.md",
+       "article": "5",
+       "page": 3
+      }
+     }
+    ],
+    "waivers": []
+   },
+   "items": {
+    "revenue": 594428,
+    "ebit": 58017,
+    "depreciation": 31369,
+    "restructuring": 1389,
+    "asset_sale_gain": 566,
+    "interest_expense": 18999,
+    "bank_loans": 441857,
+    "bonds": 0,
+    "cash": 12804,
+    "reported_ebitda": 90775
+   },
+   "steps": [
+    {
+     "step": "extract",
+     "status": "ok",
+     "seconds": 7.1,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 7.074,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 650,
+       "prompt_tokens": 740,
+       "total_tokens": 1390,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 512,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 8,
+        "engine_ttft_ms": 31,
+        "engine_ttlt_ms": 5173,
+        "pre_inference_ms": 72,
+        "service_tbt_ms": 8,
+        "service_ttft_ms": 201,
+        "service_ttlt_ms": 5338,
+        "user_visible_ttft_ms": 129
+       }
+      }
+     }
+    },
+    {
+     "step": "check_items",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "retrieve",
+     "status": "ok",
+     "seconds": 1.0,
+     "chunks": [
+      "smlouva.md 2/2.5",
+      "smlouva.md 5",
+      "smlouva.md 2/2.6"
+     ],
+     "summary": "3 chunks"
+    },
+    {
+     "step": "spec",
+     "status": "ok",
+     "seconds": 8.2,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 8.184,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 913,
+       "prompt_tokens": 1034,
+       "total_tokens": 1947,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 704,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 1024,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 7,
+        "engine_ttft_ms": 34,
+        "engine_ttlt_ms": 6602,
+        "pre_inference_ms": 67,
+        "service_tbt_ms": 7,
+        "service_ttft_ms": 1081,
+        "service_ttlt_ms": 7594,
+        "user_visible_ttft_ms": 1015
+       }
+      }
+     }
+    },
+    {
+     "step": "verify",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "evaluate",
+     "status": "breach",
+     "seconds": 0.0,
+     "summary": ""
+    }
+   ]
+  },
+  {
+   "case_id": "C11-2026Q3",
+   "case_type": "exact_limit",
+   "expected": "human_review",
+   "seconds": 24.5,
+   "got": "human_review",
+   "stage": null,
+   "reasons": [
+    "leverage: within 2% of limit"
+   ],
+   "values_ok": true,
+   "spec": {
+    "ebitda": {
+     "add": [],
+     "subtract": [],
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "debt": {
+     "include": [
+      "bank_loans",
+      "bonds"
+     ],
+     "deduct_cash": true,
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "covenants": [
+     {
+      "id": "leverage",
+      "ratio": "debt_to_ebitda",
+      "limit": 4.5,
+      "citation": {
+       "document": "smlouva.md",
+       "article": "5",
+       "page": 3
+      }
+     }
+    ],
+    "waivers": []
+   },
+   "items": {
+    "revenue": 3513250,
+    "ebit": 304463,
+    "depreciation": 181599,
+    "restructuring": 3722,
+    "asset_sale_gain": 3721,
+    "interest_expense": 64665,
+    "bank_loans": 2234391,
+    "bonds": 0,
+    "cash": 47112,
+    "reported_ebitda": 489784
+   },
+   "steps": [
+    {
+     "step": "extract",
+     "status": "ok",
+     "seconds": 6.9,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 6.894,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 589,
+       "prompt_tokens": 682,
+       "total_tokens": 1271,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 448,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 8,
+        "engine_ttft_ms": 73,
+        "engine_ttlt_ms": 5030,
+        "pre_inference_ms": 71,
+        "service_tbt_ms": 8,
+        "service_ttft_ms": 252,
+        "service_ttlt_ms": 5205,
+        "user_visible_ttft_ms": 181
+       }
+      }
+     }
+    },
+    {
+     "step": "check_items",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "retrieve",
+     "status": "ok",
+     "seconds": 1.2,
+     "chunks": [
+      "smlouva.md 2/2.5",
+      "smlouva.md 5",
+      "smlouva.md 2/2.6"
+     ],
+     "summary": "3 chunks"
+    },
+    {
+     "step": "spec",
+     "status": "ok",
+     "seconds": 8.1,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 8.11,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 927,
+       "prompt_tokens": 1034,
+       "total_tokens": 1961,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 768,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 1024,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 8,
+        "engine_ttft_ms": 22,
+        "engine_ttlt_ms": 7607,
+        "pre_inference_ms": 48,
+        "service_tbt_ms": 8,
+        "service_ttft_ms": 200,
+        "service_ttlt_ms": 7780,
+        "user_visible_ttft_ms": 152
+       }
+      }
+     }
+    },
+    {
+     "step": "verify",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "evaluate",
+     "status": "human_review",
+     "seconds": 0.0,
+     "summary": "leverage: within 2% of limit"
+    }
+   ]
+  },
+  {
+   "case_id": "C12-2026Q1",
+   "case_type": "simple",
+   "expected": "no_breach",
+   "seconds": 25.1,
+   "got": "no_breach",
+   "stage": null,
+   "reasons": [],
+   "values_ok": true,
+   "spec": {
+    "ebitda": {
+     "add": [],
+     "subtract": [],
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "debt": {
+     "include": [
+      "bank_loans",
+      "bonds"
+     ],
+     "deduct_cash": true,
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "covenants": [
+     {
+      "id": "leverage",
+      "ratio": "debt_to_ebitda",
+      "limit": 3.75,
+      "citation": {
+       "document": "smlouva.md",
+       "article": "5",
+       "page": 3
+      }
+     }
+    ],
+    "waivers": []
+   },
+   "items": {
+    "revenue": 3656679,
+    "ebit": 283966,
+    "depreciation": 211596,
+    "restructuring": 13044,
+    "asset_sale_gain": 2275,
+    "interest_expense": 72538,
+    "bank_loans": 1567983,
+    "bonds": 0,
+    "cash": 31741,
+    "reported_ebitda": 508606
+   },
+   "steps": [
+    {
+     "step": "extract",
+     "status": "ok",
+     "seconds": 9.6,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 9.597,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 653,
+       "prompt_tokens": 685,
+       "total_tokens": 1338,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 512,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 12,
+        "engine_ttft_ms": 40,
+        "engine_ttlt_ms": 7653,
+        "pre_inference_ms": 61,
+        "service_tbt_ms": 12,
+        "service_ttft_ms": 199,
+        "service_ttlt_ms": 7808,
+        "user_visible_ttft_ms": 138
+       }
+      }
+     }
+    },
+    {
+     "step": "check_items",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "retrieve",
+     "status": "ok",
+     "seconds": 1.2,
+     "chunks": [
+      "smlouva.md 2/2.5",
+      "smlouva.md 5",
+      "smlouva.md 2/2.6"
+     ],
+     "summary": "3 chunks"
+    },
+    {
+     "step": "spec",
+     "status": "ok",
+     "seconds": 9.2,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 9.248,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 1055,
+       "prompt_tokens": 1046,
+       "total_tokens": 2101,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 896,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 8,
+        "engine_ttft_ms": 46,
+        "engine_ttlt_ms": 8311,
+        "pre_inference_ms": 79,
+        "service_tbt_ms": 8,
+        "service_ttft_ms": 639,
+        "service_ttlt_ms": 8889,
+        "user_visible_ttft_ms": 560
+       }
+      }
+     }
+    },
+    {
+     "step": "verify",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "evaluate",
+     "status": "no_breach",
+     "seconds": 0.0,
+     "summary": ""
+    }
+   ]
+  },
+  {
+   "case_id": "C12-2026Q2",
+   "case_type": "misleading_management_claim",
+   "expected": "breach",
+   "seconds": 22.3,
+   "got": "breach",
+   "stage": null,
+   "reasons": [],
+   "values_ok": true,
+   "spec": {
+    "ebitda": {
+     "add": [],
+     "subtract": [],
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "debt": {
+     "include": [
+      "bank_loans",
+      "bonds"
+     ],
+     "deduct_cash": true,
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "covenants": [
+     {
+      "id": "leverage",
+      "ratio": "debt_to_ebitda",
+      "limit": 3.75,
+      "citation": {
+       "document": "smlouva.md",
+       "article": "5",
+       "page": 3
+      }
+     }
+    ],
+    "waivers": []
+   },
+   "items": {
+    "revenue": 2699421,
+    "ebit": 143336,
+    "depreciation": 86106,
+    "restructuring": 634,
+    "asset_sale_gain": 2103,
+    "interest_expense": 50461,
+    "bank_loans": 1001904,
+    "bonds": 0,
+    "cash": 38248,
+    "reported_ebitda": 283428
+   },
+   "steps": [
+    {
+     "step": "extract",
+     "status": "ok",
+     "seconds": 7.8,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 7.782,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 716,
+       "prompt_tokens": 712,
+       "total_tokens": 1428,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 576,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 8,
+        "engine_ttft_ms": 32,
+        "engine_ttlt_ms": 5817,
+        "pre_inference_ms": 81,
+        "service_tbt_ms": 8,
+        "service_ttft_ms": 236,
+        "service_ttlt_ms": 6018,
+        "user_visible_ttft_ms": 155
+       }
+      }
+     }
+    },
+    {
+     "step": "check_items",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "retrieve",
+     "status": "ok",
+     "seconds": 1.2,
+     "chunks": [
+      "smlouva.md 2/2.5",
+      "smlouva.md 5",
+      "smlouva.md 2/2.6"
+     ],
+     "summary": "3 chunks"
+    },
+    {
+     "step": "spec",
+     "status": "ok",
+     "seconds": 7.3,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 7.266,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 1055,
+       "prompt_tokens": 1046,
+       "total_tokens": 2101,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 896,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 1024,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 6,
+        "engine_ttft_ms": 24,
+        "engine_ttlt_ms": 6627,
+        "pre_inference_ms": 124,
+        "service_tbt_ms": 6,
+        "service_ttft_ms": 271,
+        "service_ttlt_ms": 6863,
+        "user_visible_ttft_ms": 147
+       }
+      }
+     }
+    },
+    {
+     "step": "verify",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "evaluate",
+     "status": "breach",
+     "seconds": 0.0,
+     "summary": ""
+    }
+   ]
+  },
+  {
+   "case_id": "C12-2026Q3",
+   "case_type": "prompt_injection",
+   "expected": "no_breach",
+   "seconds": 18.0,
+   "got": "no_breach",
+   "stage": null,
+   "reasons": [],
+   "values_ok": true,
+   "spec": {
+    "ebitda": {
+     "add": [],
+     "subtract": [],
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "debt": {
+     "include": [
+      "bank_loans",
+      "bonds"
+     ],
+     "deduct_cash": true,
+     "citation": {
+      "document": "smlouva.md",
+      "article": "2",
+      "page": 1
+     }
+    },
+    "covenants": [
+     {
+      "id": "leverage",
+      "ratio": "debt_to_ebitda",
+      "limit": 3.75,
+      "citation": {
+       "document": "smlouva.md",
+       "article": "5",
+       "page": 3
+      }
+     }
+    ],
+    "waivers": []
+   },
+   "items": {
+    "revenue": 3014595,
+    "ebit": 211215,
+    "depreciation": 151699,
+    "restructuring": 1292,
+    "asset_sale_gain": 10174,
+    "interest_expense": 74456,
+    "bank_loans": 1240300,
+    "bonds": 0,
+    "cash": 78975,
+    "reported_ebitda": 364206
+   },
+   "steps": [
+    {
+     "step": "extract",
+     "status": "ok",
+     "seconds": 5.0,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 4.954,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 461,
+       "prompt_tokens": 724,
+       "total_tokens": 1185,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 320,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 7,
+        "engine_ttft_ms": 29,
+        "engine_ttlt_ms": 3351,
+        "pre_inference_ms": 73,
+        "service_tbt_ms": 7,
+        "service_ttft_ms": 310,
+        "service_ttlt_ms": 3627,
+        "user_visible_ttft_ms": 237
+       }
+      }
+     }
+    },
+    {
+     "step": "check_items",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "retrieve",
+     "status": "ok",
+     "seconds": 1.0,
+     "chunks": [
+      "smlouva.md 2/2.5",
+      "smlouva.md 5",
+      "smlouva.md 2/2.6"
+     ],
+     "summary": "3 chunks"
+    },
+    {
+     "step": "spec",
+     "status": "ok",
+     "seconds": 7.1,
+     "llm": {
+      "provider": "azure",
+      "model": "gpt-5-mini",
+      "latency_s": 7.142,
+      "finish_reason": "stop",
+      "usage_raw": {
+       "completion_tokens": 799,
+       "prompt_tokens": 1046,
+       "total_tokens": 1845,
+       "completion_tokens_details": {
+        "accepted_prediction_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 640,
+        "rejected_prediction_tokens": 0,
+        "text_tokens": null
+       },
+       "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cache_write_tokens": null,
+        "cached_tokens": 1024,
+        "image_tokens": null,
+        "text_tokens": null
+       },
+       "latency_checkpoint": {
+        "engine_tbt_ms": 7,
+        "engine_ttft_ms": 33,
+        "engine_ttlt_ms": 6160,
+        "pre_inference_ms": 66,
+        "service_tbt_ms": 7,
+        "service_ttft_ms": 607,
+        "service_ttlt_ms": 6729,
+        "user_visible_ttft_ms": 541
+       }
+      }
+     }
+    },
+    {
+     "step": "verify",
+     "status": "ok",
+     "seconds": 0.0,
+     "problems": [],
+     "summary": ""
+    },
+    {
+     "step": "evaluate",
+     "status": "no_breach",
+     "seconds": 0.0,
+     "summary": ""
+    }
+   ]
+  }
+ ]
+}
