@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en" data-theme="brand">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>urls harness</title>
+  <!-- Live harness: renders the REAL urls.js + urls.css with a stubbed fetch that returns the shape of
+       GET /api/urls and POST /api/urls/run. Hosts are fake (example.invalid); sample data is illustrative only. -->
+  <script>
+    /* export only: which generation of the panel code this page runs. The looks "next" and "v3" load
+       next/*.js and next/*.css (new markup); all other looks load the current files. */
+    window.PREVIEW_LOOK = new URLSearchParams(location.search).get("look") || "current";
+    window.PREVIEW_NEXT = /^(next|v3)$/.test(window.PREVIEW_LOOK);
+  </script>
+  <link rel="stylesheet" href="../styles.css" />
+  <link rel="stylesheet" href="../incidents.css" />
+  <link rel="stylesheet" href="../checks.css" />
+  <script>document.write('<link rel="stylesheet" href="../' + (PREVIEW_NEXT ? "next/" : "") + 'urls.css?t=' + Date.now() + '" />');</script>
+  <!-- export only: prototype overlays, active with <html class="modern" data-theme="dark">.
+       All use the same switch, so only one of them is enabled at a time (see the Look buttons). -->
+  <link rel="stylesheet" href="../modern-dark.css" id="look-v1" />
+  <link rel="stylesheet" href="../modern-dark-v2.css" id="look-v2" disabled />
+  <link rel="stylesheet" href="../next/modern-dark-v3.css" id="look-v3" disabled />
+</head>
+<body>
+  <!-- export only: theme + look switcher (the app has 4 themes; panels must work in all of them).
+       URL: ?theme=brand|dark|light|neon  and  ?look=current|modern|v2|next|v3
+       current / modern / v2 run the current certs.js + urls.js; next / v3 run next/*.js (page reloads). -->
+  <div id="look-switch" style="position:fixed;right:12px;bottom:12px;z-index:99;display:flex;gap:4px;align-items:center;background:rgba(0,0,0,.6);padding:6px;border-radius:8px;font:12px sans-serif">
+    <span style="color:#fff;padding:0 4px">Theme</span>
+    <button type="button" data-set-theme="brand">brand</button>
+    <button type="button" data-set-theme="dark">dark</button>
+    <button type="button" data-set-theme="light">light</button>
+    <button type="button" data-set-theme="neon">neon</button>
+    <span style="color:#fff;padding:0 4px 0 10px">Look</span>
+    <button type="button" data-set-look="current">current</button>
+    <button type="button" data-set-look="modern">modern v1</button>
+    <button type="button" data-set-look="v2">modern v2</button>
+    <span style="color:#fff;padding:0 4px 0 10px">Next level</span>
+    <button type="button" data-set-look="next">next</button>
+    <button type="button" data-set-look="v3">modern v3</button>
+  </div>
+  <script>
+    (function () {
+      var root = document.documentElement, bar = document.getElementById("look-switch");
+      var sheet = { modern: document.getElementById("look-v1"), v2: document.getElementById("look-v2"), v3: document.getElementById("look-v3") };
+      var GEN = { current: 0, modern: 0, v2: 0, next: 1, v3: 1 }, look = "current";
+      function mark() {
+        bar.querySelectorAll("button").forEach(function (b) {
+          var on = b.dataset.setTheme ? b.dataset.setTheme === root.dataset.theme : b.dataset.setLook === look;
+          b.style.outline = on ? "2px solid #4aa8ff" : "none";
+        });
+      }
+      function setLook(l) {
+        look = GEN.hasOwnProperty(l) ? l : "current";
+        if (sheet[look]) root.dataset.theme = "dark"; /* the overlays exist for the dark theme only */
+        root.classList.toggle("modern", !!sheet[look]);
+        Object.keys(sheet).forEach(function (k) { sheet[k].disabled = k !== look; });
+        mark();
+      }
+      function reload(l) { /* the other generation of the JS cannot be swapped into a running page */
+        var q = new URLSearchParams(location.search);
+        q.set("look", l);
+        q.set("theme", l === "v3" ? "dark" : root.dataset.theme);
+        location.search = q.toString();
+      }
+      bar.addEventListener("click", function (ev) {
+        var b = ev.target.closest("button");
+        if (!b) return;
+        if (b.dataset.setLook) {
+          if (GEN[b.dataset.setLook] !== GEN[look]) reload(b.dataset.setLook); else setLook(b.dataset.setLook);
+          return;
+        }
+        root.dataset.theme = b.dataset.setTheme;
+        if (b.dataset.setTheme !== "dark" && sheet[look]) setLook(GEN[look] ? "next" : "current"); else mark();
+      });
+      var q = new URLSearchParams(location.search);
+      if (q.get("theme")) root.dataset.theme = q.get("theme");
+      setLook(window.PREVIEW_LOOK);
+    })();
+  </script>
+
+  <main class="dashboard" style="grid-template-columns: 1fr;">
+    <section class="col-main">
+      <div class="card mon-shell">
+        <nav class="mon-nav"><h3>AIOps Monitor</h3><button class="mon-seg active">&#x1F517; URLs</button></nav>
+        <div class="mon-main">
+          <div data-pane="urls">
+            <div class="mon-main-head">
+              <div><h2>URLs</h2><span class="subtle">Availability of every landscape URL from the reviewed catalog &middot; checked every 5 minutes, read-only (no login)</span></div>
+              <span class="rhs"><span class="subtle chk-last" id="url-last"></span>
+                <button id="url-run" class="primary" type="button">&#x25B6; Check now</button>
+                <button id="refresh-urls" class="ghost" type="button">&#x21bb; Refresh</button></span>
+            </div>
+            <div id="url-body"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script>
+    sessionStorage.removeItem("sapops-urls-filter");
+    const now = Date.now();
+    const ago = (m) => new Date(now - m * 60000).toISOString();
+    const u = (id, sid, tier, kind, access, url, verdict, extra) => Object.assign({
+      entry_id: id, sid, system: null, tier, category: "sap_abap", kind, access, url, check_mode: "probe",
+      verdict, last_verdict: verdict, stale: false, http_status: verdict === "UP" ? 302 : null, latency_ms: 41,
+      error_type: null, checked_at: ago(2), last_up_at: ago(2), fail_count: 0,
+      cert_days: null, cert_state: null, cert_flags: [], cert_checked_at: null }, extra || {});
+    const DATA = { job: "sapops-monitor-url-check", stale_minutes: 15, last_checked: ago(2), urls: [
+      u("p1-webgui-f5", "PRD", "production", "webgui", "f5", "https://prd-f5.example.invalid/gui", "UP", { cert_days: 412, cert_state: "OK", cert_flags: ["LEGACY_CA"] }),
+      u("p1-webgui-pas", "PRD", "production", "webgui", "instance_pas", "https://prd1.example.invalid:8443/sap/bc/gui/sap/its/webgui", "DOWN", { http_status: 503, fail_count: 4, last_up_at: ago(25), cert_days: 21, cert_state: "WARN" }),
+      u("p1-java", "PJV", "production", "java_start", "instance", "https://pjv.example.invalid:50001/startPage", "UP", { cert_days: 5, cert_state: "CRITICAL" }),
+      u("cc-rise", null, "production", "cloud_connector", "gclb", "https://cc.example.invalid/", "UNREACHABLE", { system: "CCP-RISE", category: "non_sap", error_type: "TIMEOUT", last_up_at: null, fail_count: 12 }),
+      u("sac-p", null, "production", "sac", "saas", "https://sac.example.invalid/", "UP", { system: "SAC-PROD", category: "non_sap" }),
+      u("q1-flp", "QAS", "simulation", "fiori", "instance_pas", "https://qas.example.invalid:8443/sap/bc/ui2/flp", "UNKNOWN", { stale: true, last_verdict: "UP", checked_at: ago(42) }),
+      u("q1-flp-http", "QAS", "simulation", "fiori", "instance_pas", "http://qas.example.invalid:8000/sap/bc/ui2/flp", "UP", { http_status: 200 }),
+      u("d1-cmc", null, "development", "bobj_cmc", "instance", "http://bod.example.invalid:8080/BOE/CMC", "UNREACHABLE", { system: "BOD", category: "bobj", error_type: "DNS_FAILED", last_up_at: null, fail_count: 30 }),
+      u("s1-webgui", "SBX", "sandbox", "webgui", "instance_pas", "https://sbx.example.invalid:8443/sap/bc/gui/sap/its/webgui", "UP", { cert_days: 120, cert_state: "OK" }),
+      u("sz-java", "SZJ", "service_zone", "java_nwa", "instance", "https://sz.example.invalid:50300/nwa", "UP", { cert_days: 900, cert_state: "OK" }),
+    ] };
+    window.fetch = (url, opts) => {
+      const body = opts && opts.method === "POST" ? { status: "started", job: DATA.job, execution: "x1" } : DATA;
+      return Promise.resolve({ ok: true, status: opts && opts.method === "POST" ? 202 : 200, json: () => Promise.resolve(JSON.parse(JSON.stringify(body))) });
+    };
+  </script>
+  <script>
+    (function () {
+      const s = document.createElement("script");
+      s.src = "../" + (window.PREVIEW_NEXT ? "next/" : "") + "urls.js?t=" + Date.now();
+      s.onload = () => window.UrlsApp.onShow();
+      document.body.appendChild(s);
+    })();
+  </script>
+</body>
+</html>

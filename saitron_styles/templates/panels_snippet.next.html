@@ -1,0 +1,19 @@
+<!-- Next level: only the certificate drawer changes in app/sapops/web/templates/index.html.
+     The menu buttons and the two panes stay exactly as in panels_snippet.html.
+     Load order: next/urls.css before next/certs.css (certs reuses pieces of urls.css). -->
+
+<!-- 3. Certificate detail drawer (end of <body>) -->
+  <!-- Slide-over: certificate details (Monitoring > Certificates, certs.js).
+       <dialog> + showModal(): focus stays inside, Esc closes, the page behind is inert, and the focus
+       returns to the row that opened it. closedby="any" adds "click outside closes"; commandfor /
+       command="close" close it without script. certs.js also closes it, so every browser is covered.
+       Same IDs as before: cert-panel, cert-panel-title, cert-panel-body, cert-panel-close. -->
+  <dialog id="cert-panel" class="drawer crt-drawer" closedby="any" aria-labelledby="cert-panel-title">
+    <div class="drawer-inner">
+      <div class="drawer-head">
+        <h2 id="cert-panel-title">Certificate</h2>
+        <button id="cert-panel-close" class="ghost close" type="button" commandfor="cert-panel" command="close" aria-label="Close">&times;</button>
+      </div>
+      <div id="cert-panel-body"></div>
+    </div>
+  </dialog>

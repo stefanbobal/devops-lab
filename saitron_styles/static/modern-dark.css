@@ -1,0 +1,242 @@
+/* =====================================================================================================
+   PROTOTYPE — "modern dark" overlay for Monitoring › Certificates and Monitoring › URLs.
+   CSS only: no change to certs.js / urls.js / markup / data contract. Active only when
+   <html class="modern" data-theme="dark">. Every newer feature has a fallback or sits behind @supports,
+   so an older browser simply shows today's dark theme.
+
+   Modern features used (all Baseline in current Chrome/Edge, Firefox, Safari unless noted):
+     1  OKLCH colours + relative colour syntax  oklch(from var(--x) l c h / .16)   (fallback: color-mix)
+     2  CSS nesting                                                            (Baseline 2023)
+     3  :has()  — row / section / tile highlighting from the state inside it  (Baseline 2023)
+     4  @starting-style + transition-behavior:allow-discrete — drawer slides in from display:none
+     5  @property — animated conic-gradient ring on the primary button / DOWN tile
+     6  @starting-style entrance — sections fade in on every render (scroll-driven view() was tried, dropped)
+     7  Container queries — summary/outlook stack by the panel width, not the window
+     8  interpolate-size + ::details-content — animated open/close of the "How" panels (Chrome/Edge 131+)
+     9  overflow: clip (sticky headers inside a clipped card), text-wrap: balance / pretty, tabular-nums,
+        color-scheme, accent-color, scrollbar-color, backdrop-filter, :focus-visible, prefers-reduced-motion
+   ===================================================================================================== */
+
+@property --m-angle { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+
+:root.modern[data-theme="dark"] {
+  color-scheme: dark;
+  accent-color: #3aa0ff;
+  scrollbar-color: #2c3a52 transparent;
+
+  /* fallbacks first (sRGB), OKLCH below */
+  --m-bg: #090d15;
+  --m-surface: rgba(20, 27, 40, .72);
+  --m-surface-2: rgba(28, 37, 54, .6);
+  --m-line: rgba(120, 140, 175, .16);
+  --m-line-strong: rgba(120, 140, 175, .28);
+  --m-fg: #e6edf7;
+  --m-muted: #93a3bb;
+  --m-accent: #4aa8ff;
+  --m-accent-2: #8b6cff;
+  --m-ok: #34d399;
+  --m-warn: #fbbf24;
+  --m-err: #fb6f6f;
+  --m-glow: 0 0 0 1px var(--m-line), 0 18px 40px -18px rgba(0, 0, 0, .7);
+
+  @supports (color: oklch(0 0 0)) {
+    --m-bg: oklch(0.15 0.02 260);
+    --m-surface: oklch(0.21 0.025 260 / .72);
+    --m-surface-2: oklch(0.25 0.03 260 / .55);
+    --m-line: oklch(0.75 0.03 260 / .14);
+    --m-line-strong: oklch(0.75 0.03 260 / .26);
+    --m-fg: oklch(0.94 0.01 250);
+    --m-muted: oklch(0.72 0.03 255);
+    --m-accent: oklch(0.73 0.15 245);
+    --m-accent-2: oklch(0.66 0.2 290);
+    --m-ok: oklch(0.8 0.16 160);
+    --m-warn: oklch(0.84 0.15 82);
+    --m-err: oklch(0.7 0.19 22);
+  }
+
+  /* feed the app's own variables so every existing rule picks the palette up */
+  --card: var(--m-surface);
+  --card-2: var(--m-surface-2);
+  --soft-bg: color-mix(in srgb, var(--m-fg) 6%, transparent);
+  --line: var(--m-line);
+  --card-border: var(--m-line);
+  --fg: var(--m-fg);
+  --muted: var(--m-muted);
+  --accent: var(--m-accent);
+  --ok: var(--m-ok);
+  --warn: var(--m-warn);
+  --err: var(--m-err);
+  --grad: linear-gradient(135deg, var(--m-accent), var(--m-accent-2));
+  --radius: 16px;
+
+  /* ---------- page: soft aurora mesh instead of a flat colour ---------- */
+  & body {
+    background:
+      radial-gradient(1100px 620px at 88% -12%, color-mix(in oklch, var(--m-accent) 26%, transparent), transparent 62%),
+      radial-gradient(900px 560px at -8% 108%, color-mix(in oklch, var(--m-accent-2) 20%, transparent), transparent 60%),
+      var(--m-bg);
+    background-attachment: fixed;
+    -webkit-font-smoothing: antialiased;
+  }
+  & h2, & h3 { text-wrap: balance; letter-spacing: -.01em; }
+  & p, & li { text-wrap: pretty; }
+
+  /* ---------- glass surfaces ---------- */
+  & .card, & .kpi, & .crt-sec, & .chk-toolbar, & .crt-pki {
+    background: var(--m-surface);
+    border: 1px solid var(--m-line);
+    box-shadow: var(--m-glow);
+    -webkit-backdrop-filter: blur(14px) saturate(1.2);
+    backdrop-filter: blur(14px) saturate(1.2);
+  }
+  & .mon-shell { background: color-mix(in srgb, var(--m-bg) 55%, transparent); overflow: clip; } /* clip ≠ hidden: no scroll container, so sticky headers work */
+  & .mon-nav { background: color-mix(in srgb, var(--m-fg) 3%, transparent); border-right-color: var(--m-line); }
+  & .mon-seg.active {
+    background: linear-gradient(90deg, color-mix(in oklch, var(--m-accent) 22%, transparent), transparent);
+    box-shadow: inset 3px 0 0 var(--m-accent);
+  }
+
+  /* ---------- KPI tiles: big gradient numbers, state-aware top edge via :has() ---------- */
+  & .kpis { gap: .9rem; }
+  & .kpi {
+    position: relative; overflow: hidden; border-radius: 16px; padding: .9rem 1rem;
+    transition: transform .25s ease, border-color .25s ease;
+    &::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 2px; background: var(--k, var(--m-accent)); opacity: .9; }
+    &:hover { transform: translateY(-2px); border-color: var(--m-line-strong); }
+    &:has(.k-ic.g) { --k: var(--m-ok); }
+    &:has(.k-ic.r) { --k: var(--m-err); }
+    &:has(.k-ic.o) { --k: var(--m-warn); }
+    & .k-val {
+      font-size: 2rem; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums;
+      background: linear-gradient(180deg, var(--m-fg), color-mix(in oklch, var(--k, var(--m-accent)) 70%, var(--m-fg)));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    & .k-ic { border-radius: 10px; }
+  }
+
+  /* ---------- status pills: dot + tint; DOWN/RED pulses (reduced-motion aware) ---------- */
+  & .pill {
+    --p: var(--m-muted);
+    gap: .28rem; padding: .14rem .45rem .14rem .38rem; letter-spacing: 0;
+    color: var(--p);
+    background: color-mix(in srgb, var(--p) 14%, transparent);
+    border: 1px solid color-mix(in srgb, var(--p) 28%, transparent);
+    &::before { content: ""; inline-size: .36rem; block-size: .36rem; border-radius: 50%; background: currentColor; flex: none; }
+    &.ok { --p: var(--m-ok); }
+    &.warn { --p: var(--m-warn); }
+    &.err { --p: var(--m-err); }
+    &.err::before { box-shadow: 0 0 0 0 currentColor; animation: m-pulse 1.8s ease-out infinite; }
+  }
+  @supports (color: oklch(from red l c h)) {
+    & .pill { background: oklch(from var(--p) l c h / .14); border-color: oklch(from var(--p) l c h / .3); }
+  }
+  & .badge { border-radius: 999px; }
+
+  /* ---------- tables: sticky headers, calm rows, state stripe via :has() ---------- */
+  & table.mini {
+    border-collapse: separate; border-spacing: 0;
+    & th {
+      position: sticky; top: 0; z-index: 1;
+      background: color-mix(in srgb, var(--m-bg) 80%, transparent);
+      -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+      font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: var(--m-muted);
+      border-bottom: 1px solid var(--m-line-strong);
+    }
+    & td { border-bottom: 1px solid var(--m-line); transition: background-color .15s ease; }
+    & tbody tr:hover td { background: color-mix(in srgb, var(--m-accent) 7%, transparent); }
+    & tr:has(> td:first-child .pill.err) > td:first-child { box-shadow: inset 3px 0 0 var(--m-err); }
+    & tr:has(> td:first-child .pill.warn) > td:first-child { box-shadow: inset 3px 0 0 var(--m-warn); }
+  }
+  & .chk-days, & .crt-val, & td { font-variant-numeric: tabular-nums; }
+  & .chk-mono, & .url-link a { font-family: "Cascadia Code", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+  /* ---------- certificate sections: red/amber accent on the card when it contains a problem ---------- */
+  & .crt-sec {
+    border-radius: 18px; padding: .9rem 1rem;
+    &:has(.pill.err) { border-color: color-mix(in srgb, var(--m-err) 40%, var(--m-line)); }
+    &:has(.pill.err) .crt-sec-head h3::after { content: " \2022"; color: var(--m-err); }
+  }
+  & .chk-env { color: var(--m-fg); letter-spacing: .08em; }
+
+  /* ---------- filter chips & inputs ---------- */
+  & .chk-chip {
+    background: transparent; border-color: var(--m-line-strong); transition: all .2s ease;
+    &:hover { color: var(--m-fg); border-color: var(--m-accent); }
+    &.active { color: var(--m-fg); border-color: transparent; background: var(--grad); box-shadow: 0 6px 18px -8px var(--m-accent); }
+  }
+  & input[type=search], & select, & .url-kind {
+    background: color-mix(in srgb, var(--m-bg) 70%, transparent); border: 1px solid var(--m-line-strong); color: var(--m-fg);
+    border-radius: 10px;
+  }
+  & :focus-visible { outline: 2px solid var(--m-accent); outline-offset: 2px; border-radius: 8px; }
+
+  /* ---------- primary button: animated conic ring (@property) ---------- */
+  & button.primary {
+    position: relative; border-radius: 12px; isolation: isolate;
+    box-shadow: 0 10px 26px -12px var(--m-accent);
+    &::after {
+      content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 1px; z-index: -1;
+      background: conic-gradient(from var(--m-angle), var(--m-accent), var(--m-accent-2), var(--m-accent));
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor; mask-composite: exclude;
+      animation: m-spin 6s linear infinite;
+    }
+  }
+
+  /* ---------- expiry outlook: glowing rounded stacks ---------- */
+  & .crt-bars { height: 170px; gap: 8px; }
+  & .crt-stack { max-width: 30px; border-bottom: 1px solid var(--m-line-strong); }
+  & .crt-seg { border-radius: 6px; margin-top: 2px; transition: filter .2s ease; }
+  & .crt-seg.red { background: linear-gradient(180deg, var(--m-err), color-mix(in oklch, var(--m-err) 60%, black)); box-shadow: 0 0 18px -4px var(--m-err); }
+  & .crt-seg.amber { background: linear-gradient(180deg, var(--m-warn), color-mix(in oklch, var(--m-warn) 60%, black)); box-shadow: 0 0 18px -6px var(--m-warn); }
+  & .crt-seg.blue { background: linear-gradient(180deg, var(--m-accent), color-mix(in oklch, var(--m-accent) 55%, black)); }
+  & .crt-col:hover .crt-seg { filter: brightness(1.25); }
+
+  /* ---------- drawer: slides in from display:none (@starting-style) ---------- */
+  & .drawer {
+    background: rgba(3, 6, 12, .55);
+    -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+    & .drawer-inner {
+      background: color-mix(in srgb, var(--m-bg) 96%, var(--m-accent) 4%); /* must sum to 100 % or it turns translucent */
+      border-left: 1px solid var(--m-line-strong);
+      box-shadow: -30px 0 60px -20px rgba(0, 0, 0, .8);
+      transition: transform .32s cubic-bezier(.2, .8, .2, 1), opacity .32s ease;
+      @starting-style { transform: translateX(48px); opacity: 0; }
+    }
+  }
+
+  /* ---------- "How it works" <details>: animated height ---------- */
+  & .chk-how {
+    border-style: solid; border-color: var(--m-line);
+    interpolate-size: allow-keywords;
+    &::details-content { block-size: 0; overflow: hidden; transition: block-size .3s ease, content-visibility .3s allow-discrete; }
+    &[open]::details-content { block-size: auto; }
+  }
+
+  /* ---------- layout by panel width, not window width (container queries) ---------- */
+  & .mon-main { container: panel / inline-size; }
+}
+
+@container panel (max-width: 1000px) {
+  :root.modern[data-theme="dark"] .crt-top { grid-template-columns: 1fr; }
+}
+
+/* ---------- entrance on render (@starting-style): sections fade in when the JS (re)renders them.
+   A scroll-driven version (animation-timeline: view()) was tried and dropped: content below the fold stays
+   invisible until scrolled, which is wrong for a monitoring screen. ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  :root.modern[data-theme="dark"] :is(.crt-sec, .chk-table, .kpi, .crt-card) {
+    transition: opacity .35s ease, translate .35s ease, transform .25s ease, border-color .25s ease;
+    @starting-style { opacity: 0; translate: 0 8px; }
+  }
+} { to { --m-angle: 360deg; } }
+@keyframes m-pulse {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 60%, transparent); }
+  100% { box-shadow: 0 0 0 .45rem transparent; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root.modern[data-theme="dark"] *,
+  :root.modern[data-theme="dark"] *::before,
+  :root.modern[data-theme="dark"] *::after { animation: none !important; transition: none !important; }
+}

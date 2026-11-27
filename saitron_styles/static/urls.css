@@ -1,0 +1,9 @@
+/* Monitoring > URLs pane (urls.js) - reuses the chk-* classes of checks.css; url-* only for what differs. */
+.url-cnt { opacity: .7; font-variant-numeric: tabular-nums; margin-left: .15rem; }
+.url-kind { padding: .33rem .5rem; border: 1px solid var(--line); border-radius: 8px; background: var(--card);
+  color: var(--fg); font-size: .78rem; }
+table.mini.url-table td.url-link a { color: var(--accent); text-decoration: none; }
+table.mini.url-table td.url-link a:hover { text-decoration: underline; }
+.url-down { font-size: .72rem; }
+table.mini.url-table td.url-wrap { white-space: normal; line-height: 1.5; }
+table.mini.url-table td.url-wrap .pill { margin-top: .1rem; }
