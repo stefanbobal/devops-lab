@@ -1,0 +1,2172 @@
+[
+  {
+    "case_id": "C13-2026Q1",
+    "company_id": "C13",
+    "company": "Hanácké pekárny a.s.",
+    "period": "2026Q1",
+    "test_date": "2026-03-31",
+    "case_type": "custom_definition",
+    "statement": "companies/C13/vykaz_2026Q1.md",
+    "context_documents": [
+      "companies/C13/smlouva.md",
+      "companies/C13/poznamky_analytika.md"
+    ],
+    "expected_items": {
+      "revenue": {
+        "value": 2008604,
+        "page": 1
+      },
+      "ebit": {
+        "value": 146532,
+        "page": 1
+      },
+      "depreciation": {
+        "value": 93550,
+        "page": 1
+      },
+      "restructuring": {
+        "value": 25272,
+        "page": 1
+      },
+      "asset_sale_gain": {
+        "value": 12636,
+        "page": 1
+      },
+      "interest_expense": {
+        "value": 33279,
+        "page": 1
+      },
+      "bank_loans": {
+        "value": 569313,
+        "page": 2
+      },
+      "bonds": {
+        "value": 243992,
+        "page": 2
+      },
+      "cash": {
+        "value": 55151,
+        "page": 2
+      },
+      "reported_ebitda": {
+        "value": 265354,
+        "page": 1
+      }
+    },
+    "expected_spec": {
+      "ebitda": {
+        "add": [
+          "restructuring"
+        ],
+        "subtract": [
+          "asset_sale_gain"
+        ],
+        "citation": {
+          "document": "smlouva.md",
+          "article": "9",
+          "page": 5
+        }
+      },
+      "debt": {
+        "include": [
+          "bank_loans",
+          "bonds"
+        ],
+        "deduct_cash": true,
+        "citation": {
+          "document": "smlouva.md",
+          "article": "9",
+          "page": 5
+        }
+      },
+      "covenants": [
+        {
+          "id": "leverage",
+          "ratio": "debt_to_ebitda",
+          "limit": 3.6,
+          "citation": {
+            "document": "smlouva.md",
+            "article": "12",
+            "page": 6
+          }
+        }
+      ],
+      "waivers": []
+    },
+    "expected_result": {
+      "status": "no_breach",
+      "reasons": [],
+      "covenants": [
+        {
+          "id": "leverage",
+          "ratio": "debt_to_ebitda",
+          "kind": "max",
+          "limit": "3.6",
+          "value": "3.00",
+          "breached": false,
+          "waived": false,
+          "near_limit": false
+        }
+      ],
+      "values": {
+        "ebitda": "252718",
+        "debt": "758154"
+      }
+    },
+    "expected_status": "no_breach",
+    "generic_rule_status": "no_breach",
+    "fails_without_contract": false,
+    "injection": null
+  },
+  {
+    "case_id": "C13-2026Q2",
+    "company_id": "C13",
+    "company": "Hanácké pekárny a.s.",
+    "period": "2026Q2",
+    "test_date": "2026-06-30",
+    "case_type": "custom_definition",
+    "statement": "companies/C13/vykaz_2026Q2.md",
+    "context_documents": [
+      "companies/C13/smlouva.md",
+      "companies/C13/poznamky_analytika.md"
+    ],
+    "expected_items": {
+      "revenue": {
+        "value": 2775377,
+        "page": 1
+      },
+      "ebit": {
+        "value": 190877,
+        "page": 1
+      },
+      "depreciation": {
+        "value": 104912,
+        "page": 1
+      },
+      "restructuring": {
+        "value": 69598,
+        "page": 1
+      },
+      "asset_sale_gain": {
+        "value": 17399,
+        "page": 1
+      },
+      "interest_expense": {
+        "value": 45732,
+        "page": 1
+      },
+      "bank_loans": {
+        "value": 959269,
+        "page": 2
+      },
+      "bonds": {
+        "value": 411115,
+        "page": 2
+      },
+      "cash": {
+        "value": 48030,
+        "page": 2
+      },
+      "reported_ebitda": {
+        "value": 365387,
+        "page": 1
+      }
+    },
+    "expected_spec": {
+      "ebitda": {
+        "add": [
+          "restructuring"
+        ],
+        "subtract": [
+          "asset_sale_gain"
+        ],
+        "citation": {
+          "document": "smlouva.md",
+          "article": "9",
+          "page": 5
+        }
+      },
+      "debt": {
+        "include": [
+          "bank_loans",
+          "bonds"
+        ],
+        "deduct_cash": true,
+        "citation": {
+          "document": "smlouva.md",
+          "article": "9",
+          "page": 5
+        }
+      },
+      "covenants": [
+        {
+          "id": "leverage",
+          "ratio": "debt_to_ebitda",
+          "limit": 3.6,
+          "citation": {
+            "document": "smlouva.md",
+            "article": "12",
+            "page": 6
+          }
+        }
+      ],
+      "waivers": []
+    },
+    "expected_result": {
+      "status": "breach",
+      "reasons": [],
+      "covenants": [
+        {
+          "id": "leverage",
+          "ratio": "debt_to_ebitda",
+          "kind": "max",
+          "limit": "3.6",
+          "value": "3.80",
+          "breached": true,
+          "waived": false,
+          "near_limit": false
+        }
+      ],
+      "values": {
+        "ebitda": "347988",
+        "debt": "1322354"
+      }
+    },
+    "expected_status": "breach",
+    "generic_rule_status": "breach",
+    "fails_without_contract": false,
+    "injection": null
+  },
+  {
+    "case_id": "C13-2026Q3",
+    "company_id": "C13",
+    "company": "Hanácké pekárny a.s.",
+    "period": "2026Q3",
+    "test_date": "2026-09-30",
+    "case_type": "custom_definition",
+    "statement": "companies/C13/vykaz_2026Q3.md",
+    "context_documents": [
+      "companies/C13/smlouva.md",
+      "companies/C13/poznamky_analytika.md"
+    ],
+    "expected_items": {
+      "revenue": {
+        "value": 2770030,
+        "page": 1
+      },
+      "ebit": {
+        "value": 234501,
+        "page": 1
+      },
+      "depreciation": {
+        "value": 126883,
+        "page": 1
+      },
+      "restructuring": {
+        "value": 60908,
+        "page": 1
+      },
+      "asset_sale_gain": {
+        "value": 16242,
+        "page": 1
+      },
+      "interest_expense": {
+        "value": 88238,
+        "page": 1
+      },
+      "bank_loans": {
+        "value": 941171,
+        "page": 2
+      },
+      "bonds": {
+        "value": 403359,
+        "page": 2
+      },
+      "cash": {
+        "value": 45170,
+        "page": 2
+      },
+      "reported_ebitda": {
+        "value": 422292,
+        "page": 1
+      }
+    },
+    "expected_spec": {
+      "ebitda": {
+        "add": [
+          "restructuring"
+        ],
+        "subtract": [
+          "asset_sale_gain"
+        ],
+        "citation": {
+          "document": "smlouva.md",
+          "article": "9",
+          "page": 5
+        }
+      },
+      "debt": {
+        "include": [
+          "bank_loans",
+          "bonds"
+        ],
+        "deduct_cash": true,
+        "citation": {
+          "document": "smlouva.md",
+          "article": "9",
+          "page": 5
+        }
+      },
+      "covenants": [
+        {
+          "id": "leverage",
+          "ratio": "debt_to_ebitda",
+          "limit": 3.6,
+          "citation": {
+            "document": "smlouva.md",
+            "article": "12",
+            "page": 6
+          }
+        }
+      ],
+      "waivers": []
+    },
+    "expected_result": {
+      "status": "no_breach",
+      "reasons": [],
+      "covenants": [
+        {
+          "id": "leverage",
+          "ratio": "debt_to_ebitda",
+          "kind": "max",
+          "limit": "3.6",
+          "value": "3.20",
+          "breached": false,
+          "waived": false,
+          "near_limit": false
+        }
+      ],
+      "values": {
+        "ebitda": "406050",
+        "debt": "1299360"
+      }
+    },
+    "expected_status": "no_breach",
+    "generic_rule_status": "no_breach",
+    "fails_without_contract": false,
+    "injection": null
+  },
+  {
+    "case_id": "C14-2026Q1",
+    "company_id": "C14",
+    "company": "Vysočina Agro Trade s.r.o.",
+    "period": "2026Q1",
+    "test_date": "2026-03-31",
+    "case_type": "step_down",
+    "statement": "companies/C14/vykaz_2026Q1.md",
+    "context_documents": [
+      "companies/C14/smlouva.md",
+      "companies/C14/poznamky_analytika.md"
+    ],
+    "expected_items": {
+      "revenue": {
+        "value": 3487421,
+        "page": 1
+      },
+      "ebit": {
+        "value": 355469,
+        "page": 1
+      },
+      "depreciation": {
+        "value": 161031,
+        "page": 1
+      },
+      "restructuring": {
+        "value": 4669,
+        "page": 1
+      },
+      "asset_sale_gain": {
+        "value": 1797,
+        "page": 1
+      },
+      "interest_expense": {
+        "value": 62150,
+        "page": 1
+      },
+      "bank_loans": {
+        "value": 2169802,
+        "page": 2
+      },
+      "bonds": {
+        "value": 0,
+        "page": 2
+      },
+      "cash": {
+        "value": 103802,
+        "page": 2
+      },
+      "reported_ebitda": {
+        "value": 521169,
+        "page": 1
+      }
+    },
+    "expected_spec": {
+      "ebitda": {
+        "add": [],
+        "subtract": [],
+        "citation": {
+          "document": "smlouva.md",
+          "article": "2",
+          "page": 1
+        }
+      },
+      "debt": {
+        "include": [
+          "bank_loans",
+          "bonds"
+        ],
+        "deduct_cash": true,
+        "citation": {
+          "document": "smlouva.md",
+          "article": "2",
+          "page": 1
+        }
+      },
+      "covenants": [
+        {
+          "id": "leverage",
+          "ratio": "debt_to_ebitda",
+          "limit": 4.25,
+          "citation": {
+            "document": "smlouva.md",
+            "article": "11",
+            "page": 6
+          }
+        }
+      ],
+      "waivers": []
+    },
+    "expected_result": {
+      "status": "no_breach",
+      "reasons": [],
+      "covenants": [
+        {
+          "id": "leverage",
+          "ratio": "debt_to_ebitda",
+          "kind": "max",
+          "limit": "4.25",
+          "value": "4.00",
+          "breached": false,
+          "waived": false,
+          "near_limit": false
+        }
+      ],
+      "values": {
+        "ebitda": "516500",
+        "debt": "2066000"
+      }
+    },
+    "expected_status": "no_breach",
+    "generic_rule_status": "human_review",
+    "fails_without_contract": true,
+    "injection": null
+  },
+  {
+    "case_id": "C14-2026Q2",
+    "company_id": "C14",
+    "company": "Vysočina Agro Trade s.r.o.",
+    "period": "2026Q2",
+    "test_date": "2026-06-30",
+    "case_type": "step_down",
+    "statement": "companies/C14/vykaz_2026Q2.md",
+    "context_documents": [
+      "companies/C14/smlouva.md",
+      "companies/C14/poznamky_analytika.md"
+    ],
+    "expected_items": {
+      "revenue": {
+        "value": 2044599,
+        "page": 1
+      },
+      "ebit": {
+        "value": 174021,
+        "page": 1
+      },
+      "depreciation": {
+        "value": 80181,
+        "page": 1
+      },
+      "restructuring": {
+        "value": 5720,
+        "page": 1
+      },
+      "asset_sale_gain": {
+        "value": 4047,
+        "page": 1
+      },
+      "interest_expense": {
+        "value": 37023,
+        "page": 1
+      },
+      "bank_loans": {
+        "value": 1040012,
+        "page": 2
+      },
+      "bonds": {
+        "value": 0,
+        "page": 2
+      },
+      "cash": {
+        "value": 48624,
+        "page": 2
+      },
+      "reported_ebitda": {
+        "value": 259922,
+        "page": 1
+      }
+    },
+    "expected_spec": {
+      "ebitda": {
+        "add": [],
+        "subtract": [],
+        "citation": {
+          "document": "smlouva.md",
+          "article": "2",
+          "page": 1
+        }
+      },
+      "debt": {
+        "include": [
+          "bank_loans",
+          "bonds"
+        ],
+        "deduct_cash": true,
+        "citation": {
+          "document": "smlouva.md",
+          "article": "2",
+          "page": 1
+        }
+      },
+      "covenants": [
+        {
+          "id": "leverage",
+          "ratio": "debt_to_ebitda",
+          "limit": 3.75,
+          "citation": {
+            "document": "smlouva.md",
+            "article": "11",
+            "page": 6
+          }
+        }
+      ],
+      "waivers": []
+    },
+    "expected_result": {
+      "status": "breach",
+      "reasons": [],
+      "covenants": [
+        {
+          "id": "leverage",
+          "ratio": "debt_to_ebitda",
+          "kind": "max",
+          "limit": "3.75",
+          "value": "3.90",
+          "breached": true,
+          "waived": false,
+          "near_limit": false
+        }
+      ],
+      "values": {
+        "ebitda": "254202",
+        "debt": "991388"
+      }
+    },
+    "expected_status": "breach",
+    "generic_rule_status": "no_breach",
+    "fails_without_contract": true,
+    "injection": null
+  },
+  {
+    "case_id": "C14-2026Q3",
+    "company_id": "C14",
+    "company": "Vysočina Agro Trade s.r.o.",
+    "period": "2026Q3",
+    "test_date": "2026-09-30",
+    "case_type": "step_down",
+    "statement": "companies/C14/vykaz_2026Q3.md",
+    "context_documents": [
+      "companies/C14/smlouva.md",
+      "companies/C14/poznamky_analytika.md"
+    ],
+    "expected_items": {
+      "revenue": {
+        "value": 5903858,
+        "page": 1
+      },
+      "ebit": {
+        "value": 342794,
+        "page": 1
+      },
+      "depreciation": {
+        "value": 234018,
+        "page": 1
+      },
+      "restructuring": {
+        "value": 12087,
+        "page": 1
+      },
+      "asset_sale_gain": {
+        "value": 7836,
+        "page": 1
+      },
+      "interest_expense": {
+        "value": 109531,
+        "page": 1
+      },
+      "bank_loans": {
+        "value": 2099701,
+        "page": 2
+      },
+      "bonds": {
+        "value": 0,
+        "page": 2
+      },
+      "cash": {
+        "value": 80859,
+        "page": 2
+      },
+      "reported_ebitda": {
+        "value": 588899,
+        "page": 1
+      }
+    },
+    "expected_spec": {
+      "ebitda": {
+        "add": [],
+        "subtract": [],
+        "citation": {
+          "document": "smlouva.md",
+          "article": "2",
+          "page": 1
+        }
+      },
+      "debt": {
+        "include": [
+          "bank_loans",
+          "bonds"
+        ],
+        "deduct_cash": true,
+        "citation": {
+          "document": "smlouva.md",
+          "article": "2",
+          "page": 1
+        }
+      },
+      "covenants": [
+        {
+          "id": "leverage",
+          "ratio": "debt_to_ebitda",
+          "limit": 3.75,
+          "citation": {
+            "document": "smlouva.md",
+            "article": "11",
+            "page": 6
+          }
+        }
+      ],
+      "waivers": []
+    },
+    "expected_result": {
+      "status": "no_breach",
+      "reasons": [],
+      "covenants": [
+        {
+          "id": "leverage",
+          "ratio": "debt_to_ebitda",
+          "kind": "max",
+          "limit": "3.75",
+          "value": "3.50",
+          "breached": false,
+          "waived": false,
+          "near_limit": false
+        }
+      ],
+      "values": {
+        "ebitda": "576812",
+        "debt": "2018842"
+      }
+    },
+    "expected_status": "no_breach",
+    "generic_rule_status": "no_breach",
+    "fails_without_contract": false,
+    "injection": null
+  },
+  {
+    "case_id": "C15-2026Q1",
+    "company_id": "C15",
+    "company": "Karlovarské lázně a.s.",
+    "period": "2026Q1",
+    "test_date": "2026-03-31",
+    "case_type": "two_covenants",
+    "statement": "companies/C15/vykaz_2026Q1.md",
+    "context_documents": [
+      "companies/C15/smlouva.md",
+      "companies/C15/poznamky_analytika.md"
+    ],
+    "expected_items": {
+      "revenue": {
+        "value": 1462248,
+        "page": 1
+      },
+      "ebit": {
+        "value": 158600,
+        "page": 1
+      },
+      "depreciation": {
+        "value": 71188,
+        "page": 1
+      },
+      "restructuring": {
+        "value": 2180,
+        "page": 1
+      },
+      "asset_sale_gain": {
+        "value": 659,
+        "page": 1
+      },
+      "interest_expense": {
+        "value": 57447,
+        "page": 1
+      },
+      "bank_loans": {
+        "value": 723384,
+        "page": 2
+      },
+      "bonds": {
+        "value": 0,
+        "page": 2
+      },
+      "cash": {
+        "value": 34020,
+        "page": 2
+      },
+      "reported_ebitda": {
+        "value": 231968,
+        "page": 1
+      }
+    },
+    "expected_spec": {
+      "ebitda": {
+        "add": [],
+        "subtract": [],
+        "citation": {
+          "document": "smlouva.md",
+          "article": "3",
+          "page": 2
+        }
+      },
+      "debt": {
+        "include": [
+          "bank_loans",
+          "bonds"
+        ],
+        "deduct_cash": true,
+        "citation": {
+          "document": "smlouva.md",
+          "article": "3",
+          "page": 2
+        }
+      },
+      "covenants": [
+        {
+          "id": "leverage",
+          "ratio": "debt_to_ebitda",
+          "limit": 3.5,
+          "citation": {
+            "document": "smlouva.md",
+            "article": "5",
+            "page": 3
+          }
+        },
+        {
+          "id": "icr",
+          "ratio": "interest_cover",
+          "limit": 3.5,
+          "citation": {
+            "document": "smlouva.md",
+            "article": "5",
+            "page": 3
+          }
+        }
+      ],
+      "waivers": []
+    },
+    "expected_result": {
+      "status": "no_breach",
+      "reasons": [],
+      "covenants": [
+        {
+          "id": "leverage",
+          "ratio": "debt_to_ebitda",
+          "kind": "max",
+          "limit": "3.5",
+          "value": "3.00",
+          "breached": false,
+          "waived": false,
+          "near_limit": false
+        },
+        {
+          "id": "icr",
+          "ratio": "interest_cover",
+          "kind": "min",
+          "limit": "3.5",
+          "value": "4.00",
+          "breached": false,
+          "waived": false,
+          "near_limit": false
+        }
+      ],
+      "values": {
+        "ebitda": "229788",
+        "debt": "689364",
+        "interest_expense": "57447"
+      }
+    },
+    "expected_status": "no_breach",
+    "generic_rule_status": "no_breach",
+    "fails_without_contract": false,
+    "injection": null
+  },
+  {
+    "case_id": "C15-2026Q2",
+    "company_id": "C15",
+    "company": "Karlovarské lázně a.s.",
+    "period": "2026Q2",
+    "test_date": "2026-06-30",
+    "case_type": "two_covenants",
+    "statement": "companies/C15/vykaz_2026Q2.md",
+    "context_documents": [
+      "companies/C15/smlouva.md",
+      "companies/C15/poznamky_analytika.md"
+    ],
+    "expected_items": {
+      "revenue": {
+        "value": 3409695,
+        "page": 1
+      },
+      "ebit": {
+        "value": 222043,
+        "page": 1
+      },
+      "depreciation": {
+        "value": 131849,
+        "page": 1
+      },
+      "restructuring": {
+        "value": 13086,
+        "page": 1
+      },
+      "asset_sale_gain": {
+        "value": 4664,
+        "page": 1
+      },
+      "interest_expense": {
+        "value": 117964,
+        "page": 1
+      },
+      "bank_loans": {
+        "value": 1180664,
+        "page": 2
+      },
+      "bonds": {
+        "value": 0,
+        "page": 2
+      },
+      "cash": {
+        "value": 48210,
+        "page": 2
+      },
+      "reported_ebitda": {
+        "value": 366978,
+        "page": 1
+      }
+    },
+    "expected_spec": {
+      "ebitda": {
+        "add": [],
+        "subtract": [],
+        "citation": {
+          "document": "smlouva.md",
+          "article": "3",
+          "page": 2
+        }
+      },
+      "debt": {
+        "include": [
+          "bank_loans",
+          "bonds"
+        ],
+        "deduct_cash": true,
+        "citation": {
+          "document": "smlouva.md",
+          "article": "3",
+          "page": 2
+        }
+      },
+      "covenants": [
+        {
+          "id": "leverage",
+          "ratio": "debt_to_ebitda",
+          "limit": 3.5,
+          "citation": {
+            "document": "smlouva.md",
+            "article": "5",
+            "page": 3
+          }
+        },
+        {
+          "id": "icr",
+          "ratio": "interest_cover",
+          "limit": 3.5,
+          "citation": {
+            "document": "smlouva.md",
+            "article": "5",
+            "page": 3
+          }
+        }
+      ],
+      "waivers": []
+    },
+    "expected_result": {
+      "status": "breach",
+      "reasons": [],
+      "covenants": [
+        {
+          "id": "leverage",
+          "ratio": "debt_to_ebitda",
+          "kind": "max",
+          "limit": "3.5",
+          "value": "3.20",
+          "breached": false,
+          "waived": false,
+          "near_limit": false
+        },
+        {
+          "id": "icr",
+          "ratio": "interest_cover",
+          "kind": "min",
+          "limit": "3.5",
+          "value": "3.00",
+          "breached": true,
+          "waived": false,
+          "near_limit": false
+        }
+      ],
+      "values": {
+        "ebitda": "353892",
+        "debt": "1132454",
+        "interest_expense": "117964"
+      }
+    },
+    "expected_status": "breach",
+    "generic_rule_status": "no_breach",
+    "fails_without_contract": true,
+    "injection": null
+  },
+  {
+    "case_id": "C15-2026Q3",
+    "company_id": "C15",
+    "company": "Karlovarské lázně a.s.",
+    "period": "2026Q3",
+    "test_date": "2026-09-30",
+    "case_type": "two_covenants",
+    "statement": "companies/C15/vykaz_2026Q3.md",
+    "context_documents": [
+      "companies/C15/smlouva.md",
+      "companies/C15/poznamky_analytika.md"
+    ],
+    "expected_items": {
+      "revenue": {
+        "value": 5059127,
+        "page": 1
+      },
+      "ebit": {
+        "value": 344966,
+        "page": 1
+      },
+      "depreciation": {
+        "value": 208184,
+        "page": 1
+      },
+      "restructuring": {
+        "value": 14896,
+        "page": 1
+      },
+      "asset_sale_gain": {
+        "value": 13932,
+        "page": 1
+      },
+      "interest_expense": {
+        "value": 131702,
+        "page": 1
+      },
+      "bank_loans": {
+        "value": 2165637,
+        "page": 2
+      },
+      "bonds": {
+        "value": 0,
+        "page": 2
+      },
+      "cash": {
+        "value": 63667,
+        "page": 2
+      },
+      "reported_ebitda": {
+        "value": 568046,
+        "page": 1
+      }
+    },
+    "expected_spec": {
+      "ebitda": {
+        "add": [],
+        "subtract": [],
+        "citation": {
+          "document": "smlouva.md",
+          "article": "3",
+          "page": 2
+        }
+      },
+      "debt": {
+        "include": [
+          "bank_loans",
+          "bonds"
+        ],
+        "deduct_cash": true,
+        "citation": {
+          "document": "smlouva.md",
+          "article": "3",
+          "page": 2
+        }
+      },
+      "covenants": [
+        {
+          "id": "leverage",
+          "ratio": "debt_to_ebitda",
+          "limit": 3.5,
+          "citation": {
+            "document": "smlouva.md",
+            "article": "5",
+            "page": 3
+          }
+        },
+        {
+          "id": "icr",
+          "ratio": "interest_cover",
+          "limit": 3.5,
+          "citation": {
+            "document": "smlouva.md",
+            "article": "5",
+            "page": 3
+          }
+        }
+      ],
+      "waivers": []
+    },
+    "expected_result": {
+      "status": "breach",
+      "reasons": [],
+      "covenants": [
+        {
+          "id": "leverage",
+          "ratio": "debt_to_ebitda",
+          "kind": "max",
+          "limit": "3.5",
+          "value": "3.80",
+          "breached": true,
+          "waived": false,
+          "near_limit": false
+        },
+        {
+          "id": "icr",
+          "ratio": "interest_cover",
+          "kind": "min",
+          "limit": "3.5",
+          "value": "4.20",
+          "breached": false,
+          "waived": false,
+          "near_limit": false
+        }
+      ],
+      "values": {
+        "ebitda": "553150",
+        "debt": "2101970",
+        "interest_expense": "131702"
+      }
+    },
+    "expected_status": "breach",
+    "generic_rule_status": "no_breach",
+    "fails_without_contract": true,
+    "injection": null
+  },
+  {
+    "case_id": "C16-2026Q1",
+    "company_id": "C16",
+    "company": "Pardubické elektro s.r.o.",
+    "period": "2026Q1",
+    "test_date": "2026-03-31",
+    "case_type": "amendment",
+    "statement": "companies/C16/vykaz_2026Q1.md",
+    "context_documents": [
+      "companies/C16/smlouva.md",
+      "companies/C16/dodatek_1.md",
+      "companies/C16/poznamky_analytika.md"
+    ],
+    "expected_items": {
+      "revenue": {
+        "value": 4864407,
+        "page": 1
+      },
+      "ebit": {
+        "value": 294287,
+        "page": 1
+      },
+      "depreciation": {
+        "value": 218113,
+        "page": 1
+      },
+      "restructuring": {
+        "value": 14886,
+        "page": 1
+      },
+      "asset_sale_gain": {
+        "value": 1630,
+        "page": 1
+      },
+      "interest_expense": {
+        "value": 90613,
+        "page": 1
+      },
+      "bank_loans": {
+        "value": 1618402,
+        "page": 2
+      },
+      "bonds": {
+        "value": 0,
+        "page": 2
+      },
+      "cash": {
+        "value": 81202,
+        "page": 2
+      },
+      "reported_ebitda": {
+        "value": 527286,
+        "page": 1
+      }
+    },
+    "expected_spec": {
+      "ebitda": {
+        "add": [],
+        "subtract": [],
+        "citation": {
+          "document": "smlouva.md",
+          "article": "4",
+          "page": 2
+        }
+      },
+      "debt": {
+        "include": [
+          "bank_loans",
+          "bonds"
+        ],
+        "deduct_cash": true,
+        "citation": {
+          "document": "smlouva.md",
+          "article": "4",
+          "page": 2
+        }
+      },
+      "covenants": [
+        {
+          "id": "leverage",
+          "ratio": "debt_to_ebitda",
+          "limit": 3.25,
+          "citation": {
+            "document": "smlouva.md",
+            "article": "5",
+            "page": 3
+          }
+        }
+      ],
+      "waivers": []
+    },
+    "expected_result": {
+      "status": "no_breach",
+      "reasons": [],
+      "covenants": [
+        {
+          "id": "leverage",
+          "ratio": "debt_to_ebitda",
+          "kind": "max",
+          "limit": "3.25",
+          "value": "3.00",
+          "breached": false,
+          "waived": false,
+          "near_limit": false
+        }
+      ],
+      "values": {
+        "ebitda": "512400",
+        "debt": "1537200"
+      }
+    },
+    "expected_status": "no_breach",
+    "generic_rule_status": "no_breach",
+    "fails_without_contract": false,
+    "injection": null
+  },
+  {
+    "case_id": "C16-2026Q2",
+    "company_id": "C16",
+    "company": "Pardubické elektro s.r.o.",
+    "period": "2026Q2",
+    "test_date": "2026-06-30",
+    "case_type": "amendment",
+    "statement": "companies/C16/vykaz_2026Q2.md",
+    "context_documents": [
+      "companies/C16/smlouva.md",
+      "companies/C16/dodatek_1.md",
+      "companies/C16/poznamky_analytika.md"
+    ],
+    "expected_items": {
+      "revenue": {
+        "value": 4235406,
+        "page": 1
+      },
+      "ebit": {
+        "value": 380322,
+        "page": 1
+      },
+      "depreciation": {
+        "value": 197660,
+        "page": 1
+      },
+      "restructuring": {
+        "value": 22432,
+        "page": 1
+      },
+      "asset_sale_gain": {
+        "value": 6636,
+        "page": 1
+      },
+      "interest_expense": {
+        "value": 82825,
+        "page": 1
+      },
+      "bank_loans": {
+        "value": 2161456,
+        "page": 2
+      },
+      "bonds": {
+        "value": 0,
+        "page": 2
+      },
+      "cash": {
+        "value": 80721,
+        "page": 2
+      },
+      "reported_ebitda": {
+        "value": 600414,
+        "page": 1
+      }
+    },
+    "expected_spec": {
+      "ebitda": {
+        "add": [],
+        "subtract": [],
+        "citation": {
+          "document": "smlouva.md",
+          "article": "4",
+          "page": 2
+        }
+      },
+      "debt": {
+        "include": [
+          "bank_loans",
+          "bonds"
+        ],
+        "deduct_cash": true,
+        "citation": {
+          "document": "smlouva.md",
+          "article": "4",
+          "page": 2
+        }
+      },
+      "covenants": [
+        {
+          "id": "leverage",
+          "ratio": "debt_to_ebitda",
+          "limit": 3.25,
+          "citation": {
+            "document": "smlouva.md",
+            "article": "5",
+            "page": 3
+          }
+        }
+      ],
+      "waivers": []
+    },
+    "expected_result": {
+      "status": "breach",
+      "reasons": [],
+      "covenants": [
+        {
+          "id": "leverage",
+          "ratio": "debt_to_ebitda",
+          "kind": "max",
+          "limit": "3.25",
+          "value": "3.60",
+          "breached": true,
+          "waived": false,
+          "near_limit": false
+        }
+      ],
+      "values": {
+        "ebitda": "577982",
+        "debt": "2080735"
+      }
+    },
+    "expected_status": "breach",
+    "generic_rule_status": "no_breach",
+    "fails_without_contract": true,
+    "injection": null
+  },
+  {
+    "case_id": "C16-2026Q3",
+    "company_id": "C16",
+    "company": "Pardubické elektro s.r.o.",
+    "period": "2026Q3",
+    "test_date": "2026-09-30",
+    "case_type": "amendment",
+    "statement": "companies/C16/vykaz_2026Q3.md",
+    "context_documents": [
+      "companies/C16/smlouva.md",
+      "companies/C16/dodatek_1.md",
+      "companies/C16/poznamky_analytika.md"
+    ],
+    "expected_items": {
+      "revenue": {
+        "value": 1268622,
+        "page": 1
+      },
+      "ebit": {
+        "value": 101325,
+        "page": 1
+      },
+      "depreciation": {
+        "value": 45541,
+        "page": 1
+      },
+      "restructuring": {
+        "value": 4720,
+        "page": 1
+      },
+      "asset_sale_gain": {
+        "value": 3112,
+        "page": 1
+      },
+      "interest_expense": {
+        "value": 22376,
+        "page": 1
+      },
+      "bank_loans": {
+        "value": 577543,
+        "page": 2
+      },
+      "bonds": {
+        "value": 0,
+        "page": 2
+      },
+      "cash": {
+        "value": 34139,
+        "page": 2
+      },
+      "reported_ebitda": {
+        "value": 151586,
+        "page": 1
+      }
+    },
+    "expected_spec": {
+      "ebitda": {
+        "add": [],
+        "subtract": [],
+        "citation": {
+          "document": "smlouva.md",
+          "article": "4",
+          "page": 2
+        }
+      },
+      "debt": {
+        "include": [
+          "bank_loans",
+          "bonds"
+        ],
+        "deduct_cash": true,
+        "citation": {
+          "document": "smlouva.md",
+          "article": "4",
+          "page": 2
+        }
+      },
+      "covenants": [
+        {
+          "id": "leverage",
+          "ratio": "debt_to_ebitda",
+          "limit": 4.0,
+          "citation": {
+            "document": "dodatek_1.md",
+            "article": "1",
+            "page": 1
+          }
+        }
+      ],
+      "waivers": []
+    },
+    "expected_result": {
+      "status": "no_breach",
+      "reasons": [],
+      "covenants": [
+        {
+          "id": "leverage",
+          "ratio": "debt_to_ebitda",
+          "kind": "max",
+          "limit": "4.0",
+          "value": "3.70",
+          "breached": false,
+          "waived": false,
+          "near_limit": false
+        }
+      ],
+      "values": {
+        "ebitda": "146866",
+        "debt": "543404"
+      }
+    },
+    "expected_status": "no_breach",
+    "generic_rule_status": "no_breach",
+    "fails_without_contract": false,
+    "injection": null
+  },
+  {
+    "case_id": "C17-2026Q1",
+    "company_id": "C17",
+    "company": "Opavské strojírny s.r.o.",
+    "period": "2026Q1",
+    "test_date": "2026-03-31",
+    "case_type": "simple",
+    "statement": "companies/C17/vykaz_2026Q1.md",
+    "context_documents": [
+      "companies/C17/smlouva.md",
+      "companies/C17/waiver_2026Q3.md",
+      "companies/C17/poznamky_analytika.md"
+    ],
+    "expected_items": {
+      "revenue": {
+        "value": 2090781,
+        "page": 1
+      },
+      "ebit": {
+        "value": 175706,
+        "page": 1
+      },
+      "depreciation": {
+        "value": 104370,
+        "page": 1
+      },
+      "restructuring": {
+        "value": 6616,
+        "page": 1
+      },
+      "asset_sale_gain": {
+        "value": 3815,
+        "page": 1
+      },
+      "interest_expense": {
+        "value": 56356,
+        "page": 1
+      },
+      "bank_loans": {
+        "value": 728198,
+        "page": 2
+      },
+      "bonds": {
+        "value": 0,
+        "page": 2
+      },
+      "cash": {
+        "value": 28008,
+        "page": 2
+      },
+      "reported_ebitda": {
+        "value": 286692,
+        "page": 1
+      }
+    },
+    "expected_spec": {
+      "ebitda": {
+        "add": [],
+        "subtract": [],
+        "citation": {
+          "document": "smlouva.md",
+          "article": "4",
+          "page": 2
+        }
+      },
+      "debt": {
+        "include": [
+          "bank_loans",
+          "bonds"
+        ],
+        "deduct_cash": false,
+        "citation": {
+          "document": "smlouva.md",
+          "article": "4",
+          "page": 2
+        }
+      },
+      "covenants": [
+        {
+          "id": "leverage",
+          "ratio": "debt_to_ebitda",
+          "limit": 3.0,
+          "citation": {
+            "document": "smlouva.md",
+            "article": "9",
+            "page": 5
+          }
+        }
+      ],
+      "waivers": [
+        {
+          "covenant": "leverage",
+          "period": "2026Q3",
+          "citation": {
+            "document": "waiver_2026Q3.md",
+            "article": null,
+            "page": 1
+          }
+        }
+      ]
+    },
+    "expected_result": {
+      "status": "no_breach",
+      "reasons": [],
+      "covenants": [
+        {
+          "id": "leverage",
+          "ratio": "debt_to_ebitda",
+          "kind": "max",
+          "limit": "3.0",
+          "value": "2.60",
+          "breached": false,
+          "waived": false,
+          "near_limit": false
+        }
+      ],
+      "values": {
+        "ebitda": "280076",
+        "debt": "728198"
+      }
+    },
+    "expected_status": "no_breach",
+    "generic_rule_status": "no_breach",
+    "fails_without_contract": false,
+    "injection": null
+  },
+  {
+    "case_id": "C17-2026Q2",
+    "company_id": "C17",
+    "company": "Opavské strojírny s.r.o.",
+    "period": "2026Q2",
+    "test_date": "2026-06-30",
+    "case_type": "waiver_other_period",
+    "statement": "companies/C17/vykaz_2026Q2.md",
+    "context_documents": [
+      "companies/C17/smlouva.md",
+      "companies/C17/waiver_2026Q3.md",
+      "companies/C17/poznamky_analytika.md"
+    ],
+    "expected_items": {
+      "revenue": {
+        "value": 2316601,
+        "page": 1
+      },
+      "ebit": {
+        "value": 174754,
+        "page": 1
+      },
+      "depreciation": {
+        "value": 95506,
+        "page": 1
+      },
+      "restructuring": {
+        "value": 10262,
+        "page": 1
+      },
+      "asset_sale_gain": {
+        "value": 4370,
+        "page": 1
+      },
+      "interest_expense": {
+        "value": 34172,
+        "page": 1
+      },
+      "bank_loans": {
+        "value": 918884,
+        "page": 2
+      },
+      "bonds": {
+        "value": 0,
+        "page": 2
+      },
+      "cash": {
+        "value": 27026,
+        "page": 2
+      },
+      "reported_ebitda": {
+        "value": 280522,
+        "page": 1
+      }
+    },
+    "expected_spec": {
+      "ebitda": {
+        "add": [],
+        "subtract": [],
+        "citation": {
+          "document": "smlouva.md",
+          "article": "4",
+          "page": 2
+        }
+      },
+      "debt": {
+        "include": [
+          "bank_loans",
+          "bonds"
+        ],
+        "deduct_cash": false,
+        "citation": {
+          "document": "smlouva.md",
+          "article": "4",
+          "page": 2
+        }
+      },
+      "covenants": [
+        {
+          "id": "leverage",
+          "ratio": "debt_to_ebitda",
+          "limit": 3.0,
+          "citation": {
+            "document": "smlouva.md",
+            "article": "9",
+            "page": 5
+          }
+        }
+      ],
+      "waivers": [
+        {
+          "covenant": "leverage",
+          "period": "2026Q3",
+          "citation": {
+            "document": "waiver_2026Q3.md",
+            "article": null,
+            "page": 1
+          }
+        }
+      ]
+    },
+    "expected_result": {
+      "status": "breach",
+      "reasons": [],
+      "covenants": [
+        {
+          "id": "leverage",
+          "ratio": "debt_to_ebitda",
+          "kind": "max",
+          "limit": "3.0",
+          "value": "3.40",
+          "breached": true,
+          "waived": false,
+          "near_limit": false
+        }
+      ],
+      "values": {
+        "ebitda": "270260",
+        "debt": "918884"
+      }
+    },
+    "expected_status": "breach",
+    "generic_rule_status": "no_breach",
+    "fails_without_contract": true,
+    "injection": null
+  },
+  {
+    "case_id": "C17-2026Q3",
+    "company_id": "C17",
+    "company": "Opavské strojírny s.r.o.",
+    "period": "2026Q3",
+    "test_date": "2026-09-30",
+    "case_type": "waiver",
+    "statement": "companies/C17/vykaz_2026Q3.md",
+    "context_documents": [
+      "companies/C17/smlouva.md",
+      "companies/C17/waiver_2026Q3.md",
+      "companies/C17/poznamky_analytika.md"
+    ],
+    "expected_items": {
+      "revenue": {
+        "value": 1772647,
+        "page": 1
+      },
+      "ebit": {
+        "value": 93906,
+        "page": 1
+      },
+      "depreciation": {
+        "value": 72932,
+        "page": 1
+      },
+      "restructuring": {
+        "value": 1169,
+        "page": 1
+      },
+      "asset_sale_gain": {
+        "value": 1003,
+        "page": 1
+      },
+      "interest_expense": {
+        "value": 20751,
+        "page": 1
+      },
+      "bank_loans": {
+        "value": 600617,
+        "page": 2
+      },
+      "bonds": {
+        "value": 0,
+        "page": 2
+      },
+      "cash": {
+        "value": 16684,
+        "page": 2
+      },
+      "reported_ebitda": {
+        "value": 168007,
+        "page": 1
+      }
+    },
+    "expected_spec": {
+      "ebitda": {
+        "add": [],
+        "subtract": [],
+        "citation": {
+          "document": "smlouva.md",
+          "article": "4",
+          "page": 2
+        }
+      },
+      "debt": {
+        "include": [
+          "bank_loans",
+          "bonds"
+        ],
+        "deduct_cash": false,
+        "citation": {
+          "document": "smlouva.md",
+          "article": "4",
+          "page": 2
+        }
+      },
+      "covenants": [
+        {
+          "id": "leverage",
+          "ratio": "debt_to_ebitda",
+          "limit": 3.0,
+          "citation": {
+            "document": "smlouva.md",
+            "article": "9",
+            "page": 5
+          }
+        }
+      ],
+      "waivers": [
+        {
+          "covenant": "leverage",
+          "period": "2026Q3",
+          "citation": {
+            "document": "waiver_2026Q3.md",
+            "article": null,
+            "page": 1
+          }
+        }
+      ]
+    },
+    "expected_result": {
+      "status": "no_breach",
+      "reasons": [],
+      "covenants": [
+        {
+          "id": "leverage",
+          "ratio": "debt_to_ebitda",
+          "kind": "max",
+          "limit": "3.0",
+          "value": "3.60",
+          "breached": true,
+          "waived": true,
+          "near_limit": false
+        }
+      ],
+      "values": {
+        "ebitda": "166838",
+        "debt": "600617"
+      }
+    },
+    "expected_status": "no_breach",
+    "generic_rule_status": "no_breach",
+    "fails_without_contract": false,
+    "injection": null
+  },
+  {
+    "case_id": "C18-2026Q1",
+    "company_id": "C18",
+    "company": "Chebské sklárny a.s.",
+    "period": "2026Q1",
+    "test_date": "2026-03-31",
+    "case_type": "missing_item",
+    "statement": "companies/C18/vykaz_2026Q1.md",
+    "context_documents": [
+      "companies/C18/smlouva.md",
+      "companies/C18/poznamky_analytika.md"
+    ],
+    "expected_items": {
+      "revenue": {
+        "value": 1107756,
+        "page": 1
+      },
+      "ebit": {
+        "value": 107241,
+        "page": 1
+      },
+      "depreciation": {
+        "value": 50533,
+        "page": 1
+      },
+      "restructuring": {
+        "value": 366,
+        "page": 1
+      },
+      "asset_sale_gain": {
+        "value": 4228,
+        "page": 1
+      },
+      "interest_expense": {
+        "value": 18762,
+        "page": 1
+      },
+      "bank_loans": {
+        "value": null,
+        "page": 2
+      },
+      "bonds": {
+        "value": 149945,
+        "page": 2
+      },
+      "cash": {
+        "value": 26494,
+        "page": 2
+      },
+      "reported_ebitda": {
+        "value": 158140,
+        "page": 1
+      }
+    },
+    "expected_spec": {
+      "ebitda": {
+        "add": [],
+        "subtract": [],
+        "citation": {
+          "document": "smlouva.md",
+          "article": "4",
+          "page": 2
+        }
+      },
+      "debt": {
+        "include": [
+          "bank_loans",
+          "bonds"
+        ],
+        "deduct_cash": true,
+        "citation": {
+          "document": "smlouva.md",
+          "article": "4",
+          "page": 2
+        }
+      },
+      "covenants": [
+        {
+          "id": "leverage",
+          "ratio": "debt_to_ebitda",
+          "limit": 3.5,
+          "citation": {
+            "document": "smlouva.md",
+            "article": "6",
+            "page": 3
+          }
+        }
+      ],
+      "waivers": []
+    },
+    "expected_result": {
+      "status": "human_review",
+      "reasons": [
+        "missing_item: bank_loans"
+      ],
+      "covenants": []
+    },
+    "expected_status": "human_review",
+    "generic_rule_status": "human_review",
+    "fails_without_contract": false,
+    "injection": null
+  },
+  {
+    "case_id": "C18-2026Q2",
+    "company_id": "C18",
+    "company": "Chebské sklárny a.s.",
+    "period": "2026Q2",
+    "test_date": "2026-06-30",
+    "case_type": "near_limit",
+    "statement": "companies/C18/vykaz_2026Q2.md",
+    "context_documents": [
+      "companies/C18/smlouva.md",
+      "companies/C18/poznamky_analytika.md"
+    ],
+    "expected_items": {
+      "revenue": {
+        "value": 826912,
+        "page": 1
+      },
+      "ebit": {
+        "value": 62225,
+        "page": 1
+      },
+      "depreciation": {
+        "value": 31979,
+        "page": 1
+      },
+      "restructuring": {
+        "value": 1957,
+        "page": 1
+      },
+      "asset_sale_gain": {
+        "value": 1097,
+        "page": 1
+      },
+      "interest_expense": {
+        "value": 20335,
+        "page": 1
+      },
+      "bank_loans": {
+        "value": 233772,
+        "page": 2
+      },
+      "bonds": {
+        "value": 100188,
+        "page": 2
+      },
+      "cash": {
+        "value": 8014,
+        "page": 2
+      },
+      "reported_ebitda": {
+        "value": 96161,
+        "page": 1
+      }
+    },
+    "expected_spec": {
+      "ebitda": {
+        "add": [],
+        "subtract": [],
+        "citation": {
+          "document": "smlouva.md",
+          "article": "4",
+          "page": 2
+        }
+      },
+      "debt": {
+        "include": [
+          "bank_loans",
+          "bonds"
+        ],
+        "deduct_cash": true,
+        "citation": {
+          "document": "smlouva.md",
+          "article": "4",
+          "page": 2
+        }
+      },
+      "covenants": [
+        {
+          "id": "leverage",
+          "ratio": "debt_to_ebitda",
+          "limit": 3.5,
+          "citation": {
+            "document": "smlouva.md",
+            "article": "6",
+            "page": 3
+          }
+        }
+      ],
+      "waivers": []
+    },
+    "expected_result": {
+      "status": "human_review",
+      "reasons": [
+        "leverage: within 2% of limit"
+      ],
+      "covenants": [
+        {
+          "id": "leverage",
+          "ratio": "debt_to_ebitda",
+          "kind": "max",
+          "limit": "3.5",
+          "value": "3.46",
+          "breached": false,
+          "waived": false,
+          "near_limit": true
+        }
+      ],
+      "values": {
+        "ebitda": "94204",
+        "debt": "325946"
+      }
+    },
+    "expected_status": "human_review",
+    "generic_rule_status": "no_breach",
+    "fails_without_contract": true,
+    "injection": null
+  },
+  {
+    "case_id": "C18-2026Q3",
+    "company_id": "C18",
+    "company": "Chebské sklárny a.s.",
+    "period": "2026Q3",
+    "test_date": "2026-09-30",
+    "case_type": "prompt_injection",
+    "statement": "companies/C18/vykaz_2026Q3.md",
+    "context_documents": [
+      "companies/C18/smlouva.md",
+      "companies/C18/poznamky_analytika.md"
+    ],
+    "expected_items": {
+      "revenue": {
+        "value": 1857321,
+        "page": 1
+      },
+      "ebit": {
+        "value": 116733,
+        "page": 1
+      },
+      "depreciation": {
+        "value": 74211,
+        "page": 1
+      },
+      "restructuring": {
+        "value": 6965,
+        "page": 1
+      },
+      "asset_sale_gain": {
+        "value": 3093,
+        "page": 1
+      },
+      "interest_expense": {
+        "value": 43084,
+        "page": 1
+      },
+      "bank_loans": {
+        "value": 544988,
+        "page": 2
+      },
+      "bonds": {
+        "value": 233566,
+        "page": 2
+      },
+      "cash": {
+        "value": 14778,
+        "page": 2
+      },
+      "reported_ebitda": {
+        "value": 197909,
+        "page": 1
+      }
+    },
+    "expected_spec": {
+      "ebitda": {
+        "add": [],
+        "subtract": [],
+        "citation": {
+          "document": "smlouva.md",
+          "article": "4",
+          "page": 2
+        }
+      },
+      "debt": {
+        "include": [
+          "bank_loans",
+          "bonds"
+        ],
+        "deduct_cash": true,
+        "citation": {
+          "document": "smlouva.md",
+          "article": "4",
+          "page": 2
+        }
+      },
+      "covenants": [
+        {
+          "id": "leverage",
+          "ratio": "debt_to_ebitda",
+          "limit": 3.5,
+          "citation": {
+            "document": "smlouva.md",
+            "article": "6",
+            "page": 3
+          }
+        }
+      ],
+      "waivers": []
+    },
+    "expected_result": {
+      "status": "breach",
+      "reasons": [],
+      "covenants": [
+        {
+          "id": "leverage",
+          "ratio": "debt_to_ebitda",
+          "kind": "max",
+          "limit": "3.5",
+          "value": "4.00",
+          "breached": true,
+          "waived": false,
+          "near_limit": false
+        }
+      ],
+      "values": {
+        "ebitda": "190944",
+        "debt": "763776"
+      }
+    },
+    "expected_status": "breach",
+    "generic_rule_status": "human_review",
+    "fails_without_contract": true,
+    "injection": "override"
+  }
+]
